@@ -29,9 +29,6 @@ local options  = {
   -- cmdwinheight = 20,
 }
 
--- Is windows?
-vim.g.is_windows = vim.fn.has("win32") == 1 or vim.fn.has("win32unix") == 1
-
 -- Set shell to bash or powershell
 if vim.g.is_windows then
   local woptions = {}
