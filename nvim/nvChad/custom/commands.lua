@@ -97,24 +97,25 @@ vim.api.nvim_create_autocmd({ "TextYankPost" }, {
 local open_config_files = function(left_rel_path, right_rel_path)
   local cfg_root = vim.fn.stdpath('config')
   local left_full_path = vim.fn.expand(cfg_root .. "/" .. left_rel_path)
-  local right_full_path = vim.fn.expand(cfg_root .. "/" .. right_rel_path)
+  local right_full_path = vim.fn.expand(cfg_root .. "/" .. right_rel_path and right_rel_path or "")
   local open_fn = "tabnew"
   if vim.bo.filetype == "alpha" then
     open_fn = "e"
   end
+vim.print("opening! ".. open_fn.." "..left_full_path .. (right_rel_path and (" | vsp "..right_full_path) or ""))
 
-  vim.cmd(open_fn.." "..left_full_path.." | vsp "..right_full_path)
+  vim.cmd(open_fn.." "..left_full_path .. (right_rel_path and (" | vsp "..right_full_path) or ""))
 end
 
 local config_commands = {
   ["EditCustomDashboard"] = {
-    "lua/plugins/configs/alpha.lua", "lua/custom/plugins/overrides/alpha.lua"
+    "lua/custom/plugins/overrides/alpha.lua"
   },
   ["EditKeyMappings"] = {
     "lua/core/mappings.lua", "lua/custom/mappings.lua"
   },
   ["EditInstalledPlugins"] = {
-    "lua/plugins/init.lua", "lua/custom/plugins.lua"
+    "lua/plugins/init.lua", "lua/custom/plugins/init.lua"
   },
   ["EditCustomOptions"] = {
     "lua/core/options.lua", "lua/custom/options.lua"
