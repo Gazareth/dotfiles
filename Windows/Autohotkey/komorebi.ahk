@@ -166,11 +166,6 @@ global discrete_hotkeys := [
   ; famous binary space partition
   ["!+p", "change-layout bsp"],
 
-  ; Flip horizontally
-  ; ["!,", "flip-layout-horizontal"],
-  ; Flip vertically
-  ; ["!.", "flip-layout-vertical"],
-
   ; Force a retile if things get janky Ctrl + Shift + R
   ["^+r", "retile"],
 
