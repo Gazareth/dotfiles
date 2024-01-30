@@ -24,7 +24,9 @@ class WindowsApp {
         if this.Title != 0 {
             app_pid := WinGetPID(this.Title)
         }
-        ProcessClose(this.Title ? app_pid : this.Exe)
+        if( app_pid != 0 ) {
+            ProcessClose(this.Title ? app_pid : this.Exe)
+        }
     }
 }
 

@@ -86,7 +86,7 @@ init() {
     ["exe", "explorer.exe", 0, 1],
     ["exe", "notepad++.exe", 0, 1],
     ["title", "Apple Music", 0, 2],
-    ["exe", "Chrome.exe", 0, 3],
+    ["exe", "chrome.exe", 0, 3],
     ["exe", "Code.exe", 0, 4],
     ["exe", "neovide.exe", 0, 4],
     ["exe", "wt.exe", 0, 5]
@@ -129,58 +129,72 @@ GenerateDirectionalCommands("+!", rhs_direction_keys, "move")
 GenerateDirectionalCommands("!", lhs_direction_keys, "stack")
 
 ; Float the focused window Alt + T
-discrete_hotkeys := [
-["!q", "toggle-float"],
+global discrete_hotkeys := [
+  ["!q", "toggle-float"],
 
-; Toggle Tiling for workspace. Alt + Shift + T
-["!+q", "toggle-tiling"],
+  ; Toggle Tiling for workspace. Alt + Shift + T
+  ["!+q", "toggle-tiling"],
 
-; Pause responding to any window events or komorebic commands Alt + P
-["!p", "toggle-pause"],
+  ; Pause responding to any window events or komorebic commands Alt + P
+  ["!p", "toggle-pause"],
 
-; Unstack the focused window
-["!h", "unstack"],
+  ; Unstack the focused window
+  ["!h", "unstack"],
 
-["!g", "cycle-stack next"],
-; ![::RunKomorebiC("cycle-stack previous")
+  ["!g", "cycle-stack next"],
+  ; ![::RunKomorebiC("cycle-stack previous")
 
-; Promote the focused window to the top of the tree, ,Alt + Shift + Enter
-["!+Enter", "promote"],
+  ; Promote the focused window to the top of the tree, ,Alt + Shift + Enter
+  ["!+Enter", "promote"],
 
-; Toggle the Monocle layout for the focused window, ,Alt + Shift + F
-; Monocle is similar to maximizing, but it will pinned the focused
-; window down
-["!+f", "toggle-monocle"],
+  ; Toggle the Monocle layout for the focused window, ,Alt + Shift + F
+  ; Monocle is similar to maximizing, but it will pinned the focused
+  ; window down
+  ["!+f", "toggle-monocle"],
 
-; Use Alt + F to toggle maximize window
-; You should always use this shortcut to maximize
-; or komorebi won't handle it like issue #12
-; https://github.com/LGUG2Z/komorebi/issues/12
-["!f", "komorebic toggle-maximize"],
+  ; Use Alt + F to toggle maximize window
+  ; You should always use this shortcut to maximize
+  ; or komorebi won't handle it like issue #12
+  ; https://github.com/LGUG2Z/komorebi/issues/12
+  ["!f", "komorebic toggle-maximize"],
 
 
-; Switch to an equal-height
-["!+l", "change-layout rows"],
-; Switch to an equal-width.
-["!+d", "change-layout columns"],
-; famous binary space partition
-["!+p", "change-layout bsp"],
+  ; Switch to an equal-height
+  ["!+l", "change-layout rows"],
+  ; Switch to an equal-width.
+  ["!+d", "change-layout columns"],
+  ; famous binary space partition
+  ["!+p", "change-layout bsp"],
 
-; Flip horizontally
-; ["!,", "flip-layout-horizontal"],
-; Flip vertically
-; ["!.", "flip-layout-vertical"],
+  ; Flip horizontally
+  ; ["!,", "flip-layout-horizontal"],
+  ; Flip vertically
+  ; ["!.", "flip-layout-vertical"],
 
-; Force a retile if things get janky Ctrl + Shift + R
-["^+r", "retile"],
+  ; Force a retile if things get janky Ctrl + Shift + R
+  ["^+r", "retile"],
+
+  ["!+q", "stop" ],
 
 ]
 
-for action in discrete_hotkeys {
-  Hotkey(action[1], (key) => RunKomorebiC(action[2]))
+ActionFunction(key) {
+  global discrete_hotkeys
+
+  for hk in discrete_hotkeys 
+  {
+    if( hk[1] == key ) {
+        RunKomorebiC(hk[2])
+        break
+    }
+  }
 }
 
-; Awkward hotkeys (these have to be written this way 🤷‍♂️)
+for ka in discrete_hotkeys {
+  Hotkey(ka[1], ActionFunction)
+}
+
+; Awkward hotkeys (these have to be written explicitly 🤷‍♂️)
 Hotkey("!,", (key) => RunKomorebiC("flip-layout horizontal"))
 Hotkey("!.", (key) => RunKomorebiC("flip-layout vertical"))
 
@@ -204,9 +218,6 @@ For num in numbers{
   WinClose("A")
 }
 
-!+q::{
-  RunKomorebiC("stop")
-}
 
 ;; Restart komorebi in a hard way
 !+z::{
