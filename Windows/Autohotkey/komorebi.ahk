@@ -89,6 +89,8 @@ init() {
     ["exe", "chrome.exe", 0, 3],
     ["exe", "Code.exe", 0, 4],
     ["exe", "neovide.exe", 0, 4],
+    ["title", "Terminal", 0, 5],
+    ["title", "PowerShell", 0, 5],
     ["exe", "wt.exe", 0, 5]
   ]
 

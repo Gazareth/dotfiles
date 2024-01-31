@@ -13,20 +13,16 @@ class WindowsApp {
         this.Title := Title ?? false
     }
     IsRunning() {
-        if this.Title != false {
+        if this.Title != 0 and WinExist(this.Title) {
             return WinGetPID(this.Title)
         } else {
-        return ProcessExist(this.Exe)
+         return ProcessExist(this.Exe)
         }
     }
     Close() {
-        app_pid := 0
-        if this.Title != 0 {
-            app_pid := WinGetPID(this.Title)
-        }
-        if( app_pid != 0 ) {
-            ProcessClose(this.Title ? app_pid : this.Exe)
-        }
+        PIDOrName := this.Title != 0 and ProcessExist(this.Title) ? this.Title : this.Exe
+        While ProcessExist(PIDOrName)
+            ProcessClose PIDOrName
     }
 }
 
@@ -35,7 +31,7 @@ global apps_config := [
     ["Edge", "msedge.exe", "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"],
     ["Chrome", "chrome.exe", "C:\Program Files\Google\Chrome\Application\chrome.exe"],
     ["Neovide", "neovide.exe", "C:\Program Files\Neovide\neovide.exe"],
-    ["Terminal", "wt.exe", "C:\Users\Gareth\AppData\Local\Microsoft\WindowsApps\wt.exe", "PowerShell"]
+    ["Terminal", "WindowsTerminal.exe", "C:\Users\Gareth\AppData\Local\Microsoft\WindowsApps\wt.exe", "PowerShell"]
 ]
 
 global apps := Map()
@@ -138,3 +134,5 @@ for mode in modes {
 
 Hotkey("^!1", (key) => SwitchMode(modes[1]))
 Hotkey("^!2", (key) => SwitchMode(modes[2]))
+
+; @todo: Identify current mode on startup and close any apps not from that mode
