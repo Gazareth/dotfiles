@@ -1,6 +1,8 @@
 -- Courtesy of https://www.reddit.com/r/neovim/comments/reovwj/comment/ht88eug/?utm_source=reddit&utm_medium=web2x&context=3
 local M = {}
 
+vim.g.is_windows = vim.loop.os_uname().version:match('Windows')
+
 local path_sep = vim.g.is_windows and '\\' or '/'
 
 -----------------------------------------------------------
@@ -36,7 +38,7 @@ function M.glob_require(package)
 
         -- skip `init` and files starting with underscore.
         if (basename ~= 'init' and basename:sub(1, 1) ~= '_') then
-            table.insert(found_files, require(module_name))
+            vim.tbl_deep_extend("error", found_files, require(module_name))
         end
     end
 
