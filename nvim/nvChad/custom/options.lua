@@ -22,11 +22,6 @@ local options  = {
   wrap = false,
   list = true,
   listchars = "tab:» ,extends:►,precedes:◄,nbsp:·,trail:▒,",
-
-  -- This helps `projections` fully restore the session
-  sessionoptions = vim.opt.sessionoptions:append("localoptions")
-  -- cmdheight = 20,
-  -- cmdwinheight = 20,
 }
 
 -- Set shell to bash or powershell
