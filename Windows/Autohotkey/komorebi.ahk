@@ -11,10 +11,10 @@ ArrayFromZero(Length){
   return temp
 }
 
-Join(s, h, t*)
+Join(sep, h, t*)
 {
 	for _,x in t
-		h .= s . x
+		h .= sep . x
 	return h
 }
 
@@ -25,6 +25,7 @@ RunKomorebiC(CommandString) {
 ; Set workspaces (start from 0)
 ; ArrayFromZero(9) => [0,1,2,3,4,5,6,7,8]
 global numbers := ArrayFromZero(WorkspaceNumber)
+global workspaceKeys := ["h", "m", "g", "n", "t", "y", "k", "q"]
 
 init() {
   RunKomorebiC("start")
@@ -135,7 +136,7 @@ global discrete_hotkeys := [
   ["!q", "toggle-float"],
 
   ; Toggle Tiling for workspace. Alt + Shift + T
-  ["!+q", "toggle-tiling"],
+  ["!+t", "toggle-tiling"],
 
   ; Pause responding to any window events or komorebic commands Alt + P
   ["!p", "toggle-pause"],
@@ -195,11 +196,22 @@ for ka in discrete_hotkeys {
 Hotkey("!,", (key) => RunKomorebiC("flip-layout horizontal"))
 Hotkey("!.", (key) => RunKomorebiC("flip-layout vertical"))
 
+
+
+CreatewSwitchWorkspace(WorkspaceIndex)
+{
+  SwitchWorkspace(key) {
+    RunKomorebiC("focus-workspace " . (WorkspaceIndex - 1))
+  }
+
+  return SwitchWorkspace
+}
+
 ; Switch to workspace
 ; Alt + 1~9
 ; Equal to bind key !1 to !9 to workspace 0 ~ 8
-For num in numbers{
-  Hotkey("!" . (num+1), (key) => RunKomorebiC("focus-workspace " . Integer(SubStr(key, 2))-1))
+For workspaceKey in workspaceKeys {
+  Hotkey("^!+#" . workspaceKey, CreatewSwitchWorkspace(A_Index))
 }
 
 ; Move window to workspace
