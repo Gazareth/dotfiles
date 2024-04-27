@@ -1,88 +1,50 @@
 #Requires AutoHotkey v2.0
+#Include lib/Enum.ahk
+#Include lib/Array.ahk
+#Include lib/App.ahk ; WindownApp
 
-global modes := [
+#Include appDefs.ahk ; APP_DEFS
+
+global modeIndex := 1
+
+global modes := Enum([
     "Default",
-    "Code (JS)"
-]
+    "Browse",
+    "CodeJS",
+    "Gaming"
+])
 
-class WindowsApp {
-    __New(Name, Exe, Path, Title := 0) {
-        this.Name := Name
-        this.Exe := Exe
-        this.Path := Path
-        this.Title := Title ?? false
-    }
-    IsRunning() {
-        if this.Title != 0 and WinExist(this.Title) {
-            return WinGetPID(this.Title)
-        } else {
-         return ProcessExist(this.Exe)
-        }
-    }
-    Close() {
-        PIDOrName := this.Title != 0 and ProcessExist(this.Title) ? this.Title : this.Exe
-        While ProcessExist(PIDOrName)
-            ProcessClose PIDOrName
-    }
-}
-
-;; === CONFIG ===
-global apps_config := [
-    ["Edge", "msedge.exe", "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"],
-    ["Chrome", "chrome.exe", "C:\Program Files\Google\Chrome\Application\chrome.exe"],
-    ["Neovide", "neovide.exe", "C:\Program Files\Neovide\neovide.exe"],
-    ["Terminal", "WindowsTerminal.exe", "C:\Users\Gareth\AppData\Local\Microsoft\WindowsApps\wt.exe", "PowerShell"]
-]
+global mode_names := Map(
+    modes.Default, "Default (blank workspace)",
+    modes.Browse, "Browsing",
+    modes.CodeJS, "Code (JS)",
+    modes.Gaming, "Gaming (Steam)"
+)
 
 global apps := Map()
 
-for app_cfg in apps_config {
+for app_cfg in APP_DEFS {
     apps[app_cfg[1]] := WindowsApp(app_cfg*)
 }
 
 global mode_apps := Map()
 
-mode_apps[modes[1]] := [
+mode_apps[modes.Default] := []
+
+mode_apps[modes.Browse] := [
     apps["Edge"]
 ]
 
-mode_apps[modes[2]] := [
+mode_apps[modes.CodeJS] := [
     apps["Edge"],
     apps["Chrome"],
     apps["Neovide"],
     apps["Terminal"]
 ]
 
-;; === UTILS ===
-IndexOf(Array, Callback) {
-    for item in Array {
-        if Callback(item) == true {
-            return A_Index
-        }
-    }
-    return -1
-}
-
-;; Finds out which items from B are not in A
-ArraySubtract(A, B) {
-    C := []
-    for b_app in B
-    {
-        for a_app in A {
-            if (a_app == b_app) {
-                continue 2
-            }
-        }
-        C.Push(b_app)
-    }
-
-    return C
-}
-
-GetAppConfig(AppName) {
-    app_index := IndexOf(apps_config, (app) => app.Name == AppName)
-    return apps_config[app_index]
-}
+mode_apps[modes.Gaming] := [
+    apps["Steam"]
+]
 
 isAllRunning(AppList) {
     for app in AppList {
@@ -98,41 +60,60 @@ SwitchMode(newMode) {
 
     new_mode_apps := mode_apps[newMode]
     old_mode_apps := mode_apps[current_mode]
-    old_mode_filtered := []
-    for oma in old_mode_apps {
-        if oma.IsRunning()
-            old_mode_filtered.Push(oma)
+    old_mode_apps_running := []
+    for o_m_a in old_mode_apps {
+        if o_m_a.IsRunning() {
+            old_mode_apps_running.Push(o_m_a)
+        }
     }
 
-    apps_to_close := ArraySubtract(new_mode_apps, old_mode_filtered)
-    apps_to_open := ArraySubtract(old_mode_filtered, new_mode_apps)
+    apps_to_close := new_mode_apps.Subtract(old_mode_apps_running)
+    apps_to_open := old_mode_apps_running.Subtract(new_mode_apps)
 
     for app in apps_to_close {
-        app.Close()
+        if app.IsRunning() {
+            MsgBox "Closing " . app.Name
+            ; app.Close()
+        }
     }
 
     for app in apps_to_open {
-        Run app.Path
+        MsgBox "Should open? " . app.Name
+        if app.ShouldOpen() {
+            MsgBox "Opening " . app.Name
+            ; Run app.Path
+        }
     }
 
-    trayMenu.Uncheck(current_mode)
-    trayMenu.Check(newMode)
+    trayMenu.Uncheck(mode_names[current_mode])
+    trayMenu.Check(mode_names[newMode])
     current_mode := newMode
 }
 
 ;; Detect if mode is code mode!
-global current_mode := modes[isAllRunning(mode_apps[modes[1]]) ? 2 : 1]
+global current_mode := isAllRunning(mode_apps[modes.CodeJS]) ? modes.CodeJS : modes.Default
+
+MsgBox "Started app suite organiser! `nMode: [" . mode_names[current_mode] . "]"
 
 ;; Set up tray menu items
 global trayMenu := A_TrayMenu
 
-for mode in modes {
-    options := A_Index == 1 ? "BarBreak" : ""
-    trayMenu.Add(mode, (ItemName, ItemPos, ParentMenu) => SwitchMode(ItemName), options)
-    trayMenu.Check(current_mode)
+HandleTrayItemClick(ItemName, ItemPos, ParentMenu) {
+    for mi, mn in mode_names {
+        if ItemName == mn
+            return SwitchMode(mi)
+    }
 }
 
-Hotkey("^!1", (key) => SwitchMode(modes[1]))
-Hotkey("^!2", (key) => SwitchMode(modes[2]))
+for mode_index, mode_name in mode_names {
+    options := A_Index == 1 ? "BarBreak" : ""
+
+    trayMenu.Add(mode_name, HandleTrayItemClick, options)
+}
+
+trayMenu.Check(mode_names[current_mode])
+
+Hotkey("^!1", (key) => SwitchMode(modes.Default))
+Hotkey("^!2", (key) => SwitchMode(modes.CodeJS))
 
 ; @todo: Identify current mode on startup and close any apps not from that mode
