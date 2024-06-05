@@ -2,9 +2,10 @@
 
 class AppSuite {
     ; Apps is an array of Strings corresponding to WindowsApp objects
-    __New(Name, Apps) {
-        this.Name := Name
-        this.Apps := Apps
+    __New(suiteDef) {
+        this.Name := suiteDef.name
+        this.Apps := suiteDef.apps
+        ; this.Transient := suiteDef.transient ; Transient suites close all their apps when switching away
     }
     IsInSuite() {
         for app in this.Apps {
@@ -21,6 +22,11 @@ class AppSuiteManager {
         this.Suites := AppSuites
 
         this.CurrentSuite := this.DetectCurrentSuite()
+
+        this.Debug := false
+    }
+    SetDebug(val) {
+        this.Debug := val
     }
     DetectCurrentSuite() {
         max_apps := Map("num", 0, "suiteId", this.DefaultSuite)
@@ -47,24 +53,27 @@ class AppSuiteManager {
             }
         }
 
-        apps_to_close := new_mode_apps.Subtract(old_mode_apps_running)
-        apps_to_open := old_mode_apps_running.Subtract(new_mode_apps)
-    
+        apps_to_close := old_mode_apps_running.Subtract(new_mode_apps)
+        apps_to_open := new_mode_apps.Subtract(old_mode_apps_running)
+
         for app in apps_to_close {
             if app.IsRunning() {
-                MsgBox "Closing " . app.Name
-                ; app.Close()
+                if this.Debug
+                    MsgBox "Closing " . app.Name
+                else
+                    app.Close()
             }
         }
 
         for app in apps_to_open {
-            MsgBox "Should open? " . app.Name
             if app.ShouldOpen() {
-                MsgBox "Opening " . app.Name
-                ; Run app.Path
+                if this.Debug
+                    MsgBox "Opening " . app.Name
+                else
+                    Run app.Path
             }
         }
-    
+
         this.CurrentSuite := newSuite
     }
 }

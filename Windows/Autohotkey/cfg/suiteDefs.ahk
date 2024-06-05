@@ -45,5 +45,5 @@ for suite_id, suite_def in AppSuites {
     if suite_def.apps.Length > 0 {
         suite_def.apps.Map((appName) => APP_DEFS[appName])
     }
-    AppSuites[suite_id] := AppSuite(suite_def.name, suite_def.apps)
+    AppSuites[suite_id] := AppSuite(suite_def)
 }
