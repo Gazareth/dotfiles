@@ -14,7 +14,7 @@ MsgBox "Started AppSuiteManager! `nMode: [" . AppSuites[ASM.CurrentSuite].Name .
 ;; Set up tray menu items
 global trayMenu := A_TrayMenu
 
-HandleTrayItemClick(ItemName, ItemPos, ParentMenu) {
+HandleSuiteTrayItemClick(ItemName, ItemPos, ParentMenu) {
     for sId, suite in AppSuites {
         sNm := suite.Name
         if ItemName == sNm {
@@ -31,11 +31,30 @@ HandleTrayItemClick(ItemName, ItemPos, ParentMenu) {
 for suite_id, suite in AppSuites {
     options := A_Index == 1 ? "BarBreak" : ""
 
-    trayMenu.Add(suite.Name, HandleTrayItemClick, options)
+    trayMenu.Add(suite.Name, HandleSuiteTrayItemClick, options)
 }
 
 ;; Mark the current suite tray item
 trayMenu.Check(ASM.CurrentSuiteName())
+
+;; Add tray item to toggle debug mode
+global debug := false
+global DEBUG_STR := "Debug"
+
+ToggleDebugMode(ItemName, ItemPos, ParentMenu) {
+    global debug
+    global ASM
+    if debug {
+        ASM.SetDebug(false)
+        return trayMenu.Uncheck(DEBUG_STR)
+    } else {
+        ASM.SetDebug(true)
+        return trayMenu.Check(DEBUG_STR)
+    }
+}
+
+trayMenu.Add() ; Add separator
+trayMenu.Add(DEBUG_STR, ToggleDebugMode)
 
 Hotkey("^!1", (key) => ASM.SwitchSuite(AppSuiteId.Default))
 Hotkey("^!2", (key) => ASM.SwitchSuite(AppSuiteId.CodeJS))
