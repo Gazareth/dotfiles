@@ -12,6 +12,7 @@ APP_DEFS_RAW := [
 
 APP_DEFS := Map()
 
+;; Map raw app defs into formalised WindowsApp class instances
 for app_cfg in APP_DEFS_RAW {
     APP_DEFS[app_cfg[1]] := WindowsApp(app_cfg*)
 }
