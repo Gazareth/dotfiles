@@ -32,17 +32,16 @@ class Array2 {
         return (len := StrLen(delim)) ? SubStr(result, 1, -len) : result
     }
 
-    ;; Returns array of items that exist in the providid array but not in this one
+    ;; Returns array of items that exist in A and not in B (A is "this")
     static Subtract(arr) {
         C := []
-        for b_app in arr
-        {
-            for a_app in this {
+        for a_app in this {
+            for b_app in arr {
                 if (a_app == b_app) {
                     continue 2
                 }
             }
-            C.Push(b_app)
+            C.Push(a_app)
         }
         return C
     }
