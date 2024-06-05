@@ -198,7 +198,7 @@ Hotkey("!.", (key) => RunKomorebiC("flip-layout vertical"))
 
 
 
-CreatewSwitchWorkspace(WorkspaceIndex)
+CreateSwitchWorkspace(WorkspaceIndex)
 {
   SwitchWorkspace(key) {
     RunKomorebiC("focus-workspace " . (WorkspaceIndex - 1))
@@ -211,7 +211,7 @@ CreatewSwitchWorkspace(WorkspaceIndex)
 ; Alt + 1~9
 ; Equal to bind key !1 to !9 to workspace 0 ~ 8
 For workspaceKey in workspaceKeys {
-  Hotkey("^!+#" . workspaceKey, CreatewSwitchWorkspace(A_Index))
+  Hotkey("^!+#" . workspaceKey, CreateSwitchWorkspace(A_Index))
 }
 
 ; Move window to workspace
