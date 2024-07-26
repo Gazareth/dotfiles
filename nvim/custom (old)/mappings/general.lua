@@ -5,7 +5,6 @@ local return_to_dashboard = require("custom.functions.mappings").return_to_dashb
 
 
 
----@type MappingsTable
 local M = {}
 
 
@@ -16,8 +15,7 @@ M.general = {
   },
   n = {
     -- Meta stuff
-    ["<leader>ps"] = { "<cmd> PackerSync <CR>", "Sync plugins" },
-    ["<leader>pc"] = { "<cmd> PackerCompile <CR>", "Compile plugins" },
+    ["<leader>lzs"] = { "<cmd> Lazy Sync <CR>", "Sync plugins" },
     ["<leader>cd"] = { "<cmd> :cd %:p:h <CR>", "Set directory to current file's" },
     ["<leader>ycd"] = {
       function()
@@ -40,7 +38,7 @@ M.general = {
     ["<C-w><C-v>"] = { "<cmd> vert sb # <CR>", "Open a vertical split of current and previous buffer" },
     ["<C-w><C-t>"] = { "<cmd> tabc <CR>", "Close tab" },
     ["<C-t>"] = { "<cmd> tabnew | Alpha <CR>", "Open new tab and run Alpha (dashboard)" },
-    ["<TAB>"] = { switch_window "w", "Switch to next window" },
+    ["<Tab>"] = { switch_window "w", "Switch to next window" },
     ["<S-Tab>"] = { switch_window "W", "Switch to previous window" },
 
     -- Help with editing/writing text

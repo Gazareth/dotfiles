@@ -23,17 +23,17 @@ local _base_lua_path = M.join_paths(vim.fn.stdpath('config'), 'lua')
 -----------------------------------------------------------
 function M.glob_require(package)
     local found_files = {}
-    glob_path = M.join_paths(
+    local glob_path = M.join_paths(
       _base_lua_path,
       package,
       '*.lua'
     )
 
-    for i, path in pairs(vim.split(vim.fn.glob(glob_path), '\n')) do
+    for _, path in pairs(vim.split(vim.fn.glob(glob_path), '\n')) do
         -- convert absolute filename to relative
         -- ~/.config/nvim/lua/<package>/<module>.lua => <package>/foo
-        relfilename = path:gsub(_base_lua_path .. "\\", ""):gsub(".lua", "")
-        basename = vim.fs.basename(relfilename)
+        local relfilename = path:gsub(_base_lua_path .. "\\", ""):gsub(".lua", "")
+        local basename = vim.fs.basename(relfilename)
         local module_name = relfilename:gsub("\\", ".")
 
         -- skip `init` and files starting with underscore.
