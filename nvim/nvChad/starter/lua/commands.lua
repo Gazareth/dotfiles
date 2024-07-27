@@ -1,4 +1,4 @@
-local close_empty_buffers = require("custom.functions.buffers").close_empty_buffers
+local close_empty_buffers = require("functions.buffers").close_empty_buffers
 
 -- Global command to set current directory to the nvim config dir
 vim.api.nvim_create_user_command("CdHome", function()

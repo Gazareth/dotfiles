@@ -29,6 +29,8 @@ function M.glob_require(package)
       '*.lua'
     )
 
+
+
     for _, path in pairs(vim.split(vim.fn.glob(glob_path), '\n')) do
         -- convert absolute filename to relative
         -- ~/.config/nvim/lua/<package>/<module>.lua => <package>/foo
@@ -38,7 +40,7 @@ function M.glob_require(package)
 
         -- skip `init` and files starting with underscore.
         if (basename ~= 'init' and basename:sub(1, 1) ~= '_') then
-            vim.tbl_deep_extend("error", found_files, require(module_name))
+            found_files = vim.tbl_deep_extend("error", found_files, require(module_name))
         end
     end
 

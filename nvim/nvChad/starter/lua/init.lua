@@ -1,4 +1,4 @@
-local env_file_present, env = pcall(require, "custom.env")
+local env_file_present, env = pcall(require, "env")
 local nvchad_present, nvchad = pcall(require, "nvchad")
 
 if not env_file_present then
@@ -14,11 +14,12 @@ else
     require "nvchad.options"
 end
 
-
-
 -- Is windows?
 vim.g.is_windows = vim.loop.os_uname().version:match('Windows')
 
-require "custom.neovide"
-require "custom.commands"
-require "custom.options"
+vim.print("Running lua?")
+
+require "neovide"
+require "options"
+require "commands"
+require "mappings"

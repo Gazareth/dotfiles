@@ -15,14 +15,14 @@ local M = {
   {
     "yuttie/comfortable-motion.vim",  -- Smooth scrolling
     config = function()
-      require "custom.configs.comfortable-motion"
+      require "configs.comfortable-motion"
     end
   },
 
   {
     "mg979/vim-visual-multi",  -- Multi cursor
     config = function()
-      require "custom.configs.vim-visual-multi"
+      require "configs.vim-visual-multi"
     end
   },
 

@@ -1,12 +1,9 @@
-local current_file_dir = require("custom.functions.mappings").current_file_dir
-local switch_window = require("custom.functions.mappings").switch_window
-local explore_current_file_dir = require("custom.functions.mappings").explore_current_file_dir
-local return_to_dashboard = require("custom.functions.mappings").return_to_dashboard
-
-
+local current_file_dir = require("functions.mappings").current_file_dir
+local switch_window = require("functions.mappings").switch_window
+local explore_current_file_dir = require("functions.mappings").explore_current_file_dir
+local return_to_dashboard = require("functions.mappings").return_to_dashboard
 
 local M = {}
-
 
 M.general = {
   [{"n", "i"}] = {
@@ -15,7 +12,7 @@ M.general = {
   },
   n = {
     -- Meta stuff
-    ["<leader>lzs"] = { "<cmd> Lazy Sync <CR>", "Sync plugins" },
+    ["<leader>lzs"] = { "<cmd> Lazy sync <CR>", "Sync plugins" },
     ["<leader>cd"] = { "<cmd> :cd %:p:h <CR>", "Set directory to current file's" },
     ["<leader>ycd"] = {
       function()
