@@ -1,7 +1,10 @@
+local acmd = vim.api.nvim_create_autocmd
+local ucmd = vim.api.nvim_create_autocmd
+
 local close_empty_buffers = require("functions.buffers").close_empty_buffers
 
 -- Global command to set current directory to the nvim config dir
-vim.api.nvim_create_user_command("CdHome", function()
+ucmd("CdHome", function()
   -- local Switcher = require("projections.switcher")
   -- Switcher:set_current()
   vim.cmd("cd "..vim.fn.stdpath('config'))
@@ -9,7 +12,7 @@ end, {})
 
 -- GENERAL AUTOCMDS
 -- Set cd to neovim config on start (if alpha is the only open buffer)
-vim.api.nvim_create_autocmd({ "VimEnter" }, {
+acmd({ "VimEnter" }, {
   callback = function()
     local current_type = vim.bo.filetype
     if current_type == "alpha" or #current_type == 0 then
@@ -19,12 +22,12 @@ vim.api.nvim_create_autocmd({ "VimEnter" }, {
 })
 
 -- Close empty buffers when left
-vim.api.nvim_create_autocmd({ "BufLeave" }, {
+acmd({ "BufLeave" }, {
   callback = close_empty_buffers
 })
 
 -- Highlight yanked text for a brief period after yanking
-vim.api.nvim_create_autocmd({ "TextYankPost" }, {
+acmd({ "TextYankPost" }, {
   callback = function()
     vim.highlight.on_yank { higroup = "YankHighlight", timeout = 375 }
   end,
@@ -60,7 +63,7 @@ local config_commands = {
 
 -- Create commands for each entry in `config_commands` above
 for k,v in pairs(config_commands) do
-  vim.api.nvim_create_user_command(k, function()
+  ucmd(k, function()
     open_config_files(v[1], v[2])
   end, {})
 end

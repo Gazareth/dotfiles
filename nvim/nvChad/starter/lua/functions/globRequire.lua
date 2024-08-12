@@ -21,15 +21,13 @@ local _base_lua_path = M.join_paths(vim.fn.stdpath('config'), 'lua')
 -- Loads all modules from the given package.
 -- @param package: name of the package in lua folder.
 -----------------------------------------------------------
-function M.glob_require(package)
+function M.glob_require(package, is_list)
     local found_files = {}
     local glob_path = M.join_paths(
       _base_lua_path,
       package,
       '*.lua'
     )
-
-
 
     for _, path in pairs(vim.split(vim.fn.glob(glob_path), '\n')) do
         -- convert absolute filename to relative
@@ -40,7 +38,12 @@ function M.glob_require(package)
 
         -- skip `init` and files starting with underscore.
         if (basename ~= 'init' and basename:sub(1, 1) ~= '_') then
-            found_files = vim.tbl_deep_extend("error", found_files, require(module_name))
+            local new_module = require(module_name)
+            if is_list then
+                vim.list_extend(found_files, new_module)
+            else
+                found_files = vim.tbl_deep_extend("error", found_files, new_module)
+            end
         end
     end
 

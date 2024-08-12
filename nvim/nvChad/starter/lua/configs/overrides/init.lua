@@ -56,7 +56,7 @@ M.nvimtree = {
   },
 }
 
-M.alpha = require "custom.configs.overrides.alpha"
+M.alpha = require "configs.overrides.alpha"
 
 M.blankline = {
   space_char_blankline = " ",

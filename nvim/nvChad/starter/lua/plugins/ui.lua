@@ -1,4 +1,4 @@
-local overrides = require("custom.configs.overrides")
+local overrides = require("configs.overrides")
 
 -- UI
 local M = {
