@@ -54,7 +54,6 @@ M.close_empty_buffers = function()
 
   local candidates = {}
   for _, bi in ipairs(valid_bufs) do
-    vim.print(" candidate ! - " .. bi)
     if is_close_buf_candidate(bi) > 0 then
       table.insert(candidates, bi)
     else

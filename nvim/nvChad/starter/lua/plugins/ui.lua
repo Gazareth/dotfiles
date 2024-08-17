@@ -65,6 +65,9 @@ local M = {
 
   {
     "lukas-reineke/indent-blankline.nvim",  -- Show indentation levels
+    main = "ibl",
+    ---@module "ibl"
+    ---@type ibl.config
     opts = overrides.blankline,
   },
 

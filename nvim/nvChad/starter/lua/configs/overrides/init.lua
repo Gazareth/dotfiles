@@ -59,13 +59,8 @@ M.nvimtree = {
 M.alpha = require "configs.overrides.alpha"
 
 M.blankline = {
-  space_char_blankline = " ",
-  show_current_context = true,
-  show_current_context_start = true,
-  show_first_indent_level = false,
-  show_trailing_blankline_indent = false,
-  context_char = "┃",
-  filetype_exclude = {
+  exclude = {
+    filetypes = {
     "NvimTree",
     "lspinfo",
     "packer",
@@ -74,9 +69,18 @@ M.blankline = {
     "man",
     "alpha",
     "",
+    },
   },
-  char_highlight_list = blankline_highlight_groups,
-  context_highlight_list = blankline_highlight_groups,
+  indent = {
+    highlight = {
+      "IndentBlanklineIndent1",
+      "IndentBlanklineIndent2",
+      "IndentBlanklineIndent3",
+      "IndentBlanklineIndent4",
+      "IndentBlanklineIndent5",
+      "IndentBlanklineIndent6",
+    }
+  }
 }
 
 
