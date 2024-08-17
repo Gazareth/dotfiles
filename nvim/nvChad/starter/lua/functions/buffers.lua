@@ -49,11 +49,12 @@ M.close_empty_buffers = function()
   -- Get valid buffers
   local valid_bufs = vim.tbl_filter(function(bi)
     return vim.api.nvim_buf_is_valid(bi)
-      and vim.api.nvim_buf_get_option(bi, 'buflisted')
+      and vim.api.nvim_get_option_value('buflisted', { buf = bi })
   end, vim.api.nvim_list_bufs())
 
   local candidates = {}
   for _, bi in ipairs(valid_bufs) do
+    vim.print(" candidate ! - " .. bi)
     if is_close_buf_candidate(bi) > 0 then
       table.insert(candidates, bi)
     else

@@ -1,5 +1,5 @@
 local acmd = vim.api.nvim_create_autocmd
-local ucmd = vim.api.nvim_create_autocmd
+local ucmd = vim.api.nvim_create_user_command
 
 local close_empty_buffers = require("functions.buffers").close_empty_buffers
 
@@ -23,7 +23,7 @@ acmd({ "VimEnter" }, {
 
 -- Close empty buffers when left
 acmd({ "BufLeave" }, {
-  callback = close_empty_buffers
+  callback = function () vim.schedule(close_empty_buffers) end
 })
 
 -- Highlight yanked text for a brief period after yanking
@@ -33,38 +33,28 @@ acmd({ "TextYankPost" }, {
   end,
 })
 
-local open_config_files = function(left_rel_path, right_rel_path)
+local open_config_file = function(rel_path)
   local cfg_root = vim.fn.stdpath('config')
-  local left_full_path = vim.fn.expand(cfg_root .. "/" .. left_rel_path)
-  local right_full_path = vim.fn.expand(cfg_root .. "/" .. right_rel_path and right_rel_path or "")
+  local full_path = vim.fn.expand(cfg_root .. "/" .. rel_path)
   local open_fn = "tabnew"
   if vim.bo.filetype == "alpha" then
     open_fn = "e"
   end
--- vim.print("opening! ".. open_fn.." "..left_full_path .. (right_rel_path and (" | vsp "..right_full_path) or ""))
 
-  vim.cmd(open_fn.." "..left_full_path .. (right_rel_path and (" | vsp "..right_full_path) or ""))
+  vim.cmd(open_fn.." "..full_path)
 end
 
 local config_commands = {
-  ["EditCustomDashboard"] = {
-    "lua/custom/plugins/overrides/alpha.lua"
-  },
-  ["EditKeyMappings"] = {
-    "lua/core/mappings.lua", "lua/custom/mappings/init.lua"
-  },
-  ["EditInstalledPlugins"] = {
-    "lua/plugins/init.lua", "lua/custom/plugins/init.lua"
-  },
-  ["EditCustomOptions"] = {
-    "lua/core/options.lua", "lua/custom/options.lua"
-  },
+  ["EditCustomDashboard"] = "lua/plugins/overrides/alpha.lua",
+  ["EditKeyMappings"] = "lua/mappings/init.lua",
+  ["EditInstalledPlugins"] = "lua/plugins/init.lua",
+  ["EditCustomOptions"] = "lua/options.lua",
 }
 
 -- Create commands for each entry in `config_commands` above
 for k,v in pairs(config_commands) do
   ucmd(k, function()
-    open_config_files(v[1], v[2])
+    open_config_file(v)
   end, {})
 end
 

@@ -2,6 +2,34 @@ local alpha_setup = function ()
   local present, alpha = pcall(require, "alpha")
   local dashboard = require("alpha.themes.dashboard")
 
+  -- Disable sign column in alpha
+  local acmd = vim.api.nvim_create_autocmd
+  local agrp = vim.api.nvim_create_augroup
+
+  agrp("alpha_tabline", { clear = true })
+
+  acmd("FileType", {
+          group = "alpha_tabline",
+          pattern = { "alpha" },
+          callback = function() vim.schedule(function() vim.cmd("set showtabline=0 laststatus=0 noruler nonumber") end) end
+  })
+
+  acmd("FileType", {
+          group = "alpha_tabline",
+          pattern = { "alpha" },
+          callback = function()
+                  acmd("BufUnload", {
+                          group = "alpha_tabline",
+                          buffer = 0,
+                          callback = function()
+                            vim.schedule(function()
+                              vim.cmd("set showtabline=2 ruler laststatus=3 number")
+                            end)
+                          end
+                        })
+          end,
+  })
+
   dashboard.section.header.val = {
 "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡀⠀⠀⠀⠠⡆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀   ",
 "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⡀⠀⠙⢶⣄⠀⠀⣧⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀   ",
@@ -47,7 +75,7 @@ local alpha_setup = function ()
     button("SPC e o", "  Set Options", ":EditCustomOptions <CR>"),
     button("SPC e d", "舘 Configure Dashboard", ":EditCustomDashboard <CR>"),
     button("SPC e p", "  Configure Plugins", ":EditInstalledPlugins <CR>"),
-    button("SPC l", "鈴  Lazy", ":Lazy <CR>"),
+    button("SPC l", "鈴 Lazy", ":Lazy <CR>"),
     button("SPC e s", "  Settings", ":e $MYVIMRC | :noautocmd lcd %:p:h <CR>"),
     button("q", "  Quit Neovim", ":qa <CR>"),
   }

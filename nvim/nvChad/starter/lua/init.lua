@@ -17,8 +17,6 @@ end
 -- Is windows?
 vim.g.is_windows = vim.loop.os_uname().version:match('Windows')
 
-vim.print("Running lua?")
-
 require "neovide"
 require "options"
 require "commands"
