@@ -4,7 +4,7 @@ local overrides = require("configs.overrides")
 local M = {
   {
     "echasnovski/mini.cursorword",  -- Highlight all instances of the word under the cursor
-    lazy = false,
+    event = "BufEnter ",
     version = false,
     config = function()
       require('mini.cursorword').setup()
@@ -21,7 +21,15 @@ local M = {
 
  {
     "beauwilliams/focus.nvim",  -- Dynamically resize splits to focus on current one
+    version = false,
+    lazy = false,
+    config = function() require("focus").setup() end
  },
+
+{
+  "rlychrisg/truncateline.nvim", -- Hints at offscreen text when horizontally scrolling
+  enabled = false
+},
 
  {
     "folke/zen-mode.nvim",

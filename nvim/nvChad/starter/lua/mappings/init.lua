@@ -1,4 +1,3 @@
-
 local glob_require = require("functions.globRequire").glob_require
 
 local mappings = glob_require("mappings")
