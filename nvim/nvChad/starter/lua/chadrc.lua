@@ -7,7 +7,7 @@ local highlights = require "highlights"
 ---@type ChadrcConfig
 local M = {}
 
-M.ui = {
+M.base46 = {
 	theme = "monokai_pro",
 	theme_toggle = { "monokai_pro", "one_light" },
   

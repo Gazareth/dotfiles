@@ -133,8 +133,6 @@ M.add = {
   St_cwd_project = {
     fg = "lighter_grey",
     bg = "lightbg",
-    -- bold = true
-    -- italic = true
   },
   CurSearch = searchHighlight(true),
   IncSearch = searchHighlight(true),
