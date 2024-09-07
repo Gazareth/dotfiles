@@ -1,58 +1,93 @@
 ﻿#Requires AutoHotkey v2.0
 
-MOMENTUM_BASE := 4
-MOMENTUM_MULTIPLIER := 1.1
+MOMENTUM_BASE := 0
+MOMENTUM_RAMP_UP := 0.0175
+MOMENTUM_MAX := 150
 
-global mouse_x := 0
-global mouse_y := 0
-global momentum := 0
+ELAPSED_DECAY_FACTOR := 3
+
+global mouse_left := 0
+global mouse_down := 0
+global mouse_right := 0
+global mouse_up := 0
+global elapsed_x := 0
+global elapsed_y := 0
+
+Momentum(elapsed) {
+    return (((1 - Exp(-MOMENTUM_RAMP_UP * elapsed ** 1.4)) * MOMENTUM_MAX) + MOMENTUM_BASE)
+}
+
+Elapsed() {
+    global elapsed_x
+    global elapsed_y
+    return Max(elapsed_x, elapsed_y)
+}
 
 loop {
-    if mouse_x != 0 {
-        momentum *= MOMENTUM_MULTIPLIER
-        MouseMove mouse_x * momentum, 0, 2, "R"
+    dir_x := mouse_right - mouse_left
+    dir_y := mouse_down - mouse_up
+
+    if dir_x != 0 {
+        if !elapsed_x
+            elapsed_x := MOMENTUM_BASE
+
+        elapsed_x += 1
+        MouseMove dir_x * Momentum(Elapsed()), 0, 0, "R"
+    } else {
+        if dir_y == 0
+            elapsed_x /= ELAPSED_DECAY_FACTOR
     }
 
-    if mouse_y != 0 {
-        momentum *= MOMENTUM_MULTIPLIER
-        MouseMove 0, mouse_y * momentum, 2, "R"
+    if dir_y != 0 {
+        if !elapsed_y
+            elapsed_y := MOMENTUM_BASE
+
+        elapsed_y += 1
+        MouseMove 0, dir_y * Momentum(Elapsed()), 0, "R"
+    } else {
+        if dir_x == 0
+            elapsed_y /= ELAPSED_DECAY_FACTOR
     }
 
-    Sleep 1
+    DllCall("Sleep", "UInt", 5)  ; Must use DllCall instead of the Sleep function.
 }
 
 !^+#F1:: {
-    global mouse_y := -1
+    global mouse_up := 1
 }
 
 !^+#F1 Up:: {
-    global mouse_y := 0
-    global momentum := MOMENTUM_BASE
+    global mouse_up := 0
 }
 
 !^+#F2:: {
-    global mouse_x := -1
+    global mouse_left := 1
 }
 
 !^+#F2 Up:: {
-    global mouse_x := 0
-    global momentum := MOMENTUM_BASE
+    global mouse_left := 0
 }
 
 !^+#F3:: {
-    global mouse_y := 1
+    global mouse_down := 1
 }
 
 !^+#F3 Up:: {
-    global mouse_y := 0
-    global momentum := MOMENTUM_BASE
+    global mouse_down := 0
 }
 
 !^+#F4:: {
-    global mouse_x := 1
+    global mouse_right := 1
 }
 
 !^+#F4 Up:: {
-    global mouse_x := 0
-    global momentum := MOMENTUM_BASE
+    global mouse_right := 0
+}
+
+!^+#F5:: {
+    send "{WheelUp 1}"
+}
+
+!^+#F6:: {
+    send "{WheelDown 1}"
 }
