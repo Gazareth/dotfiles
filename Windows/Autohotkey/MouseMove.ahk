@@ -1,8 +1,10 @@
 ﻿#Requires AutoHotkey v2.0
 
-MOMENTUM_BASE := 0
-MOMENTUM_RAMP_UP := 0.0175
-MOMENTUM_MAX := 150
+SetCapslockState "AlwaysOff"
+
+MOMENTUM_BASE := 1
+MOMENTUM_RAMP_UP := 0.0135
+MOMENTUM_MAX := 135
 
 ELAPSED_DECAY_FACTOR := 3
 
@@ -14,7 +16,7 @@ global elapsed_x := 0
 global elapsed_y := 0
 
 Momentum(elapsed) {
-    return (((1 - Exp(-MOMENTUM_RAMP_UP * elapsed ** 1.4)) * MOMENTUM_MAX) + MOMENTUM_BASE)
+    return (((1 - Exp(-MOMENTUM_RAMP_UP * elapsed ** 1.2)) * MOMENTUM_MAX) + MOMENTUM_BASE)
 }
 
 Elapsed() {
@@ -28,22 +30,16 @@ loop {
     dir_y := mouse_down - mouse_up
 
     if dir_x != 0 {
-        if !elapsed_x
-            elapsed_x := MOMENTUM_BASE
-
         elapsed_x += 1
-        MouseMove dir_x * Momentum(Elapsed()), 0, 0, "R"
+        MouseMove dir_x * Momentum(Elapsed()), 0, 1, "R"
     } else {
         if dir_y == 0
             elapsed_x /= ELAPSED_DECAY_FACTOR
     }
 
     if dir_y != 0 {
-        if !elapsed_y
-            elapsed_y := MOMENTUM_BASE
-
         elapsed_y += 1
-        MouseMove 0, dir_y * Momentum(Elapsed()), 0, "R"
+        MouseMove 0, dir_y * Momentum(Elapsed()), 1, "R"
     } else {
         if dir_x == 0
             elapsed_y /= ELAPSED_DECAY_FACTOR
@@ -52,42 +48,42 @@ loop {
     DllCall("Sleep", "UInt", 5)  ; Must use DllCall instead of the Sleep function.
 }
 
-!^+#F1:: {
+~Capslock & F1:: {
     global mouse_up := 1
 }
 
-!^+#F1 Up:: {
+~Capslock & F1 Up:: {
     global mouse_up := 0
 }
 
-!^+#F2:: {
+~Capslock & F2:: {
     global mouse_left := 1
 }
 
-!^+#F2 Up:: {
+~Capslock & F2 Up:: {
     global mouse_left := 0
 }
 
-!^+#F3:: {
+~Capslock & F3:: {
     global mouse_down := 1
 }
 
-!^+#F3 Up:: {
+~Capslock & F3 Up:: {
     global mouse_down := 0
 }
 
-!^+#F4:: {
+~Capslock & F4:: {
     global mouse_right := 1
 }
 
-!^+#F4 Up:: {
+~Capslock & F4 Up:: {
     global mouse_right := 0
 }
 
-!^+#F5:: {
+~Capslock & F5:: {
     send "{WheelUp 1}"
 }
 
-!^+#F6:: {
+~Capslock & F6:: {
     send "{WheelDown 1}"
 }
