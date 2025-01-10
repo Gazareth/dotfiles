@@ -1,17 +1,73 @@
 # Windows setup
 
-## Junctions/Symlinks - Neovims
+## Setup
 
-Use [junction](https://superuser.com/a/1020825)
+### Add "which" command to powershell
 
-- `mklink /j "%LocalAppData%\nvim\lua" "X:\Development\dotfiles\nvim\nvChad\starter\lua"`
-- `mklink /j "%LocalAppData%\nvim\after" "X:\Development\dotfiles\nvim\nvChad\starter\after"`
+```powershell
+"`nNew-Alias which get-command" | add-content $profile
+```
 
-You must also copy over `init.lua` and `stylua.toml` for NvChad initialization
+If profile has not been created:
+
+```powershell
+New-Item -path $PROFILE -type File -force
+```
+
+Set workspace root path:
+
+```powershell
+"`n`$WORKSPACE = 'X:\Development'" | add-content $profile
+```
 
 ## Disable Office365 key
 
 Using an elevated shell:
 
 - `REG ADD HKCU\Software\Classes\ms-officeapp\Shell\Open\Command /t REG_SZ /d rundll32`
+
+
+## Installations
+
+### [Scoop](https://scoop.sh/)
+
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
+scoop bucket add extras
+```
+
+### Lazygit
+
+Install via scoop. Then,
+
+#### Add 'gg' alias
+
+```powershell
+"`nNew-Alias gg lazygit" | add-content $profile
+```
+
+### Neovim
+
+Install via scoop, then configure.
+
+#### Configure profile
+
+Set env var `NVIM_APPNAME` to whatever you want your profile to be called.
+
+e.g. `NVIM_APPNAME=nvim-configs\default`
+
+##### Create 'junctions' between this repo and the nvim config folder
+
+Use [junction](https://superuser.com/a/1020825)
+
+- `cmd /c mklink /j "$ENV:LocalAppData\$ENV:NVIM_APPNAME" "$WORKSPACE\dotfiles\nvim\nvChad\starter"`
+
+#### Install profile dependencies
+
+```powershell
+scoop install cmake
+```
+
+
 
