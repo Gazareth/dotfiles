@@ -57,7 +57,7 @@ Set env var `NVIM_APPNAME` to whatever you want your profile to be called.
 
 e.g. `NVIM_APPNAME=nvim-configs\default`
 
-##### Create 'junctions' between this repo and the nvim config folder
+##### Create 'junction' between this repo and the nvim config folder
 
 Use [junction](https://superuser.com/a/1020825)
 
@@ -69,5 +69,10 @@ Use [junction](https://superuser.com/a/1020825)
 scoop install cmake
 ```
 
+### [Komorebi](https://github.com/LGUG2Z/komorebi)
 
+Install komorebi as detailed in the readme
 
+#### Create symbolic link to the config file
+
+- `cmd /c mklink "$ENV:UserProfile\komorebi.json" "$WORKSPACE\dotfiles\Windows\config\komorebi.json"`
