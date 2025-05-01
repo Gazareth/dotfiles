@@ -10,8 +10,8 @@ SetCapslockState "AlwaysOff"
 ;; remap capslock to hyper
 ;; if capslock is toggled, remap it to esc
 
-;; note: must use tidle prefix to fire hotkey once it is pressed
-;; not until the hotkey is released
+;; note: tidle prefix here means hotkey is fired once it is pressed
+;; rather than when it is released
 ~Capslock:: {
     ;; downtemp tells subsequent sends that the key is not permanently down, and may be released whenever a keystroke calls for it.
     Send "{Ctrl DownTemp}{Shift DownTemp}{Alt DownTemp}{LWin DownTemp}"
@@ -22,27 +22,25 @@ SetCapslockState "AlwaysOff"
     }
 }
 
-
-~Capslock & b:: { 
-  Send "^{Home}" 
+~Capslock & b:: {
+    Send "^{Home}"
 }
 
-~Capslock & w:: { 
-    Send "^{Left}" 
+~Capslock & w:: {
+    Send "^{Left}"
 }
 
-~Capslock & a:: { 
+~Capslock & a:: {
     Send "^{Right}"
 }
 
-~Capslock & i:: { 
+~Capslock & i:: {
     Send "{Down}"
 }
 
-~Capslock & r:: { 
+~Capslock & r:: {
     Send "^{End}"
 }
-
 
 ;; Hyper+c/v to copy/paste
 ; ~Capslock & c:: Send ^{c}
