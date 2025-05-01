@@ -2,9 +2,9 @@
 
 SetCapslockState "AlwaysOff"
 
-MOMENTUM_BASE := 0.5
-MOMENTUM_RAMP_UP := 0.015
-MOMENTUM_MAX := 150
+MOMENTUM_BASE := 0
+MOMENTUM_RAMP_UP := 0.01
+MOMENTUM_MAX := 180
 
 ELAPSED_DECAY_FACTOR := 3
 
@@ -86,4 +86,12 @@ loop {
 
 ~Capslock & F6:: {
     send "{WheelDown 1}"
+}
+
+~Capslock & F7:: {
+    send "{WheelLeft 1}"
+}
+
+~Capslock & F8:: {
+    send "{WheelRight 1}"
 }
