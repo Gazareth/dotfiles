@@ -1,8 +1,6 @@
 local acmd = vim.api.nvim_create_autocmd
 local ucmd = vim.api.nvim_create_user_command
 
-local close_empty_buffers = require("functions.buffers").close_empty_buffers
-
 -- Global command to set current directory to the nvim config dir
 ucmd("CdHome", function()
   -- local Switcher = require("projections.switcher")
@@ -19,11 +17,6 @@ acmd({ "VimEnter" }, {
       vim.schedule(function() vim.cmd("CdHome") end)
     end
   end,
-})
-
--- Close empty buffers when left
-acmd({ "BufLeave" }, {
-  callback = function () vim.schedule(close_empty_buffers) end
 })
 
 -- Highlight yanked text for a brief period after yanking
