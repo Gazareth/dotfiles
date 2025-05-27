@@ -5,7 +5,7 @@ local M = {
     {
         "coffebar/neovim-project",
         opts = {
-          projects = vim.g.project_patterns,
+          projects = vim.g.projects,
           last_session_on_startup = false
         },
         init = function()
