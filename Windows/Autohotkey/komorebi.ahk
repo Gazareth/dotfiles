@@ -1,6 +1,9 @@
 #Requires AutoHotkey v2.0+
 #SingleInstance Force
 
+;; deactivate capslock completely
+SetCapslockState "AlwaysOff"
+
 WorkspaceNumber := 9
 
 ArrayFromZero(Length) {
@@ -24,7 +27,7 @@ RunKomorebiC(CommandString) {
 ; Set workspaces (start from 0)
 ; ArrayFromZero(9) => [0,1,2,3,4,5,6,7,8]
 global numbers := ArrayFromZero(WorkspaceNumber)
-global workspaceKeys := ["h", "m", "g", "n", "t", "y", "k", "q"]
+global workspaceKeys := ["1", "2", "3", "4", "Q", "W", "E", "R"]
 
 init() {
     RunKomorebiC("start")
@@ -86,12 +89,14 @@ init() {
         ["exe", "explorer.exe", 0, 1],
         ["exe", "notepad++.exe", 0, 1],
         ["title", "Apple Music", 0, 2],
-        ["exe", "chrome.exe", 0, 3],
-        ["exe", "Code.exe", 0, 4],
-        ["exe", "neovide.exe", 0, 4],
-        ["title", "Terminal", 0, 5],
-        ["title", "PowerShell", 0, 5],
-        ["exe", "wt.exe", 0, 5]
+        ["exe", "Spotify.exe", 0, 2],
+        ["exe", "Obsidian.exe", 0, 3],
+        ["exe", "chrome.exe", 0, 4],
+        ["exe", "Code.exe", 0, 5],
+        ["exe", "neovide.exe", 0, 5],
+        ["title", "Terminal", 0, 6],
+        ["title", "PowerShell", 0, 6],
+        ["exe", "wt.exe", 0, 6]
     ]
 
     for workspace_app in workspace_apps {
@@ -99,6 +104,8 @@ init() {
     }
 
     RunKomorebiC("toggle-title-bars")
+
+    MsgBox("Komorebi has finished initialising!")
 }
 
 ;; run init function at start
@@ -193,7 +200,7 @@ CreateSwitchWorkspace(WorkspaceIndex) {
 ; Alt + 1~9
 ; Equal to bind key !1 to !9 to workspace 0 ~ 8
 for workspaceKey in workspaceKeys {
-    Hotkey("^!+#" . workspaceKey, CreateSwitchWorkspace(A_Index))
+    Hotkey("~CapsLock & " . workspaceKey, CreateSwitchWorkspace(A_Index))
 }
 
 ; Move window to workspace
