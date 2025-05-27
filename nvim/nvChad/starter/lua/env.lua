@@ -1,8 +1,7 @@
 local M = {}
 
 M.project_patterns = {
-    "X:/Development/*",
-    "./*"
-}
+    "X:/Development/*"
+  }
 
 return M

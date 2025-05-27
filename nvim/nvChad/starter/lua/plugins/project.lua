@@ -4,10 +4,12 @@ local M = {
     },
     {
         "coffebar/neovim-project",
-        opts = {
-          projects = vim.g.projects,
-          last_session_on_startup = false
-        },
+        config = function()
+          require("neovim-project").setup({
+            projects = vim.g.project_patterns,
+            last_session_on_startup = false
+          })
+        end,
         init = function()
           -- enable saving the state of plugins in the session
           vim.opt.sessionoptions:append("globals") -- save global variables that start with an uppercase letter and contain at least one lowercase letter.
@@ -17,7 +19,7 @@ local M = {
           { "nvim-telescope/telescope.nvim", tag = "0.1.4" },
           { "Shatur/neovim-session-manager" },
         },
-        lazy = false,
+        lazy = true,
         priority = 100,
     }
 }
