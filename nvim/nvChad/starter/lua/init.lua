@@ -5,6 +5,7 @@ if not env_file_present then
   vim.print("Warning! Env file not detected! Project directories will not be found.")
 else
     vim.g.project_patterns = env.project_patterns
+    vim.g.refresh_rate = env.refresh_rate
 end
 
 if not nvchad_present then
