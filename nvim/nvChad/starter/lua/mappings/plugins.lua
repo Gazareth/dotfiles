@@ -45,18 +45,6 @@ M.leap = {
     }
   }
 
-  M.nvimtree = {
-    n = {
-      ["<leader>fd"] = {
-        function()
-          require("nvim-tree").toggle(false, true)
-        end,
-        "toggle nvimtree",
-      },
-      ["<leader>fe"] = { "<cmd> NvimTreeFocus <CR>", "focus nvimtree" },
-    },
-  }
-
   M.tabufline = {
     n = {
       -- cycle through buffers
