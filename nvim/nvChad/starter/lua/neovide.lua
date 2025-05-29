@@ -9,7 +9,7 @@ vim.opt.guifont = make_font_cfg(g.neovide_font_size)
 
 g.neovide_cursor_vfx_mode = "wireframe"
 
-g.neovide_refresh_rate = 144
+g.neovide_refresh_rate = vim.g.refresh_rate or 60
 
 g.neovide_scroll_animation_length = 0.375
 
@@ -17,6 +17,9 @@ g.neovide_hide_mouse_when_typing = true
 
 vim.opt.title = true
 vim.opt.titlestring = "Neovide"
+
+-- vim.g.neovide_opacity = 0.95
+vim.g.neovide_normal_opacity = 0.975
 
 -- This option is currently faulty
 -- g.neovide_remember_window_size = true
