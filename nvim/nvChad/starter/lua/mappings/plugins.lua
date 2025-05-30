@@ -39,12 +39,6 @@ M.leap = {
     },
   }
 
-  M.minimap = {
-    n = {
-      ["<leader>mm"] = { "<cmd> MinimapToggle <CR>", "Toggle code mini-map" }
-    }
-  }
-
   M.tabufline = {
     n = {
       -- cycle through buffers
