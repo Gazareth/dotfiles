@@ -1,6 +1,6 @@
 local M = {
-    {"Shatur/neovim-session-manager",
-        dependencies = "nvim-lua/plenary.nvim"
+    {
+      "https://github.com/MagicDuck/grug-far.nvim",
     },
     {
         "coffebar/neovim-project",
@@ -26,7 +26,10 @@ local M = {
           "NeovimProjectLoadRecent",
         },
         priority = 100,
-    }
+    },
+    {"Shatur/neovim-session-manager",
+        dependencies = "nvim-lua/plenary.nvim"
+    },
 }
 
 return M
