@@ -1,5 +1,5 @@
-local keys = require("custom.constants.keys")
-local get_keys = require("custom.functions.lazy").get_keys
+local keys = require("constants.keys")
+local get_keys = require("functions.lazy").get_keys
 
 -- Vim motions/controls
 local M = {
