@@ -39,6 +39,12 @@ M.leap = {
     },
   }
 
+  M.mini_files = {
+    n = {
+      ["<C-b>"] = { "<cmd> MiniFilesOpen <CR>", "Open File Browser (Powered by mini.files)" },
+    },
+  }
+
   M.tabufline = {
     n = {
       -- cycle through buffers

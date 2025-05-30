@@ -20,6 +20,11 @@ local M = {
           { "Shatur/neovim-session-manager" },
         },
         lazy = true,
+        cmd = {
+          "NeovimProjectDiscover",
+          "NeovimProjectHistory",
+          "NeovimProjectLoadRecent",
+        },
         priority = 100,
     }
 }

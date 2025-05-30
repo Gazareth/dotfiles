@@ -36,19 +36,24 @@ local M = {
         require("mini.files").refresh { content = { filter = new_filter } }
       end
 
+      vim.api.nvim_create_user_command("MiniFilesOpen", function()
+        require("mini.files").open()
+      end, { desc = "Open Mini Files" })
+
       vim.api.nvim_create_autocmd("User", {
         pattern = "MiniFilesBufferCreate",
         callback = function(args)
           local buf_id = args.data.buf_id
           -- Tweak left-hand side of mapping to your liking
           vim.keymap.set("n", "g.", toggle_dotfiles, { buffer = buf_id })
-          vim.keymap.set("n", "-", require("mini.files").close, { buffer = buf_id })
+          vim.keymap.set("n", "<C-b>", require("mini.files").close, { buffer = buf_id })
           vim.keymap.set("n", "o", gio_open, { buffer = buf_id })
         end,
       })
     end,
 
-    lazy = false,
+    lazy = true,
+    cmd = { "MiniFilesOpen" },
   }
 }
 
