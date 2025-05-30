@@ -22,6 +22,12 @@ M.leap = {
     },
   }
 
+  M.grug_far = {
+    n = {
+      ["<leader>gf"] = { "<cmd> GrugFAR <CR>", "GrugFAR: Find and Replace" },
+    },
+  }
+
   M.focus = {
     n = {
       ["<F3>"] = { "<cmd> FocusMaximise <CR>", "Focus current window" },
