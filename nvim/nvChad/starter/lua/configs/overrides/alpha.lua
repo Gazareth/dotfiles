@@ -61,8 +61,8 @@ local alpha_setup = function ()
 
   dashboard.section.buttons.val = {
     button("SPC f l s", "  Load Previous Session", ":NeovimProjectLoadRecent <CR>"),
-    button("SPC f p", "  Open Project", ":Telescope neovim-project history<CR>"),
-    button("SPC f p", "  Discover Project", ":Telescope neovim-project discover<CR>"),
+    button("SPC f p", "  Open Project", ":NeovimProjectHistory<CR>"),
+    button("SPC f p", "  Discover Project", ":NeovimProjectDiscover<CR>"),
     button("SPC f o", "  Recent File  ", ":Telescope oldfiles<CR>"),
     button("SPC t e", "  Terminal  ", ":terminal <CR>"),
     -- button("SPC f f", "  Find File  ", ":Telescope find_files<CR>"),
