@@ -90,6 +90,7 @@ init() {
         ["exe", "notepad++.exe", 0, 1],
         ["title", "Apple Music", 0, 2],
         ["exe", "Spotify.exe", 0, 2],
+        ["title", "Amazon Music", 0, 2],
         ["exe", "Obsidian.exe", 0, 3],
         ["exe", "chrome.exe", 0, 4],
         ["exe", "Code.exe", 0, 5],
