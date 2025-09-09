@@ -1,6 +1,4 @@
-local base_alpha_setup = function()
-    local dashboard = require("alpha.themes.dashboard")
-
+local base_alpha_setup = function(dashboard)
     dashboard.section.header.val =
         {"⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡀⠀⠀⠀⠠⡆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀   ",
          "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⡀⠀⠙⢶⣄⠀⠀⣧⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀   ",
@@ -35,7 +33,7 @@ local base_alpha_setup = function()
                                      button("SPC f o", "  Recent File  ", ":Telescope oldfiles<CR>"),
                                      button("SPC t h", "  Themes  ", ":Telescope themes<CR>"),
                                      button("SPC l", "鈴 Lazy", ":Lazy <CR>"),
-                                     button("SPC e s", "  Settings", ":Alpha settings <CR>"),
+                                     button("SPC e s", "  Settings", ":AlphaSettings <CR>"),
                                      button("q", "  Quit Neovim", ":qa <CR>")}
 
     local fn = vim.fn

@@ -44,27 +44,35 @@ local alpha_setup = function()
         end
     })
 
+    local dashboards = {
+        default = function()
+            return dashboard
+        end,
+        base = base_dashboard,
+        settings = settings_dashboard,
+        project = project_dashboard
+    }
+
+    local previous_dashboard = "default"
+
     local function switch_dashboard(new_dashboard)
         if (vim.o.filetype == "alpha") then
             vim.cmd("bd!")
         end
-        alpha.setup(new_dashboard.config)
+        alpha.setup(new_dashboard(vim.deepcopy(dashboard)).config)
+        previous_dashboard = new_dashboard
         vim.cmd("Alpha")
     end
 
-    ucmd("AlphaBase", function()
-        switch_dashboard(base_dashboard())
-    end, {})
+    ucmd("AlphaOmega", function(args)
+        local dash_key_to_switch_to = args.args ~= "" and args.args or previous_dashboard
+        switch_dashboard(dashboards[dash_key_to_switch_to])
+    end, {
+        desc = "Opens an Alpha dashboard by key",
+        nargs = "?"
+    })
 
-    ucmd("AlphaSettings", function()
-        switch_dashboard(settings_dashboard())
-    end, {})
-
-    ucmd("AlphaProject", function()
-        switch_dashboard(project_dashboard())
-    end, {})
-
-    local starter_dashboard = base_dashboard()
+    local starter_dashboard = dashboards[previous_dashboard](dashboard)
     alpha.setup(starter_dashboard.config)
 end
 
