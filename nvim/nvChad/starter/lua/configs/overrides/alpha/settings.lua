@@ -1,5 +1,4 @@
-local settings_alpha_setup = function()
-    local dashboard = require("alpha.themes.dashboard")
+local settings_alpha_setup = function(dashboard)
 
     dashboard.section.header.val =
         {"⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀",
@@ -25,7 +24,7 @@ local settings_alpha_setup = function()
                                      button("SPC e d", "舘 Configure Dashboard", ":EditCustomDashboard <CR>"),
                                      button("SPC e p", "  Configure Plugins", ":EditInstalledPlugins <CR>"),
                                      button("SPC e s", "  Vim config", ":e $MYVIMRC | :noautocmd lcd %:p:h <CR>"),
-                                     button("q", "  Quit Neovim", ":qa <CR>")}
+                                     button("q", "🢠  Back to previous menu", ":AlphaOmega <CR>")}
 
     local fn = vim.fn
     local marginTop = 0.135

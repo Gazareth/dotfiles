@@ -1,5 +1,4 @@
-local base_alpha_setup = function()
-    local dashboard = require("alpha.themes.dashboard")
+local base_alpha_setup = function(dashboard)
 
     dashboard.section.header.val =
         {"⠀⣤⣤⣤⣤⣤⣤⣤⣤⣤⣤⣤⣤⣄⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀",
