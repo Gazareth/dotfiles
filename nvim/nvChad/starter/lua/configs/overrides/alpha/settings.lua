@@ -24,7 +24,7 @@ local settings_alpha_setup = function(dashboard)
                                      button("SPC e d", "舘 Configure Dashboard", ":EditCustomDashboard <CR>"),
                                      button("SPC e p", "  Configure Plugins", ":EditInstalledPlugins <CR>"),
                                      button("SPC e s", "  Vim config", ":e $MYVIMRC | :noautocmd lcd %:p:h <CR>"),
-                                     button("q", "🢠  Back to previous menu", ":AlphaOmega <CR>")}
+                                     button("q", "🢠  Back to previous menu", ":AlphaOmegaPrev<CR>")}
 
     local fn = vim.fn
     local marginTop = 0.135
