@@ -1,0 +1,3 @@
+[submodule "nvim/myPlugins/alpha-omega-nvim"]
+	path = nvim/myPlugins/alpha-omega-nvim
+	url = https://github.com/Gazareth/alpha-omega-nvim.git
