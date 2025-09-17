@@ -276,3 +276,20 @@ global FilterOutClass := ["WorkerW", "Shell_TrayWnd", "NotifyIconOverflowWindow"
         WinActivate(window_id)
     }
 }
+
+;; note: tidle prefix here means hotkey is fired once it is pressed
+;; rather than when it is released
+~Capslock:: {
+    ;; downtemp tells subsequent sends that the key is not permanently down, and may be released whenever a keystroke calls for it.
+    Send "{Ctrl DownTemp}{Shift DownTemp}{Alt DownTemp}{LWin DownTemp}"
+    KeyWait "CapsLock"
+    Send "{Ctrl Up}{Shift Up}{Alt Up}{LWin Up}"
+    if (A_PriorKey = "CapsLock") {
+        Send "{Esc}"
+    }
+}
+
+~CapsLock & Space:: {
+    Send "{LWin Down}{Tab}"
+    Send "{LWin Up}"
+}
