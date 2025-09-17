@@ -36,6 +36,7 @@ M.nvimtree = {
 }
 
 M.alpha = require "configs.overrides.alpha"
+M.alpha_omega = require "configs.overrides.alpha-omega"
 
 M.blankline = {
     exclude = {

@@ -49,7 +49,11 @@ local M = {{
     'goolord/alpha-nvim', -- Startup dashboard
     lazy = false,
     config = overrides.alpha
-}, {"mbbill/undotree" -- Access different undo "timelines"
-}}
+}, {
+    'Gazareth/alpha-omega-nvim', -- Startup dashboard
+    lazy = false,
+    config = overrides.alpha_omega
+}, {"mbbill/undotree"} -- Access different undo "timelines"
+}
 
 return M
