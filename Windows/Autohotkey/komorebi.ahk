@@ -139,7 +139,7 @@ GenerateDirectionalCommands("!", lhs_direction_keys, "stack")
 
 ; Float the focused window Alt + T
 global discrete_hotkeys := [
-    ["!q", "toggle-float"],
+    ["!s", "toggle-float"],
     ; Toggle Tiling for workspace. Alt + Shift + T
     ["!+t", "toggle-tiling"],
     ; Pause responding to any window events or komorebic commands Alt + P
