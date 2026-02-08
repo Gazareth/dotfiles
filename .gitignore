@@ -1,2 +1,6 @@
+# Ignore environment variable files and lock files
 nvim/nvChad/custom/env.lua
 nvim/nvChad/starter/lazy-lock.json
+
+# Ignore compiled AutoHotkey scripts
+Windows/AutoHotkey/**/*.exe
