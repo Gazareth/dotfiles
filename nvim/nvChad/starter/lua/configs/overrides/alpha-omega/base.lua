@@ -31,7 +31,7 @@ local base_alpha_setup = function(dashboard)
                                      button("SPC f p", "  Open Project", ":NeovimProjectHistory<CR>"),
                                      button("SPC f p", "  Discover Project", ":NeovimProjectDiscover<CR>"),
                                      button("SPC f o", "  Recent File  ", ":Telescope oldfiles<CR>"),
-                                     button("SPC t h", "  Themes  ", ":Telescope themes<CR>"),
+                                     button("SPC t h", "  Themes  ", ":lua require('nvchad.themes').open()<CR>"),
                                      button("SPC l", "鈴 Lazy", ":Lazy<CR>"),
                                      button("SPC e s", "  Settings", ":AlphaOmega settings <CR>"),
                                      button("q", "  Quit Neovim", ":qa <CR>")}
