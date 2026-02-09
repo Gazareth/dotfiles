@@ -51,24 +51,6 @@ M.leap = {
     },
   }
 
-  M.tabufline = {
-    n = {
-      -- cycle through buffers
-      ["<leader><TAB>"] = {
-        function()
-          require("nvchad_ui.tabufline").tabuflineNext()
-        end,
-        "goto next buffer",
-      },
-      ["<leader><S-Tab>"] = {
-        function()
-          require("nvchad_ui.tabufline").tabuflinePrev()
-        end,
-        "goto prev buffer",
-      },
-    },
-  }
-
   M.telescope = {
     n = {
       ["<leader>fp"] = { "<cmd> Telescope projections <CR>", "find projects" },
