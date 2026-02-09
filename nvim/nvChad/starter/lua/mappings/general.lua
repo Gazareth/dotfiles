@@ -38,8 +38,8 @@ M.general = {
     ["<C-w><C-v>"] = { "<cmd> vert sb # <CR>", "Open a vertical split of current and previous buffer" },
     ["<C-w><C-t>"] = { "<cmd> tabc <CR>", "Close tab" },
     ["<C-t>"] = { "<cmd> tabnew | Alpha <CR>", "Open new tab and run Alpha (dashboard)" },
-    ["<Tab>"] = { switch_window "w", "Switch to next window" },
-    ["<S-Tab>"] = { switch_window "W", "Switch to previous window" },
+    ["<Tab>"] = { "<cmd> wincmd w <CR>", "Switch to next window" },
+    ["<S-Tab>"] = { "<cmd> wincmd W <CR>", "Switch to previous window" },
 
     -- Help with editing/writing text
     ["Y"] = { "^vg_", "select line (excluding EOL character)" },
