@@ -9,6 +9,9 @@ M.general = {
   [{"n", "i"}] = {
     ["<C-Tab>"] = { "<cmd> tabnext <CR>", "Switch to next tab" },
     ["<C-S-Tab>"] = { "<cmd> tabprev <CR>", "Switch to previous tab" },
+    -- cycle through buffers
+    ["<leader><TAB>"] = { "<cmd> bnext <CR>", "Next buffer" },
+    ["<leader><S-TAB>"] = { "<cmd> bprevious <CR>", "Prev buffer" },
   },
   n = {
     -- Meta stuff
