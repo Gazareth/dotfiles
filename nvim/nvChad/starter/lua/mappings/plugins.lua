@@ -24,7 +24,7 @@ M.leap = {
 
   M.grug_far = {
     n = {
-      ["<leader>gf"] = { "<cmd> GrugFAR <CR>", "GrugFAR: Find and Replace" },
+      ["<leader>gf"] = { "<cmd> GrugFar <CR>", "GrugFar: Find and Replace" },
     },
   }
 
