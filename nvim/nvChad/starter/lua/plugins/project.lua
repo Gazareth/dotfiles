@@ -1,6 +1,7 @@
 local M = {
     {
-      "https://github.com/MagicDuck/grug-far.nvim",
+      "MagicDuck/grug-far.nvim",
+      cmd = {"GrugFar"}
     },
     {
         "coffebar/neovim-project",
