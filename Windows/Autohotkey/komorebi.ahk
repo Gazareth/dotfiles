@@ -36,8 +36,8 @@ init() {
 
     settings := [
         "remove-title-bar exe neovide.exe",
-        "alt-focus-hack enable",
-        "window-hiding-behaviour cloak",  ;; prevent flashing when switching workspaces
+        ; "alt-focus-hack enable",
+        ;; "window-hiding-behaviour cloak",  ;; prevent flashing when switching workspaces
         "active-window-border-color 56 189 248"
         "active-window-border enable"
     ]
@@ -95,9 +95,12 @@ init() {
         ["exe", "chrome.exe", 0, 4],
         ["exe", "Code.exe", 0, 5],
         ["exe", "neovide.exe", 0, 5],
-        ["title", "Terminal", 0, 6],
-        ["title", "PowerShell", 0, 6],
-        ["exe", "wt.exe", 0, 6]
+        ["exe", "wt.exe", 0, 6],
+        ["exe", "WindowsTerminal.exe", 0, 6],
+        ["exe", "Microsoft.WindowsTerminal_1.23.20211.0_x64__8wekyb3d8bbwe.exe", 0, 6],
+        ["exe", "pwsh.exe", 0, 6],
+        ["exe", "wt.exe", 0, 6],
+        ["exe", "WhatsApp.Root.exe", 0, 7],
     ]
 
     for workspace_app in workspace_apps {
