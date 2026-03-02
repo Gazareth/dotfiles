@@ -1,11 +1,11 @@
 {
-  "$schema": "https://raw.githubusercontent.com/LGUG2Z/komorebi/v0.1.20/schema.json",
+  "$schema": "https://raw.githubusercontent.com/LGUG2Z/komorebi/v0.1.39/schema.json",
   "app_specific_configuration_path": "$Env:USERPROFILE/applications.json",
   "window_hiding_behaviour": "Cloak",
   "mouse_follows_focus": true,
   "cross_monitor_move_behaviour": "Insert",
-  "default_workspace_padding": 20,
-  "default_container_padding": 20,
+  "default_workspace_padding": 10,
+  "default_container_padding": 8,
   "border": false,
   "border_colours": {
     "single": {
@@ -33,5 +33,174 @@
       "unfocused_text": "#b3b3b3",
       "background": "#141414"
     }
-  }
+  },
+  "monitors": [
+    {
+      "workspaces": [
+        {
+          "name": "I - Browser",
+          "layout": "Columns",
+          "initial_workspace_rules": [
+            {
+              "kind": "Exe",
+              "id": "msedge.exe"
+            }
+          ]
+        },
+        {
+          "name": "II - Files",
+          "layout": "UltrawideVerticalStack",
+          "initial_workspace_rules": [
+            {
+              "kind": "Exe",
+              "id": "explorer.exe"
+            },
+            {
+              "kind": "Exe",
+              "id": "notepad++.exe"
+            }
+          ]
+        },
+        {
+          "name": "III - Media",
+          "layout": "BSP",
+          "initial_workspace_rules": [
+            {
+              "kind": "Title",
+              "id": "Apple Music",
+              "matching_strategy": "Contains"
+            },
+            {
+              "kind": "Exe",
+              "id": "Spotify.exe"
+            },
+            {
+              "kind": "Title",
+              "id": "Amazon Music",
+              "matching_strategy": "Contains"
+            }
+          ]
+        },
+        {
+          "name": "IV - Notes",
+          "layout": "UltrawideVerticalStack",
+          "initial_workspace_rules": [
+            {
+              "kind": "Exe",
+              "id": "Obsidian.exe"
+            }
+          ]
+        },
+        {
+          "name": "V - Application",
+          "layout": "Rows",
+          "initial_workspace_rules": [
+            {
+              "kind": "Exe",
+              "id": "chrome.exe"
+            }
+          ]
+        },
+        {
+          "name": "VI - Code",
+          "layout": "VerticalStack",
+          "initial_workspace_rules": [
+            {
+              "kind": "Exe",
+              "id": "Code.exe"
+            },
+            {
+              "kind": "Exe",
+              "id": "neovide.exe"
+            }
+          ]
+        },
+        {
+          "name": "VII - Terminal",
+          "layout": "HorizontalStack",
+          "initial_workspace_rules": [
+            {
+              "kind": "Exe",
+              "id": "wt.exe"
+            },
+            {
+              "kind": "Exe",
+              "id": "WindowsTerminal.exe"
+            },
+            {
+              "kind": "Exe",
+              "id": "Microsoft.WindowsTerminal_1.23.20211.0_x64__8wekyb3d8bbwe.exe"
+            },
+            {
+              "kind": "Exe",
+              "id": "pwsh.exe"
+            }
+          ]
+        },
+        {
+          "name": "VIII - Comms",
+          "layout": "UltrawideVerticalStack",
+          "initial_workspace_rules": [
+            {
+              "kind": "Exe",
+              "id": "WhatsApp.Root.exe",
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "tray_and_multi_window_applications": [
+    {
+      "kind": "Exe",
+      "id": "Discord"
+    },
+    {
+      "kind": "Exe",
+      "id": "Telegram"
+    },
+    {
+      "kind": "Exe",
+      "id": "cloudmusic"
+    },
+    {
+      "kind": "Exe",
+      "id": "everything"
+    },
+    {
+      "kind": "Exe",
+      "id": "GoldenDict"
+    },
+    {
+      "kind": "Exe",
+      "id": "'Clash for Windows'"
+    }
+  ],
+  "floating_applications": [
+    {
+      "kind": "Class",
+      "id": "SunAwtDialog"
+    },
+    {
+      "kind": "Title",
+      "id": "Control Panel",
+      "matching_strategy": "Equals"
+    },
+    {
+      "kind": "Class",
+      "id": "TaskManagerWindow"
+    },
+    {
+      "kind": "Exe",
+      "id": "onTopReplica"
+    },
+    {
+      "kind": "Exe",
+      "id": "Vial.exe"
+    },
+    {
+      "kind": "Exe",
+      "id": "Updater.exe"
+    }
+  ]
 }
