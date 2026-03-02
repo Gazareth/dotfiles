@@ -31,80 +31,13 @@ global workspaceKeys := ["1", "2", "3", "4", "Q", "W", "E", "R"]
 
 init() {
     RunKomorebiC("start")
-    ;; focus-follows-mouse feels buggy
-    ; RunKomorebiC("focus-follows-mouse disable")
 
     settings := [
         "remove-title-bar exe neovide.exe",
-        ; "alt-focus-hack enable",
-        ;; "window-hiding-behaviour cloak",  ;; prevent flashing when switching workspaces
-        "active-window-border-color 56 189 248"
-        "active-window-border enable"
     ]
 
     for SettingsCommand in settings {
         RunKomorebiC(SettingsCommand)
-    }
-
-    blacklist := [
-        ["class", "SunAwtDialog"], ; Always float IntelliJ popups, matching on class
-        ["title", '"Control Panel"'],
-        ["class", "TaskManagerWindow"],
-        ["exe", "onTopReplica"],
-        ["exe", "Vial.exe"],
-        ["exe", "Updater.exe"],
-    ]
-
-    for blacklistItem in blacklist {
-        RunKomorebiC(Join(" ", "float-rule", blacklistItem*))
-    }
-
-    tray_blacklist := [
-        ["exe", "Discord.exe"],
-        ["exe", "Telegram.exe"],
-        ["exe", "cloudmusic.exe"],
-        ["exe", "everything.exe"],
-        ["exe", "GoldenDict.exe"],
-        ["exe", "'Clash for Windows.exe'"],
-    ]
-
-    for tray_item in tray_blacklist {
-        RunKomorebiC(Join(" ", "identify-tray-application", tray_item*))
-    }
-
-    ;; IDM can't not be handle properly
-    ;; I don't like it tiling anyway. So I just comment it
-    ;; Run("komorebic manage-rule exe IDMan.exe",,"Hide")
-    RunKomorebiC("ensure-workspaces 0 " . WorkspaceNumber)
-
-    ; set the padding to all the workspaces
-    for num in numbers {
-        RunKomorebiC("workspace-padding 0 " . num . " 10")
-        RunKomorebiC("container-padding 0 " . num . " 8")
-    }
-
-    ;; Setup workspace rules
-    workspace_apps := [
-        ["exe", "msedge.exe", 0, 0],
-        ["exe", "explorer.exe", 0, 1],
-        ["exe", "notepad++.exe", 0, 1],
-        ["title", "Apple Music", 0, 2],
-        ["exe", "Spotify.exe", 0, 2],
-        ["title", "Amazon Music", 0, 2],
-        ["exe", "Obsidian.exe", 0, 3],
-        ["exe", "chrome.exe", 0, 4],
-        ["exe", "Code.exe", 0, 5],
-        ["exe", "neovide.exe", 0, 5],
-        ["exe", "wt.exe", 0, 6],
-        ["exe", "WindowsTerminal.exe", 0, 6],
-        ["exe", "Microsoft.WindowsTerminal_1.23.20211.0_x64__8wekyb3d8bbwe.exe", 0, 6],
-        ["exe", "pwsh.exe", 0, 6],
-        ["exe", "wt.exe", 0, 6],
-        ["exe", "WhatsApp.Root.exe", 0, 7],
-    ]
-
-    for workspace_app in workspace_apps {
-        RunKomorebiC(Join(" ", "workspace-rule", workspace_app*))
     }
 
     RunKomorebiC("toggle-title-bars")
