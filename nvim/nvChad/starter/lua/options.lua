@@ -3,6 +3,8 @@ local final_opts = {}
 local options  = {
   guicursor = "i:ver35-blinkwait1-blinkoff600-blinkon600-InsertModeCursor,r:hor20-InsertMode,v:block-blinkwait1-blinkoff200-blinkon1000-VisualModeCursor",
 
+  linespace = 6,
+
   autoindent = true,
   relativenumber = true,
 

@@ -4,7 +4,7 @@ local make_font_cfg = function(font_size)
   return { "FiraCode_NFM:h"..font_size..":#e-subpixelantialias:#h-none" }
 end
 -- vim.opt.guicursor = ""
-g.neovide_font_size = 10
+g.neovide_font_size = 8.5
 vim.opt.guifont = make_font_cfg(g.neovide_font_size)
 
 g.neovide_cursor_vfx_mode = "wireframe"
