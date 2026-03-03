@@ -7,6 +7,7 @@ local options  = {
 
   autoindent = true,
   relativenumber = true,
+  statuscolumn="  %=%l %s ",
 
   backspace = "indent,eol,start",
   smarttab = true,
