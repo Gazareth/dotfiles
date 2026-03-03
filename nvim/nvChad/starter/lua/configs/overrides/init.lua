@@ -18,9 +18,9 @@ M.mason = {
     "clangd", "clang-format"}
 }
 
--- git support in nvimtree
 M.nvimtree = {
     enabled = false,
+  -- git support in nvimtree
     git = {
         enable = true
     },

@@ -12,6 +12,7 @@ M.general = {
     -- cycle through buffers
     ["<leader><TAB>"] = { "<cmd> bnext <CR>", "Next buffer" },
     ["<leader><S-TAB>"] = { "<cmd> bprevious <CR>", "Prev buffer" },
+    ["<leader>x"] = { "<cmd> bd <CR>", "Delete buffer" },
   },
   n = {
     -- Meta stuff

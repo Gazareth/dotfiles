@@ -45,9 +45,9 @@ M.leap = {
     },
   }
 
-  M.mini_files = {
+  M.fyler = {
     n = {
-      ["<C-b>"] = { "<cmd> MiniFilesOpen <CR>", "Open File Browser (Powered by mini.files)" },
+      ["<leader>b"] = { "<cmd> Fyler <CR>", "Open File Browser (Powered by Fyler)" },
     },
   }
 
