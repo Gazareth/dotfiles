@@ -8,8 +8,8 @@ local highlights = require "highlights"
 local M = {}
 
 M.base46 = {
-	theme = "monokai_pro",
-	theme_toggle = { "monokai_pro", "one_light" },
+	theme = "monokai_pro_ristretto",
+	theme_toggle = { "monokai_pro_ristretto", "one_light" },
   
 	hl_override = highlights.override,
 	hl_add = highlights.add,
