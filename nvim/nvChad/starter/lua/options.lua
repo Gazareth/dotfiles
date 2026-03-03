@@ -24,7 +24,14 @@ local options  = {
 
   wrap = false,
   list = true,
-  listchars = "tab:» ,extends:►,precedes:◄,nbsp:·,trail:▒,",
+  listchars = {
+    tab = "» ",
+    space = '·',
+    extends = "►",
+    precedes = "◄",
+    nbsp = "·",
+    trail = "▒",
+  },
 }
 
 -- Set shell to bash or powershell
