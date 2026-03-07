@@ -10,6 +10,11 @@ M.override = {
   },
   Comment = {
     italic = true,
+    fg = "grey_fg"
+  },
+  ["@comment"] = {
+    italic = true,
+    fg = "grey_fg"
   },
 
   St_NormalMode = {
