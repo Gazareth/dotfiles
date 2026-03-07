@@ -5,7 +5,14 @@ local get_keys = require("functions.lazy").get_keys
 local M = {
   {
     "andymass/vim-matchup",  -- Highlight/move to matching bracket/quote
-    keys = { "%", "g%", "[%", "]%", "z%" }
+    opts = {
+      treesitter = {
+        stopline = 500,
+      },
+
+    },
+    event = "BufEnter",
+    keys = { "g%", "[%", "]%", "z%" }
   },
 
   {
@@ -21,26 +28,21 @@ local M = {
 
   {
     "gbprod/substitute.nvim",  -- Replace selection with default register
-    keys = vim.list_extend(
-      get_keys({"n"}, {{"s", "ss", "S"}}),
-      get_keys({"x"}, {{"s"}})
-    ),
+    keys = { "s", "ss", "S", { "S", mode = "x" }},
     config = function()
       local subst = require("substitute")
       subst.setup()
       vim.keymap.set("n", "s", subst.operator, { desc = "Substitute (With motion)" ,noremap = true })
       vim.keymap.set("n", "ss", subst.line, { desc = "Substitute (Line)" ,noremap = true })
       vim.keymap.set("n", "S", subst.eol, { desc = "Substitute (To end of line)" ,noremap = true })
-      vim.keymap.set("x", "s", subst.visual, { desc = "Substitute (Visual selection)" ,noremap = true })
+      vim.keymap.set("x", "S", subst.visual, { desc = "Substitute (Visual selection)" ,noremap = true })
     end
   },
 
   {
     "tommcdo/vim-exchange",
-    keys = vim.list_extend(
-      get_keys({"n"}, {{"cx", "cxx", "cxc"}}),
-      get_keys({"x"}, {{"X"}})
-    )
+    keys = {"cx", "cxx", "cxc", { "x", "X"}},
+  },
   },
 
   { "nvim-mini/mini.surround",
@@ -69,7 +71,8 @@ local M = {
         -- see `:h MiniSurround.config`.
         search_method = 'cover_or_nearest',
       })
-    end
+    end,
+    lazy = false
   }
 }
 
