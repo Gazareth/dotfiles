@@ -20,4 +20,10 @@ M.base46 = {
 	-- },
 }
 
+M.ui = {
+  tabufline = {
+    enabled= false
+  }
+}
+
 return M
