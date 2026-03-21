@@ -45,7 +45,8 @@ local M = {
   },
   },
 
-  { "nvim-mini/mini.surround",
+  {
+    "nvim-mini/mini.surround",
     config = function()
       require('mini.surround').setup({
         -- Duration (in ms) of highlight when calling `MiniSurround.highlight()`

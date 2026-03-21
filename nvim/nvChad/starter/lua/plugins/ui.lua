@@ -20,7 +20,8 @@ local M = {{
     cmd = {"Trouble", "TroubleToggle", "TroubleRefresh", "TroubleClose"}, -- View diagnostic errors in one place
     dependencies = "nvim-tree/nvim-web-devicons",
     config = function()
-        require("trouble").setup {vim.keymap.set("n", "gR", function()
+        require("trouble").setup {
+            vim.keymap.set("n", "gR", function()
             require("trouble").next({
                 skip_groups = true,
                 jump = true
