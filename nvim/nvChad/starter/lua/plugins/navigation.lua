@@ -1,5 +1,6 @@
 -- Navigation
 local M = {
+  { "serhez/bento.nvim", opts = {}, event = "DirChanged" },
   {
     "bassamsdata/namu.nvim",
     opts = {

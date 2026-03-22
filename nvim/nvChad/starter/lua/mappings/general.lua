@@ -26,9 +26,6 @@ M.general = {
     },
     ["<leader>ecd"] = { explore_current_file_dir, "Open explorer at current file's directory (windows)" },
 
-    -- Modes
-    [";"] = { ":", "enter command mode", opts = { nowait = true } },
-
     ["ZW"] = { "<cmd> wa <CR>", "Save all files" },
     ["ZD"] = { return_to_dashboard(false), "Return to project dashboard" },
     ["ZDQ"] = { return_to_dashboard(true), "Return to dashboard" },

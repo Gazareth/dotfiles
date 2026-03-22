@@ -1,4 +1,4 @@
----@type MappingsTable
+---@class MappingsTable
 local M = {}
 
 M.disabled = {
