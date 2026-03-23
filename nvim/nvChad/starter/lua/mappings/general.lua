@@ -2,6 +2,8 @@ local current_file_dir = require("functions.mappings").current_file_dir
 local switch_window = require("functions.mappings").switch_window
 local explore_current_file_dir = require("functions.mappings").explore_current_file_dir
 local return_to_dashboard = require("functions.mappings").return_to_dashboard
+local flick_command = require("functions.scroll-flick").flick_command
+
 
 local M = {}
 
@@ -38,6 +40,12 @@ M.general = {
     ["<C-t>"] = { "<cmd> tabnew | Alpha <CR>", "Open new tab and run Alpha (dashboard)" },
     ["<Tab>"] = { "<cmd> wincmd w <CR>", "Switch to next window" },
     ["<S-Tab>"] = { "<cmd> wincmd W <CR>", "Switch to previous window" },
+
+    -- Scrolling
+    ["<C-S-g>"] = { flick_command("2.15"), "Jump ↑ by ½ screen" },
+    ["<C-S-h>"] = { flick_command("-2.15"), "Jump ↓ by ½ screen" },
+    ["<C-S-j>"] = { flick_command("0.75"), "Jump ↑ by ¼ screen" },
+    ["<C-S-k>"] = { flick_command("-0.75"), "Jump ↓ by ¼ screen" },
 
     -- Help with editing/writing text
     ["Y"] = { "^vg_", "select line (excluding EOL character)" },

@@ -6,17 +6,10 @@ local M = {
 
   {
     "max397574/better-escape.nvim", -- Avoid delays before resolving hotkey chains
-    event = "InsertEnter",
     config = function()
       require("better_escape").setup()
     end,
-  },
-
-  {
-    "yuttie/comfortable-motion.vim",  -- Smooth scrolling
-    config = function()
-      require "configs.comfortable-motion"
-    end
+    event = "InsertEnter",
   },
 
   {
@@ -28,7 +21,7 @@ local M = {
 
   {
     "gbprod/stay-in-place.nvim",  -- Prevent cursor moving when searching/filtering
-    lazy = false
+    event = "BufEnter",
   },
 
   {
