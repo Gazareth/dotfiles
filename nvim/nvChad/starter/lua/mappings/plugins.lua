@@ -1,5 +1,23 @@
 local M = {}
 
+M.cellular_automation = {
+  n = {
+    ["<leader>fml"] = { "<cmd>CellularAutomaton make_it_rain<CR>", "Make it rain (FML)" },
+  },
+}
+
+M.focus = {
+  n = {
+    ["<F3>"] = { "<cmd> FocusMaximise <CR>", "Focus current window" },
+  },
+}
+
+M.grug_far = {
+  n = {
+    ["<leader>gf"] = { "<cmd> GrugFar <CR>", "GrugFar: Find and Replace" },
+  },
+}
+
 M.leap = {
   [{ "n", "x", "o" }] = {
     ["-"] = { "<Plug>(leap-forward-to)", "Leap: forward-to" },
@@ -16,24 +34,6 @@ M.leap_ast = {
   [{ 'n', 'x', 'o' }] = { ["<A-n>"] = { function() require("leap-ast").leap() end, "Leap: AST node" } },
 }
 
-M.cellular_automation = {
-  n = {
-    ["<leader>fml"] = { "<cmd>CellularAutomaton make_it_rain<CR>", "Make it rain (FML)" },
-  },
-}
-
-M.grug_far = {
-  n = {
-    ["<leader>gf"] = { "<cmd> GrugFar <CR>", "GrugFar: Find and Replace" },
-  },
-}
-
-M.focus = {
-  n = {
-    ["<F3>"] = { "<cmd> FocusMaximise <CR>", "Focus current window" },
-  },
-}
-
 M.lspconfig = {
   n = {
     ["<leader>fmt"] = {
@@ -45,21 +45,15 @@ M.lspconfig = {
   },
 }
 
-M.fyler = {
+M.namu = {
   n = {
-    ["<leader>b"] = { "<cmd> Fyler <CR>", "Open File Browser (Powered by Fyler)" },
-  },
-}
-
-M.telescope = {
-  n = {
-    ["<leader>fp"] = { "<cmd> Telescope projections <CR>", "find projects" },
-    ["<leader><C-t>"] = { "<cmd> Telescope telescope-tabs list_tabs <CR>", "Browse tabs" },
-    ["<leader>cdr"] = { "<cmd>Telescope cder<CR>", "Change current directory (cder)" },
-  },
+    ["<leader>ew"] = {  ":Namu symbols<cr>", "Namu - LSP Symbols" },
+    ["<leader>sw"] = {  ":Namu workspace<cr>", "Namu - Workspace LSP Symbols" },
+  }
 }
 
 local tcpresent, tree_climber = pcall(require, "tree-climber")
+
 if tcpresent then
   local tc_func = function(func_name, opts)
     return function() return tree_climber[func_name](opts) end

@@ -1,7 +1,5 @@
 local alpha_omega_config = function()
-    local present, alpha_omega = pcall(require, "alpha-omega")
-
-    local dashboard = require("alpha.themes.dashboard")
+    local alpha_omega = require("alpha-omega")
 
     local base_dashboard = require("configs.overrides.alpha-omega.base")
     local project_dashboard = require("configs.overrides.alpha-omega.project")

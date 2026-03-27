@@ -1,13 +1,15 @@
 local M = {}
 
-M.treesitter = {
-    ensure_installed = {"vim", "lua", "html", "css", "javascript", "typescript", "tsx", "c", "markdown",
-                        "markdown_inline"},
+M.alpha = require "configs.overrides.alpha"
+M.alpha_omega = require "configs.overrides.alpha-omega"
+
+M.blankline = {
+    exclude = {
+        filetypes = {"NvimTree", "lspinfo", "packer", "checkhealth", "help", "man", "alpha", ""}
+    },
     indent = {
-        enable = true
-        -- disable = {
-        --   "python"
-        -- },
+        highlight = {"IndentBlanklineIndent1", "IndentBlanklineIndent2", "IndentBlanklineIndent3",
+                     "IndentBlanklineIndent4", "IndentBlanklineIndent5", "IndentBlanklineIndent6"}
     }
 }
 
@@ -37,16 +39,14 @@ M.nvimtree = {
     }
 }
 
-M.alpha = require "configs.overrides.alpha"
-M.alpha_omega = require "configs.overrides.alpha-omega"
-
-M.blankline = {
-    exclude = {
-        filetypes = {"NvimTree", "lspinfo", "packer", "checkhealth", "help", "man", "alpha", ""}
-    },
+M.treesitter = {
+    ensure_installed = {"vim", "lua", "html", "css", "javascript", "typescript", "tsx", "c", "markdown",
+                        "markdown_inline"},
     indent = {
-        highlight = {"IndentBlanklineIndent1", "IndentBlanklineIndent2", "IndentBlanklineIndent3",
-                     "IndentBlanklineIndent4", "IndentBlanklineIndent5", "IndentBlanklineIndent6"}
+        enable = true
+        -- disable = {
+        --   "python"
+        -- },
     }
 }
 
