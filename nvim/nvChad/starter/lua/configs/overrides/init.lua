@@ -11,9 +11,11 @@ M.treesitter = {
     }
 }
 
+M.lspconfig = require "configs.overrides.lspconfig"
+
 M.mason = {
     ensure_installed = { -- lua stuff
-    "lua-language-server", "stylua", -- web dev stuff
+    "emmylua_ls", "stylua",
     "css-lsp", "html-lsp", "typescript-language-server", "deno", "prettier", -- c/cpp stuff
     "clangd", "clang-format"}
 }
