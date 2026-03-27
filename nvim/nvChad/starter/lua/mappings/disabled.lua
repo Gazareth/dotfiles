@@ -10,6 +10,7 @@ M.disabled = {
       ["<leader>n"] = { "", "toggle line number" },
       ["<leader>rn"] = { "", "toggle relative number" },
       ["<C-n>"] = { "", "toggle nvimtree" },
+      ["<C-c>"] = { "", "general copy whole file" },
       ["<leader>e"] = { "", "focus nvimtree" },
       ["<A-h>"] = { "", "toggle floating term" },
     },
