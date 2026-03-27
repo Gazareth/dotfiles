@@ -3,21 +3,47 @@ local M = {
   { "serhez/bento.nvim", opts = {}, event = "DirChanged" },
   {
     "bassamsdata/namu.nvim",
+    dependencies =  { 
+      { "Chaitanyabsprip/fastaction.nvim", config = true }, -- Forces setup() to run
+    },
     opts = {
       global = {},
       namu_symbols = { -- Specific Module options
-        options = {},
+        options = {
+          AllowKinds = {
+            -- Extend the default lua list
+            lua = {
+              "Variable", -- For the local assignment at the top
+              "Field",    -- For all the nested entries in your table
+              "Function",
+              "Method",
+              "Table",
+              "Module",
+              "Call",   -- Note: Namu uses "Call" for FunctionCall
+              "String", -- If you want to see the raw string values in the list
+            },
+          },
+          BlockList = {
+            default = {},
+            -- Filetype-specific
+            lua = {
+              "^vim%.",     -- anonymous functions passed to nvim api
+              "%.%.%. :",   -- vim.iter functions
+              ":gsub",      -- lua string.gsub
+              "^callback$", -- nvim autocmds
+              "^filter$",
+              "^map$",      -- nvim keymaps
+              "^%[%d+%]$",  -- Blocks anonymous fields that look like [1], [20], etc.
+            },
+            -- another example:
+            -- python = { "^__" }, -- ignore __init__ functions
+          },
+        },
       },
     },
-    -- === Suggested Keymaps: ===
-    vim.keymap.set("n", "<leader>ew", ":Namu symbols<cr>", {
-      desc = "Jump to LSP symbol",
-      silent = true,
-    }),
-    vim.keymap.set("n", "<leader>sw", ":Namu workspace<cr>", {
-      desc = "LSP Symbols - Workspace",
-      silent = true,
-    }),
+    config = {
+      require("configs.namu")
+    },
     event = "BufEnter",
   },
 }
