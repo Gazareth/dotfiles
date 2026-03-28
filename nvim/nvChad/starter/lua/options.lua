@@ -37,7 +37,7 @@ if vim.g.is_windows then
   local woptions = {}
 
   -- USE BASH! (WSL)
-  if true then
+  if false then
     woptions = { shell = "bash", shellcmdflag = "-c" }
   else
     woptions = {
