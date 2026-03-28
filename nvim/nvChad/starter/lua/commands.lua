@@ -21,6 +21,37 @@ acmd({"VimEnter"}, {
     end
 })
 
+-- Populate workspace diagnostics
+ucmd("WkspDiag", function()
+    local any_triggered = false
+
+    for _, client in ipairs(vim.lsp.get_clients()) do
+        local has_openclose = client:supports_method("textDocumentSync/openClose")
+        local has_publish = client:supports_method("textDocument/publishDiagnostics")
+        local has_filetypes = client.config and client.config.filetypes
+
+        if not has_openclose or not has_publish or not has_filetypes then
+            vim.notify(string.format("WkspDiag skipped %s: openClose=%s publishDiagnostics=%s filetypes=%s",
+                client.name, tostring(has_openclose), tostring(has_publish), vim.inspect(has_filetypes)),
+                vim.log.levels.WARN)
+        else
+            require("workspace-diagnostics").populate_workspace_diagnostics(client, 0)
+            vim.notify("WkspDiag triggered for " .. client.name, vim.log.levels.INFO)
+            any_triggered = true
+        end
+    end
+
+    if not any_triggered then
+        vim.notify("WkspDiag: no eligible LSP clients found", vim.log.levels.ERROR)
+    end
+
+local path = "/full/path/to/nvim/nvChad/starter/lua/configs/test.lua"
+local uri = vim.uri_from_fname(path)
+local bufnr = vim.uri_to_bufnr(uri)
+print(vim.inspect(vim.diagnostic.get(bufnr)))
+
+end, {})
+
 -- Highlight yanked text for a brief period after yanking
 acmd({"TextYankPost"}, {
     callback = function()
@@ -56,7 +87,7 @@ for k, v in pairs(config_commands) do
     end, {})
 end
 
--- Autocmd to open Alpha when last buffer is closed
+-- Open dashboard when last buffer is closed
 acmd("BufDelete", {
     group = vim.api.nvim_create_augroup("bufdelpost_autocmd", {}),
     desc = "BufDeletePost User autocmd",
@@ -69,6 +100,7 @@ acmd("BufDelete", {
     end
 })
 
+-- Open dashboard when no available buffers
 acmd("User", {
     pattern = "BufDeletePost",
     group = vim.api.nvim_create_augroup("dashboard_delete_buffers", {}),
