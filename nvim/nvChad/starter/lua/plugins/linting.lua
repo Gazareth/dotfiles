@@ -1,4 +1,9 @@
 local M = {{
+    "neovim/nvim-lspconfig",
+    config = function()
+        require("configs.overrides.lspconfig")
+    end
+}, {
     "artemave/workspace-diagnostics.nvim",
     opts = {
         debug = true

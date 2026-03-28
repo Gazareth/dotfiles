@@ -13,8 +13,6 @@ M.blankline = {
     }
 }
 
-M.lspconfig = require "configs.overrides.lspconfig"
-
 M.mason = {
     ensure_installed = { -- lua stuff
     "emmylua_ls", "stylua",

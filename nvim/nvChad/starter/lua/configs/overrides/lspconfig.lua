@@ -11,4 +11,5 @@ vim.lsp.config("emmylua_ls", {
   }
 })
 
+vim.lsp.enable("lua_ls", false) -- disable lua_ls since we are using emmylua_ls instead
 vim.lsp.enable(servers)
