@@ -1,12 +1,13 @@
+local fyler_config = require("configs.fyler")
+
 local M = {
   {
     "A7Lavinraj/fyler.nvim",
     dependencies = { "nvim-tree/nvim-web-devicons" },
+    branch = "stable",
     lazy = false,      -- Necessary for `default_explorer` to work properly
-    opts = require("configs.fyler"),
-    keys = {
-      { "<C-b>", "<Cmd>Fyler<Cr>", desc = "Open Fyler View" },
-    }
+    opts = fyler_config.opts,
+    keys = fyler_config.keys,
   },
   {
     "echasnovski/mini.files",
