@@ -18,32 +18,6 @@ local function normalize_menu_items(raw_items, keys)
   return normalized
 end
 
-local function get_workspace_git_root()
-  local result = vim.fn.systemlist("git rev-parse --show-toplevel")
-  if vim.v.shell_error ~= 0 or not result or #result == 0 then
-    return nil
-  end
-  return result[1]
-end
-
-local function ensure_workspace_git_root()
-  local git_root = get_workspace_git_root()
-  if git_root and git_root ~= "" then
-    vim.cmd("lcd " .. vim.fn.fnameescape(git_root))
-    return true
-  end
-  return false
-end
-
-local function check_diags()
-  for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-    local diags = vim.diagnostic.get(buf)
-    if #diags > 0 then
-      print(buf, vim.api.nvim_buf_get_name(buf), #diags)
-    end
-  end
-end
-
 local function open_fastaction_menu(menu_items, prompt_text)
   local fastaction = require("fastaction")
 
@@ -77,10 +51,6 @@ local function open_fastaction_menu(menu_items, prompt_text)
     end
 
     if choice.module and choice.fn then
-      if choice.module == "namu_diagnostics" and choice.fn == "show_workspace_diagnostics" then
-        ensure_workspace_git_root()
-      end
-
       local ok, mod = pcall(require, "namu." .. choice.module)
       if not ok then
         vim.notify("Failed to load Namu module: namu." .. choice.module, vim.log.levels.ERROR)
@@ -111,4 +81,4 @@ local function open_namu_menu()
   open_fastaction_menu(menu_items, "Namu Features")
 end
 
-vim.keymap.set("n", "<leader>nm", check_diags, { desc = "Namu Fast Menu" })
+vim.keymap.set("n", "<leader>nm", open_namu_menu, { desc = "Namu Fast Menu" })
