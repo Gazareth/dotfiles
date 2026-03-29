@@ -5,8 +5,11 @@ local items = {
   { key = "a", icon = "", label = "Swap toward child node", cmd = "SwapRight" },
 }
 
-return vim.tbl_map(function(item)
-  return vim.tbl_extend("force", {
-    action = "Treewalker " .. item.cmd,
-  }, item)
-end, items)
+return {
+  title = "Swap Nodes",
+  items = vim.tbl_map(function(item)
+    return vim.tbl_extend("force", {
+      action = "Treewalker " .. item.cmd,
+    }, item)
+  end, items),
+}

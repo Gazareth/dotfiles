@@ -10,13 +10,13 @@ local function recalculate_widths(widths, item_widths)
 	}
 end
 
--- Build Item objects and calculate max column widths from a section spec.
+-- Build Item objects and calculate max column widths from item specs
 -- Returns: items (list), widths (table with icon/text/key maxima)
-function M.create(section_spec)
+function M.create(item_specs)
 	local items = {}
 	local widths = { icon = 0, text = 0, key = 0 }
 
-	for _, item_spec in ipairs(section_spec) do
+	for _, item_spec in ipairs(item_specs or {}) do
 		local item = Item.create(nil, item_spec)
 		table.insert(items, item)
 

@@ -10,8 +10,11 @@ local items = {
   { key = "c", icon = "", label = "All calls (in & out)", submodule = "namu_callhierarchy", fn = "show_both_calls" },
 }
 
-return vim.tbl_map(function(item)
-  return vim.tbl_extend("force", {
-    module = module_name,
-  }, item)
-end, items)
+return {
+  title = "Namu",
+  items = vim.tbl_map(function(item)
+    return vim.tbl_extend("force", {
+      module = module_name,
+    }, item)
+  end, items),
+}

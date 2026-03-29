@@ -5,8 +5,11 @@
   { key = "y", icon = "", label = "Jump to child node", cmd = "Right" },
 }
 
-return vim.tbl_map(function(item)
-  return vim.tbl_extend("force", {
-    action = "Treewalker " .. item.cmd,
-  }, item)
-end, items)
+return {
+  title = "Jump to Node",
+  items = vim.tbl_map(function(item)
+    return vim.tbl_extend("force", {
+      action = "Treewalker " .. item.cmd,
+    }, item)
+  end, items),
+}

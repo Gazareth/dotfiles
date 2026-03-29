@@ -21,8 +21,9 @@ end
 function M.create(section_spec)
 	local section = setmetatable({}, M)
 	section.title = section_spec.title
+	local item_specs = section_spec.items
 
-	local items, widths = items_factory.create(section_spec)
+	local items, widths = items_factory.create(item_specs)
 	section.items = items
 
 	local nui_rows = { NuiMenu.item("") } -- Spacer line at the top
