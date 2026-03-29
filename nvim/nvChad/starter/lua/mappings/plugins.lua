@@ -45,40 +45,6 @@ M.lspconfig = {
   },
 }
 
-M.namu = {
-  n = {
-    ["<leader>ew"] = {  ":Namu symbols<cr>", "Namu - LSP Symbols" },
-    ["<leader>sw"] = {  ":Namu workspace<cr>", "Namu - Workspace LSP Symbols" },
-  }
-}
-
-local tcpresent, tree_climber = pcall(require, "tree-climber")
-
-if tcpresent then
-  local tc_func = function(func_name, opts)
-    return function() return tree_climber[func_name](opts) end
-  end
-  local tc_highlight = function(func_name) return tc_func(func_name, { highlight = true, skip_comments = true }) end
-  local tc_skipcomments = function(func_name) return tc_func(func_name, { skip_comments = true }) end
-
-  M.tree_climber = {
-    [{ "n", "v", "o" }] = {
-      ["<A-k>"] = { tc_highlight("goto_parent"), "Go to parent Treesitter node" },
-      ["<A-j>"] = { tc_highlight("goto_child"), "Go to child Treesitter node" },
-      ["<A-l>"] = { tc_skipcomments("goto_next"), "Go to next Treesitter node" },
-      ["<A-h>"] = { tc_skipcomments("goto_prev"), "Go to previous Treesitter node" },
-    },
-    [{ "v", "o" }] = {
-      ["ie"] = { tree_climber.select_node, "Select inside treesitter node" },
-    },
-    ["n"] = {
-      ["<C-l>"] = { tree_climber.swap_next, "Swap with next Treesitter node" },
-      ["<C-h>"] = { tree_climber.swap_prev, "Swap with previous Treesitter node" },
-      ["<C-H>"] = { tree_climber.highlight_node, "Highlight Treesitter node" },
-    }
-  }
-end
-
 M.trouble = {
   n = {
     ["<leader>tc"] = { "<cmd> TroubleToggle <CR>", "Toggle Trouble (Diagnostics)" },
