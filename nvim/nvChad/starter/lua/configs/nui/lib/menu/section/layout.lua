@@ -46,15 +46,15 @@ function M.pad_center(value, width)
 	return text
 end
 
-local function create_section_layout(list, prompt, list_count)
-	local title = list.title or prompt or "Actions"
-	if list_count == 1 and prompt then
+local function create_section_layout(section, prompt, section_count)
+	local title = section.title or prompt or "Actions"
+	if section_count == 1 and prompt then
 		title = prompt
 	end
 
 	local line_widths = vim.tbl_map(function(line)
 		return str.display_width(line.text)
-	end, list.lines or {})
+	end, section.lines or {})
 
 	local max_label_len = max_or_zero(line_widths)
 	local title_width = str.display_width(" " .. title .. " ")
@@ -63,7 +63,7 @@ local function create_section_layout(list, prompt, list_count)
 		title = title,
 		size = {
 			width = math.max(max_label_len + 2, title_width + 2, 4),
-			height = math.max(#(list.lines or {}), 1) + 2,
+			height = math.max(#(section.lines or {}), 1) + 2,
 		},
 		popup = {
 			border = {
@@ -80,23 +80,23 @@ local function create_section_layout(list, prompt, list_count)
 	}
 end
 
--- Build popup layout options from rendered lists and prompt.
-function M.create_menu_layout(lists, prompt)
-	local sections = {}
+-- Build popup layout options from sections and prompt.
+function M.create_menu_layout(sections, prompt)
+	local section_layouts = {}
 	local total_width = 0
 	local max_height = 1
 
-	for _, list in ipairs(lists or {}) do
-		local section = create_section_layout(list, prompt, #(lists or {}))
-		sections[#sections + 1] = section
-		total_width = total_width + section.size.width
-		max_height = math.max(max_height, section.size.height)
+	for _, section in ipairs(sections or {}) do
+		local section_layout = create_section_layout(section, prompt, #(sections or {}))
+		section_layouts[#section_layouts + 1] = section_layout
+		total_width = total_width + section_layout.size.width
+		max_height = math.max(max_height, section_layout.size.height)
 	end
 
-	if #sections == 0 then
-		sections[1] = create_section_layout({ lines = {}, title = prompt }, prompt, 1)
-		total_width = sections[1].size.width
-		max_height = sections[1].size.height
+	if #section_layouts == 0 then
+		section_layouts[1] = create_section_layout({ lines = {}, title = prompt }, prompt, 1)
+		total_width = section_layouts[1].size.width
+		max_height = section_layouts[1].size.height
 	end
 
 	return {
@@ -108,7 +108,7 @@ function M.create_menu_layout(lists, prompt)
 				height = max_height,
 			},
 		},
-		sections = sections,
+		sections = section_layouts,
 	}
 end
 

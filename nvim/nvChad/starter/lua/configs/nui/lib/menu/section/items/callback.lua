@@ -52,7 +52,7 @@ function M.execute(item)
     return
   end
 
-  if type(item._menu.resolve) == "function" then
+  if type(item._menu) == "table" and type(item._menu.resolve) == "function" then
     item._menu.resolve(item)
   end
 end

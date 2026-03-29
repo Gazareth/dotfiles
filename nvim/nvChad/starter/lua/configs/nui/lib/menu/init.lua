@@ -1,16 +1,16 @@
 local NuiMenu = require("nui.menu")
 local NuiLayout = require("nui.layout")
 
-local create_menu_items = require("configs.nui.lib.menu.items")
-local layout = require("configs.nui.lib.menu.layout")
+local Section = require("configs.nui.lib.menu.section")
+local layout = require("configs.nui.lib.menu.section.layout")
+
 local M = {}
 M.__index = M
 
-M.lists = {} -- Renderable menu sections
-M.guts = {} -- Menu choices with callback
+M.sections = {} -- Section objects
 M.prompt = nil
 
-local function create_menu_section(section, section_layout)
+local function create_nui_section(section, section_layout)
 	return NuiMenu(
 		vim.tbl_deep_extend("force", {
 			enter = false,
@@ -32,14 +32,14 @@ end
 -- Build and open the NUI popup for this menu.
 function M:open()
 	local prompt = self.prompt or "Actions"
-	local menu_layout = layout.create_menu_layout(self.lists, prompt)
-	local sections = {}
+	local menu_layout = layout.create_menu_layout(self.sections, prompt)
+	local nui_sections = {}
 	local boxes = {}
 
-	for index, list in ipairs(self.lists) do
-		local section = create_menu_section(list, menu_layout.sections[index])
-		sections[index] = section
-		boxes[index] = NuiLayout.Box(section, { size = menu_layout.sections[index].size })
+	for index, section in ipairs(self.sections) do
+		local nui_section = create_nui_section(section, menu_layout.sections[index])
+		nui_sections[index] = nui_section
+		boxes[index] = NuiLayout.Box(nui_section, { size = menu_layout.sections[index].size })
 	end
 
 	local popup = NuiLayout(menu_layout.layout, NuiLayout.Box(boxes, { dir = "row" }))
@@ -50,16 +50,22 @@ function M:open()
 
 	popup:mount()
 
-	for _, section in ipairs(sections) do
-		vim.keymap.set("n", "q", close_menu, { buffer = section.bufnr, nowait = true, silent = true })
-		vim.keymap.set("n", "<Esc>", close_menu, { buffer = section.bufnr, nowait = true, silent = true })
+	-- Collect hotkeys from all sections
+	local all_hotkeys = {}
+	for _, section in ipairs(self.sections) do
+		vim.list_extend(all_hotkeys, section:get_hotkeys())
+	end
 
-		for _, item in ipairs(self.guts) do
-			item:mount(section.bufnr, close_menu)
+	for _, nui_section in ipairs(nui_sections) do
+		vim.keymap.set("n", "q", close_menu, { buffer = nui_section.bufnr, nowait = true, silent = true })
+		vim.keymap.set("n", "<Esc>", close_menu, { buffer = nui_section.bufnr, nowait = true, silent = true })
+
+		for _, item in ipairs(all_hotkeys) do
+			item:mount(nui_section.bufnr, close_menu)
 		end
 	end
 
-	vim.api.nvim_set_current_win(sections[1].winid)
+	vim.api.nvim_set_current_win(nui_sections[1].winid)
 end
 
 -- Bind this menu to a keymap.
@@ -76,7 +82,11 @@ function M.create(title, menu_spec)
 	local menu = setmetatable({}, M)
 	menu.prompt = title
 
-	menu.lists, menu.guts = create_menu_items(menu_spec)
+	menu.sections = {}
+	for _, section_spec in ipairs(menu_spec) do
+		table.insert(menu.sections, Section.create(section_spec))
+	end
+
 	return menu
 end
 

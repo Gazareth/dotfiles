@@ -1,8 +1,8 @@
 local NuiMenu = require("nui.menu")
 
 local str = require("configs.nui.lib.string")
-local callback = require("configs.nui.lib.menu.item.callback")
-local layout = require("configs.nui.lib.menu.layout")
+local callback = require("configs.nui.lib.menu.section.items.callback")
+local layout = require("configs.nui.lib.menu.section.layout")
 
 local M = {}
 M.__index = M
@@ -59,7 +59,7 @@ function M:mount(buffer, close_menu)
   })
 end
 
--- Build a MenuItem from a raw spec, bound to its parent menu.
+-- Build an Item from a raw spec.
 function M.create(menu, item_spec)
   local item = vim.tbl_extend("force", {}, item_spec)
   item.id = str.to_lower(item.key, nil)
