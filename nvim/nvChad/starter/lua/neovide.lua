@@ -1,7 +1,7 @@
 local g = vim.g
 
 local make_font_cfg = function(font_size)
-  return { "FiraCode Nerd Font,Symbols Nerd Font:h"..font_size..":#e-subpixelantialias:#h-none" }
+  return { "Hack Nerd Font Mono,Symbols Nerd Font:h"..font_size..":#e-subpixelantialias:#h-none" }
 end
 -- vim.opt.guicursor = ""
 g.neovide_font_size = 10
