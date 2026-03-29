@@ -30,6 +30,11 @@ function M.create(section_spec)
 
 	for _, item in ipairs(items) do
 		table.insert(nui_rows, item:as_nui_item(widths))
+
+        -- Add paddings below header items
+		if type(item.heading) == "string" and item.heading ~= "" then
+			table.insert(nui_rows, NuiMenu.item(""))
+		end
 	end
 
 	table.insert(nui_rows, NuiMenu.item("")) -- Spacer line at the bottom

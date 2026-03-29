@@ -7,8 +7,19 @@ local layout = require("configs.nui.lib.menu.section.layout")
 local M = {}
 M.__index = M
 
+local function create_separator(text, char)
+  return NuiMenu.separator(text or "", {
+    char = char or "─",
+    text_align = "left",
+  })
+end
+
 -- Calculate display widths used for row alignment.
 function M:get_widths()
+  if self.separator or type(self.heading) == "string" then
+    return { icon = 0, text = 0, key = 0 }
+  end
+
   return {
     icon = vim.fn.strdisplaywidth(str.non_empty_or(self.icon, "")),
     text = vim.fn.strdisplaywidth(self.label or ""),
@@ -40,6 +51,14 @@ function M:format(widths)
 end
 
 function M:as_nui_item(widths)
+  if type(self.heading) == "string" and self.heading ~= "" then
+    return create_separator(self.heading, " ")
+  end
+
+  if self.separator then
+    return create_separator(self.label)
+  end
+
   return NuiMenu.item(self:format(widths))
 end
 

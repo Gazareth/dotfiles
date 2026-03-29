@@ -20,6 +20,11 @@ return {
   diagnostics = {
     title = " Diagnostics",
     items = with_module({
+      { heading = "Jump" },
+      { key = "n", icon = "", label = "Jump to next diagnostic in file", action = "lua vim.diagnostic.jump({ count = 1 })" },
+      { key = "p", icon = "", label = "Jump to previous diagnostic in file", action = "lua vim.diagnostic.jump({ count = -1 })" },
+      { separator = true },
+      { heading = "Scan" },
       { key = "b", icon = "", label = "Buffer diagnostics", submodule = "namu_diagnostics", fn = "show_current_diagnostics" },
       { key = "o", icon = "", label = "Open-buffer diagnostics", submodule = "namu_diagnostics", fn = "show_buffer_diagnostics" },
       { key = "w", icon = "", label = "Workspace diagnostics", submodule = "namu_diagnostics", fn = "show_workspace_diagnostics" },
