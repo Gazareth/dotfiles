@@ -1,60 +1,62 @@
+local NuiMenu = require("nui.menu")
+local event = require("nui.utils.autocmd").event
+
 local Item = require("configs.nui.lib.menu.item")
 local create_menu_items = require("configs.nui.lib.menu.items")
 local layout = require("configs.nui.lib.menu.layout")
+local M = {}
+M.__index = M
 
-local Menu = {}
-Menu.__index = Menu
+M.lines = {} -- Nui renderable content
+M.guts = {} -- Menu choices with callback
+M.prompt = nil
 
 -- Build and open the NUI popup for this menu.
-function Menu:open()
-  local NuiMenu = require("nui.menu")
-  local event = require("nui.utils.autocmd").event
+function M:open()
+    local prompt = self.prompt or "Actions"
 
-  local items = vim.tbl_map(function(item_spec)
-    return Item.create(self, item_spec)
-  end, self.items or {})
+    local popup = NuiMenu(layout.create_menu_layout(self.lines, prompt), {
+        lines = self.lines,
+        keymap = {
+            close = {"q", "<Esc>"},
+            submit = {},
+            focus_next = {},
+            focus_prev = {}
+        }
+    })
 
-  local lines = create_menu_items(items, NuiMenu)
-  local prompt = self.prompt or "Actions"
+    -- Pop up the popup
+    popup:mount()
 
-  local popup = NuiMenu(layout.create_menu_layout(lines, prompt), {
-    lines = lines,
-    keymap = {
-      close = { "q", "<Esc>" },
-      submit = {},
-      focus_next = {},
-      focus_prev = {},
-    },
-  })
+    -- Mount all items to enable their hotkeys (they are set against the buffer, so not permanent)
+    for _, item in ipairs(self.guts) do
+        item:mount(popup.bufnr, function()
+            popup:unmount()
+        end)
+    end
 
-  popup:mount()
-
-  popup:on(event.BufLeave, function()
-    popup:unmount()
-  end)
-
-  for _, item in ipairs(items) do
-    item:mount(popup.bufnr, function()
-      popup:unmount()
+    -- Setup automatic exit when leaving the buffer
+    popup:on(event.BufLeave, function()
+        popup:unmount()
     end)
-  end
 end
 
 -- Bind this menu to a keymap.
-function Menu:bind(mode, lhs, desc)
-  vim.keymap.set(mode, lhs, function()
-    self:open()
-  end, { desc = desc })
+function M:bind(mode, lhs, desc)
+    vim.keymap.set(mode, lhs, function()
+        self:open()
+    end, {
+        desc = desc
+    })
 end
 
 -- Create a new Menu object from a spec table.
-function Menu.create(menu_spec)
-  return setmetatable(vim.tbl_extend("force", {}, menu_spec), Menu)
+function M.create(title, menu_spec)
+    local menu = setmetatable({}, M)
+    menu.prompt = title
+
+    menu.lines, menu.guts = create_menu_items(menu_spec)
+    return menu
 end
 
--- Entry point: create a Menu from a spec.
-local function setup_menu(menu_spec)
-  return Menu.create(menu_spec)
-end
-
-return setup_menu
+return M
