@@ -1,33 +1,24 @@
-local menu_item = require("configs.nui.lib.menu.item")
-local items = require("configs.nui.lib.menu.items")
+local Item = require("configs.nui.lib.menu.item")
+local create_menu_items = require("configs.nui.lib.menu.items")
+local layout = require("configs.nui.lib.menu.layout")
 
--- Create, mount, and wire a popup menu from a menu spec.
-local function open_menu(menu_spec)
-  local Menu = require("nui.menu")
+local Menu = {}
+Menu.__index = Menu
+
+-- Build and open the NUI popup for this menu.
+function Menu:open()
+  local NuiMenu = require("nui.menu")
   local event = require("nui.utils.autocmd").event
 
-  local rendered = items.build(menu_spec, Menu)
-  local prompt = menu_spec.prompt or "Actions"
+  local items = vim.tbl_map(function(item_spec)
+    return Item.create(self, item_spec)
+  end, self.items or {})
 
-  local popup = Menu({
-    relative = "editor",
-    position = "50%",
-    size = {
-      width = rendered.popup_width,
-      height = rendered.popup_height,
-    },
-    border = {
-      style = "rounded",
-      text = {
-        top = " " .. prompt .. " ",
-        top_align = "center",
-      },
-    },
-    win_options = {
-      cursorline = false,
-    },
-  }, {
-    lines = rendered.lines,
+  local lines = create_menu_items(items, NuiMenu)
+  local prompt = self.prompt or "Actions"
+
+  local popup = NuiMenu(layout.create_menu_layout(lines, prompt), {
+    lines = lines,
     keymap = {
       close = { "q", "<Esc>" },
       submit = {},
@@ -42,38 +33,28 @@ local function open_menu(menu_spec)
     popup:unmount()
   end)
 
-  for key, item in pairs(rendered.key_to_item) do
-    vim.keymap.set("n", key, function()
+  for _, item in ipairs(items) do
+    item:mount(popup.bufnr, function()
       popup:unmount()
-      menu_item.run(menu_spec, item)
-    end, {
-      buffer = popup.bufnr,
-      nowait = true,
-      silent = true,
-    })
+    end)
   end
 end
 
--- Link a menu object to a top-level keymap.
-local function bind_menu_to_keymaps(menu, mode, lhs, desc)
+-- Bind this menu to a keymap.
+function Menu:bind(mode, lhs, desc)
   vim.keymap.set(mode, lhs, function()
-    open_menu(menu)
+    self:open()
   end, { desc = desc })
 end
 
--- Build a full menu object from a lean menu spec.
-local function create_menu_from_spec(menu_spec)
-  local menu = vim.tbl_extend("force", {}, menu_spec)
-
-  menu.open = function()
-    open_menu(menu)
-  end
-
-  menu.bind = function(mode, lhs, desc)
-    bind_menu_to_keymaps(menu, mode, lhs, desc)
-  end
-
-  return menu
+-- Create a new Menu object from a spec table.
+function Menu.create(menu_spec)
+  return setmetatable(vim.tbl_extend("force", {}, menu_spec), Menu)
 end
 
-return create_menu_from_spec
+-- Entry point: create a Menu from a spec.
+local function setup_menu(menu_spec)
+  return Menu.create(menu_spec)
+end
+
+return setup_menu
