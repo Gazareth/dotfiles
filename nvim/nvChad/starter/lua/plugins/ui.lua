@@ -18,11 +18,10 @@ local M = { {
   end
 },
   {
-    "Chaitanyabsprip/fastaction.nvim",
+    "MunifTanjim/nui.nvim",
     event = "VeryLazy",
     config = function()
-      require("fastaction").setup {}
-      require("configs.fastactions").setup()
+      require("configs.nui").setup()
     end,
   },
   -- Restore last quit buffer
