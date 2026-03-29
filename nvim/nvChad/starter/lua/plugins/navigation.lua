@@ -3,9 +3,6 @@ local M = {
   { "serhez/bento.nvim", opts = {}, event = "DirChanged" },
   {
     "bassamsdata/namu.nvim",
-    dependencies =  { 
-      { "Chaitanyabsprip/fastaction.nvim", config = true }, -- Forces setup() to run
-    },
     opts = {
       global = {},
       namu_symbols = { -- Specific Module options
@@ -40,9 +37,6 @@ local M = {
           },
         },
       },
-    },
-    config = {
-      require("configs.namu")
     },
     event = "BufEnter",
   },

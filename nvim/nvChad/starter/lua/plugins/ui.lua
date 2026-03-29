@@ -17,6 +17,14 @@ local M = { {
     require('telescope').load_extension('ui-select')
   end
 },
+  {
+    "Chaitanyabsprip/fastaction.nvim",
+    event = "VeryLazy",
+    config = function()
+      require("fastaction").setup {}
+      require("configs.fastactions").setup()
+    end,
+  },
   -- Restore last quit buffer
   {
     "AndrewRadev/undoquit.vim",

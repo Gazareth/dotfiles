@@ -82,6 +82,14 @@ local M = {
       })
     end,
     lazy = false
+  },
+
+  {
+    "aaronik/treewalker.nvim",
+    cmd = "Treewalker",
+    config = function()
+      require("treewalker").setup {}
+    end,
   }
 }
 
