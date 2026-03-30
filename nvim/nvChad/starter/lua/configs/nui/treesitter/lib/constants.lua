@@ -34,4 +34,13 @@ M.supported_nodes = {
   ["function"] = "function",
 }
 
+M.roles = {
+  identifier = "identifier",
+  field = "field",
+  parameter = "parameter",
+  binding = "binding",
+  method = "method",
+  ["function"] = "function",
+}
+
 return M

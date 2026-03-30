@@ -1,6 +1,8 @@
 local constants = require("configs.nui.treesitter.parsers.function.lib.constants")
 local parameters = require("configs.nui.treesitter.parsers.function.lib.parameters")
-local node_types = require("configs.nui.treesitter.lib.constants").node_types
+local treesitter_constants = require("configs.nui.treesitter.lib.constants")
+local node_types = treesitter_constants.node_types
+local roles = treesitter_constants.roles
 
 local M = {}
 
@@ -30,11 +32,11 @@ end
 
 function M.detect_method_kind(node_info)
   if node_info.node_type == node_types.method_definition then
-    return "method"
+    return roles.method
   end
 
-  if type(node_info.parent_type) == "string" and string.find(node_info.parent_type, "method", 1, true) then
-    return "method"
+  if type(node_info.parent_type) == "string" and string.find(node_info.parent_type, roles.method, 1, true) then
+    return roles.method
   end
 
   local params = parameters.find_parameter_container(node_info.node)
@@ -43,15 +45,18 @@ function M.detect_method_kind(node_info)
     if first then
       local ok, first_text = pcall(vim.treesitter.get_node_text, first, node_info.bufnr)
       if ok and (first_text == "self" or first_text == "this") then
-        return "method"
+        return roles.method
       end
     end
   end
 
-  return "function"
+  return roles["function"]
 end
 
 M.constants = constants
+M.function_like_types = constants.function_like_types
+M.assignment_types = constants.assignment_types
+M.table_assignment_types = constants.table_assignment_types
 M.find_parameter_container = parameters.find_parameter_container
 M.count_parameters = parameters.count_parameters
 

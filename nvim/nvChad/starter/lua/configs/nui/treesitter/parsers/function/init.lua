@@ -1,5 +1,6 @@
 local lib = require("configs.nui.treesitter.parsers.function.lib")
-local supported_nodes = require("configs.nui.treesitter.lib.constants").supported_nodes
+local treesitter_constants = require("configs.nui.treesitter.lib.constants")
+local supported_nodes = treesitter_constants.supported_nodes
 
 local M = {}
 
