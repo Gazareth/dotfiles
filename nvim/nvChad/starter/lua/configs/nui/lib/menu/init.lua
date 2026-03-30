@@ -10,6 +10,49 @@ M.__index = M
 M.sections = {} -- Section objects
 M.prompt = nil
 
+local function resolve_section_spec(menu, spec_or_fn)
+	local spec = spec_or_fn
+
+	if type(spec_or_fn) == "function" then
+		local ok, result = pcall(spec_or_fn, menu)
+		if not ok then
+			vim.notify("Failed to resolve dynamic menu section: " .. tostring(result), vim.log.levels.ERROR)
+			return nil, true
+		end
+		spec = result
+	end
+
+	if type(spec) == "table" and spec.__abort_open == true then
+		local message = spec.__abort_message or "Menu could not be opened for the current context."
+		vim.notify(message, vim.log.levels.WARN)
+		return nil, true
+	end
+
+	if type(spec) ~= "table" then
+		vim.notify("Invalid menu section spec. Expected table.", vim.log.levels.ERROR)
+		return nil, false
+	end
+
+	return Section.create(spec), false
+end
+
+function M:resolve_sections()
+	local resolved_sections = {}
+
+	for _, section_spec in ipairs(self.section_specs or {}) do
+		local section, should_abort = resolve_section_spec(self, section_spec)
+		if should_abort then
+			return nil
+		end
+
+		if section ~= nil then
+			table.insert(resolved_sections, section)
+		end
+	end
+
+	return resolved_sections
+end
+
 local function create_nui_section(section, section_layout)
 	return NuiMenu(
 		vim.tbl_deep_extend("force", {
@@ -31,6 +74,13 @@ end
 
 -- Build and open the NUI popup for this menu.
 function M:open()
+	local sections = self:resolve_sections()
+	if sections == nil or #sections == 0 then
+		return
+	end
+
+	self.sections = sections
+
 	local prompt = self.prompt or "Actions"
 	local menu_layout = layout.create_menu_layout(self.sections, prompt)
 	local nui_sections = {}
@@ -81,11 +131,7 @@ end
 function M.create(title, menu_spec)
 	local menu = setmetatable({}, M)
 	menu.prompt = title
-
-	menu.sections = {}
-	for _, section_spec in ipairs(menu_spec) do
-		table.insert(menu.sections, Section.create(section_spec))
-	end
+	menu.section_specs = menu_spec or {}
 
 	return menu
 end
