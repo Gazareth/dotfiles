@@ -44,4 +44,24 @@ function M.count_parameters(node)
   end)
 end
 
+-- List concrete parameter nodes inside a function parameter list.
+function M.list_parameters(node)
+  local params = M.find_parameter_container(node)
+  if not params then
+    return nil
+  end
+
+  local list = {}
+  local named_count = params:named_child_count()
+
+  for i = 0, named_count - 1 do
+    local child = params:named_child(i)
+    if constants.parameter_types[child:type()] == true then
+      list[#list + 1] = child
+    end
+  end
+
+  return list, params
+end
+
 return M

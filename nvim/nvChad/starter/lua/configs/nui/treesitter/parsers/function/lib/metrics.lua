@@ -2,6 +2,11 @@ local constants = require("configs.nui.treesitter.parsers.function.lib.constants
 local parameters = require("configs.nui.treesitter.parsers.function.lib.parameters")
 
 local M = {}
+local call_types = {
+  call = true,
+  call_expression = true,
+  function_call = true,
+}
 
 -- Visit a node and all of its descendants.
 local function walk(node, fn)
@@ -28,9 +33,27 @@ function M.count_descendants(node, predicate)
   return count
 end
 
+-- Collect descendants that match a given test.
+function M.collect_descendants(node, predicate)
+  local list = {}
+  walk(node, function(current)
+    if current ~= node and predicate(current) then
+      list[#list + 1] = current
+    end
+  end)
+  return list
+end
+
 -- Count nested functions inside the current function.
 local function count_nested_functions(node)
   return M.count_descendants(node, function(current)
+    return constants.function_like_types[current:type()] == true
+  end)
+end
+
+-- Collect nested function nodes inside the current function.
+function M.find_nested_functions(node)
+  return M.collect_descendants(node, function(current)
     return constants.function_like_types[current:type()] == true
   end)
 end
@@ -42,10 +65,38 @@ local function count_assignments(node)
   end)
 end
 
+-- Collect assignment nodes inside the current function.
+function M.find_assignments(node)
+  return M.collect_descendants(node, function(current)
+    return constants.assignment_types[current:type()] == true
+  end)
+end
+
 -- Count table field assignments inside the current function.
 local function count_table_assignments(node)
   return M.count_descendants(node, function(current)
     return constants.table_assignment_types[current:type()] == true
+  end)
+end
+
+-- Collect table field assignment nodes inside the current function.
+function M.find_table_assignments(node)
+  return M.collect_descendants(node, function(current)
+    return constants.table_assignment_types[current:type()] == true
+  end)
+end
+
+-- Count calls made within the current function body.
+local function count_calls(node)
+  return M.count_descendants(node, function(current)
+    return call_types[current:type()] == true
+  end)
+end
+
+-- Collect call expressions within the current function body.
+function M.find_calls(node)
+  return M.collect_descendants(node, function(current)
+    return call_types[current:type()] == true
   end)
 end
 
@@ -57,6 +108,7 @@ function M.build_function_metrics(node_info)
     nested_function_count = count_nested_functions(node_info.node),
     assignment_count = count_assignments(node_info.node),
     table_assignment_count = count_table_assignments(node_info.node),
+    called_count = count_calls(node_info.node),
   }
 end
 
