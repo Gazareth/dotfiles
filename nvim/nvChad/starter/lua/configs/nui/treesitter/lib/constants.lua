@@ -43,4 +43,38 @@ M.roles = {
   ["function"] = "function",
 }
 
+M.identifier_role_parent_types = {
+  field = {
+    [M.node_types.field] = true,
+    [M.node_types.pair] = true,
+    [M.node_types.property] = true,
+    [M.node_types.property_identifier] = true,
+    [M.node_types.object] = true,
+  },
+  parameter = {
+    [M.node_types.parameter] = true,
+    [M.node_types.parameters] = true,
+    [M.node_types.parameter_list] = true,
+    [M.node_types.formal_parameters] = true,
+    [M.node_types.arguments] = true,
+  },
+  binding = {
+    [M.node_types.variable_declaration] = true,
+    [M.node_types.local_declaration] = true,
+    [M.node_types.assignment_statement] = true,
+    [M.node_types.assignment_expression] = true,
+  },
+}
+
+M.parameter_container_types = {
+  [M.node_types.parameters] = true,
+  [M.node_types.parameter_list] = true,
+  [M.node_types.formal_parameters] = true,
+}
+
+M.method_receiver_names = {
+  self = true,
+  this = true,
+}
+
 return M
