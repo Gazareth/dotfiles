@@ -18,10 +18,10 @@ local M = { {
   end
 },
   {
-    "MunifTanjim/nui.nvim",
+    "anuvyklack/hydra.nvim",
     event = "VeryLazy",
     config = function()
-      require("configs.nui").setup()
+      require("configs.hydra").setup()
     end,
   },
   -- Restore last quit buffer
