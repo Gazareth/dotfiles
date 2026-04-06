@@ -77,7 +77,10 @@ function M.open(menu_spec)
     return
   end
 
-  local rendered = hint.build(sections)
+  -- Hint render options
+  local rendered = hint.build(sections, {
+    title = menu_spec.title,
+  })
   local heads = build_heads(rendered)
 
   local hydra = Hydra({

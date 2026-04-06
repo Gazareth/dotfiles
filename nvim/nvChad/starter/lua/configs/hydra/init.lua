@@ -16,12 +16,12 @@ function M.setup(opts)
   end, { desc = "Namu Symbols Menu" })
 
   vim.keymap.set("n", "<leader>tt", function()
-    Menu.open(menus.treewalker_all)
+    Menu.open(type(menus.treewalker_all) == "function" and menus.treewalker_all() or menus.treewalker_all)
   end, { desc = "Treewalker Scope & Actions" })
 
   vim.keymap.set("n", "<leader>tn", function()
     treesitter_config.with_context_mode(modes.max or modes.lowest_node, function()
-      Menu.open(menus.treewalker_all)
+      Menu.open(type(menus.treewalker_all) == "function" and menus.treewalker_all() or menus.treewalker_all)
     end)
   end, { desc = "Treewalker Max Depth Node" })
 end

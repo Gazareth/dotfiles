@@ -108,19 +108,11 @@ local function select_by_mode(candidates, mode)
   return candidates[standard_index].node_info
 end
 
--- Choose the action anchor from the cursor node chain
-function M.select_node_info(node_info)
-  if not node_info or not node_info.node then
-    return node_info
-  end
-
-  local config = treesitter_config.get()
-  local resolve_options = build_resolve_options(config)
-  local mode = config.context_mode or "standard"
-  local current = node_info.node
+-- Actionable candidates from cursor chain
+local function collect_candidates(node_info, resolve_options)
+  local current = node_info and node_info.node or nil
   local candidates = {}
 
-  -- Walk parent nodes until a valid anchor is found
   while current do
     local candidate = build_node_info({
       bufnr = node_info.bufnr,
@@ -141,6 +133,55 @@ function M.select_node_info(node_info)
 
     current = current:parent()
   end
+
+  return candidates
+end
+
+-- Public anchor candidate list
+function M.get_candidates(node_info)
+  if not node_info or not node_info.node then
+    return {}
+  end
+
+  local config = treesitter_config.get()
+  local resolve_options = build_resolve_options(config)
+  return collect_candidates(node_info, resolve_options)
+end
+
+-- Candidate index for selected node
+function M.find_candidate_index(candidates, selected_node_info)
+  if type(candidates) ~= "table" or not selected_node_info or not selected_node_info.node then
+    return nil
+  end
+
+  local ok, selected_id = pcall(function()
+    return selected_node_info.node:id()
+  end)
+  if not ok then
+    return nil
+  end
+
+  for index, entry in ipairs(candidates) do
+    local match_ok, entry_id = pcall(function()
+      return entry.node_info.node:id()
+    end)
+    if match_ok and entry_id == selected_id then
+      return index
+    end
+  end
+
+  return nil
+end
+
+-- Choose the action anchor from the cursor node chain
+function M.select_node_info(node_info)
+  if not node_info or not node_info.node then
+    return node_info
+  end
+
+  local config = treesitter_config.get()
+  local mode = config.context_mode or "standard"
+  local candidates = M.get_candidates(node_info)
 
   if #candidates == 0 then
     return node_info

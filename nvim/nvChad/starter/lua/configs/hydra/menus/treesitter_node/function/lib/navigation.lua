@@ -1,6 +1,25 @@
 local M = {}
 local action_ids = require("configs.hydra.treesitter.lib.atlantis.constants").action_ids
 
+-- Jump label role-name format
+local function format_jump_label(target, fallback_role, fallback_name)
+  local role = fallback_role
+  local name = fallback_name
+
+  if type(target) == "table" then
+    if type(target.role) == "string" and target.role ~= "" then
+      role = target.role
+    end
+    if type(target.name) == "string" and target.name ~= "" then
+      name = target.name
+    end
+  end
+
+  role = vim.trim(tostring(role or "Target"))
+  name = vim.trim(tostring(name or "item"))
+  return "[" .. role .. "] " .. name
+end
+
 -- Cursor jump to a target node
 function M.jump_to_target(target)
   return function()
@@ -55,7 +74,7 @@ function M.append_parameter_rows(items, targets, hotkeys, used, cursor)
     items[#items + 1] = {
       key = key,
       icon = ">",
-      label = "Go to parameters",
+      label = format_jump_label(parameter_container, "Parameters", "list"),
       action_id = action_ids.jump,
       action = M.jump_to_target(parameter_container),
     }
@@ -67,7 +86,7 @@ function M.append_parameter_rows(items, targets, hotkeys, used, cursor)
     items[#items + 1] = {
       key = key,
       icon = ">",
-      label = "Go to parameter " .. tostring(index),
+      label = format_jump_label(target, "Parameter", tostring(index)),
       action_id = action_ids.jump,
       action = M.jump_to_target(target),
     }
@@ -79,13 +98,12 @@ end
 -- Jump rows for nested functions
 function M.append_nested_function_rows(items, targets, hotkeys, used, cursor)
   for _, target in ipairs(targets.nested_functions or {}) do
-    local label = target.label or "nested function"
     local key
     key, cursor = M.next_hotkey(hotkeys, used, cursor)
     items[#items + 1] = {
       key = key,
       icon = ">",
-      label = "Go to " .. label,
+      label = format_jump_label(target, "Function", "nested function"),
       action_id = action_ids.jump,
       action = M.jump_to_target(target),
     }
@@ -106,7 +124,7 @@ function M.append_assignment_rows(items, targets, hotkeys, used, cursor)
     items[#items + 1] = {
       key = key,
       icon = ">",
-      label = "Go to assignment " .. tostring(index),
+      label = format_jump_label(target, "Assignment", tostring(index)),
       action_id = action_ids.jump,
       action = M.jump_to_target(target),
     }
@@ -118,7 +136,7 @@ function M.append_assignment_rows(items, targets, hotkeys, used, cursor)
     items[#items + 1] = {
       key = key,
       icon = ">",
-      label = "Go to assignment n",
+      label = format_jump_label(nil, "Assignment", "n"),
       action_id = action_ids.jump,
       action = function() end,
     }

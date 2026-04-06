@@ -13,14 +13,16 @@ local function get_node_text(node, bufnr)
   return text or ""
 end
 
--- Buffer position plus display label
-local function to_target(node, bufnr, label)
+-- Target role-name fields
+local function to_target(node, bufnr, label, role, name)
   local row, col = node:start()
   return {
     bufnr = bufnr,
     row = row,
     col = col,
     label = label,
+    role = role,
+    name = name,
   }
 end
 
@@ -60,11 +62,22 @@ function M.build_parameter_targets(node_info)
   }
 
   if parameter_container then
-    targets.container = to_target(parameter_container, node_info.bufnr, "parameters")
+    targets.container = to_target(parameter_container, node_info.bufnr, "parameters", "Parameters", "list")
   end
 
   for index, node in ipairs(parameter_nodes or {}) do
-    targets.parameters[index] = to_target(node, node_info.bufnr, "parameter " .. tostring(index))
+    local parameter_name = vim.trim(get_node_text(node, node_info.bufnr))
+    if parameter_name == "" then
+      parameter_name = "parameter " .. tostring(index)
+    end
+
+    targets.parameters[index] = to_target(
+      node,
+      node_info.bufnr,
+      "parameter " .. tostring(index),
+      "Parameter",
+      parameter_name
+    )
   end
 
   return targets
@@ -79,7 +92,7 @@ function M.build_nested_function_targets(node_info)
       name = "nested function"
     end
 
-    targets[#targets + 1] = to_target(node, node_info.bufnr, name)
+    targets[#targets + 1] = to_target(node, node_info.bufnr, name, "Function", name)
   end
 
   return targets
@@ -94,7 +107,18 @@ function M.build_assignment_targets(node_info)
   vim.list_extend(all_assignments, metrics.find_table_assignments(node_info.node))
 
   for index, node in ipairs(all_assignments) do
-    targets[index] = to_target(node, node_info.bufnr, "assignment " .. tostring(index))
+    local assignment_name = vim.trim(get_node_text(node, node_info.bufnr))
+    if assignment_name == "" then
+      assignment_name = "assignment " .. tostring(index)
+    end
+
+    targets[index] = to_target(
+      node,
+      node_info.bufnr,
+      "assignment " .. tostring(index),
+      "Assignment",
+      assignment_name
+    )
   end
 
   return targets

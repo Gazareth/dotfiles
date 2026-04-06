@@ -6,7 +6,7 @@ local items = {
 }
 
 return {
-  title = " ⇅ Swap Nodes",
+  title = " ⇅ Swap",
   items = vim.tbl_map(function(item)
     return vim.tbl_extend("force", {
       action = "Treewalker " .. item.cmd,
