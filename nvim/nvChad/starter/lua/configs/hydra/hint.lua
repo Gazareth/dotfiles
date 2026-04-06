@@ -20,6 +20,13 @@ local function pad_right(text, width)
   return value .. string.rep(" ", padding)
 end
 
+-- Sanitize Hydra hint control characters
+local function escape_hint_text(text)
+  local value = text or ""
+  -- Keep hint parser safe by removing marker chars from dynamic labels
+  return value:gsub("_", "-"):gsub("%^", ""):gsub("\\", "/")
+end
+
 local function next_hotkey(used)
   for char in HOTKEY_POOL:gmatch(".") do
     if not used[char] then
@@ -93,7 +100,7 @@ local function render_item(item)
 end
 
 local function section_lines(section)
-  local title = section.title or ""
+  local title = escape_hint_text(section.title or "")
   local lines = {}
 
   if title ~= "" then
@@ -104,7 +111,7 @@ local function section_lines(section)
   end
 
   for _, item in ipairs(section.items or {}) do
-    lines[#lines + 1] = render_item(item)
+    lines[#lines + 1] = escape_hint_text(render_item(item))
   end
 
   return lines

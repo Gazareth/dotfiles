@@ -8,7 +8,7 @@ local call_types = {
   function_call = true,
 }
 
--- Visit a node and all of its descendants.
+-- Recursive node walk
 local function walk(node, fn)
   if not node then
     return
@@ -22,7 +22,7 @@ local function walk(node, fn)
   end
 end
 
--- Count descendants that match a given test.
+-- Matching descendant count
 function M.count_descendants(node, predicate)
   local count = 0
   walk(node, function(current)
@@ -33,7 +33,7 @@ function M.count_descendants(node, predicate)
   return count
 end
 
--- Collect descendants that match a given test.
+-- Matching descendant list
 function M.collect_descendants(node, predicate)
   local list = {}
   walk(node, function(current)
@@ -44,63 +44,63 @@ function M.collect_descendants(node, predicate)
   return list
 end
 
--- Count nested functions inside the current function.
+-- Nested function count
 local function count_nested_functions(node)
   return M.count_descendants(node, function(current)
     return constants.function_like_types[current:type()] == true
   end)
 end
 
--- Collect nested function nodes inside the current function.
+-- Nested function list
 function M.find_nested_functions(node)
   return M.collect_descendants(node, function(current)
     return constants.function_like_types[current:type()] == true
   end)
 end
 
--- Count assignment nodes inside the current function.
+-- Assignment count
 local function count_assignments(node)
   return M.count_descendants(node, function(current)
     return constants.assignment_types[current:type()] == true
   end)
 end
 
--- Collect assignment nodes inside the current function.
+-- Assignment list
 function M.find_assignments(node)
   return M.collect_descendants(node, function(current)
     return constants.assignment_types[current:type()] == true
   end)
 end
 
--- Count table field assignments inside the current function.
+-- Table assignment count
 local function count_table_assignments(node)
   return M.count_descendants(node, function(current)
     return constants.table_assignment_types[current:type()] == true
   end)
 end
 
--- Collect table field assignment nodes inside the current function.
+-- Table assignment list
 function M.find_table_assignments(node)
   return M.collect_descendants(node, function(current)
     return constants.table_assignment_types[current:type()] == true
   end)
 end
 
--- Count calls made within the current function body.
+-- Call count
 local function count_calls(node)
   return M.count_descendants(node, function(current)
     return call_types[current:type()] == true
   end)
 end
 
--- Collect call expressions within the current function body.
+-- Call list
 function M.find_calls(node)
   return M.collect_descendants(node, function(current)
     return call_types[current:type()] == true
   end)
 end
 
--- Build the metrics table for a parsed function.
+-- Function metrics
 function M.build_function_metrics(node_info)
   return {
     parameter_count = parameters.count_parameters(node_info.node),

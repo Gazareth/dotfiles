@@ -4,7 +4,7 @@ local parameter_container_types = treesitter_constants.parameter_container_types
 
 local M = {}
 
--- Count child nodes that match a given test.
+-- Matching child count
 local function count_named_children(node, predicate)
   local count = 0
   local named_count = node:named_child_count()
@@ -19,7 +19,7 @@ local function count_named_children(node, predicate)
   return count
 end
 
--- Find the child node that holds this function's parameter list.
+-- Parameter container lookup
 function M.find_parameter_container(node)
   local named_count = node:named_child_count()
   for i = 0, named_count - 1 do
@@ -32,7 +32,7 @@ function M.find_parameter_container(node)
   return nil
 end
 
--- Count the parameters inside a function's parameter list.
+-- Parameter count
 function M.count_parameters(node)
   local params = M.find_parameter_container(node)
   if not params then
@@ -44,7 +44,7 @@ function M.count_parameters(node)
   end)
 end
 
--- List concrete parameter nodes inside a function parameter list.
+-- Parameter node list
 function M.list_parameters(node)
   local params = M.find_parameter_container(node)
   if not params then

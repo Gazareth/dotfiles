@@ -2,8 +2,15 @@ local parse_identifier = require("configs.hydra.treesitter.parsers.identifier").
 local parse_function = require("configs.hydra.treesitter.parsers.function").parse_function
 local parse_binary_expression = require("configs.hydra.treesitter.parsers.binary_expression").parse_binary_expression
 local parse_generic = require("configs.hydra.treesitter.parsers.generic").parse_generic
-local node_types = require("configs.hydra.treesitter.lib.constants").node_types
+local treesitter_constants = require("configs.hydra.treesitter.lib.constants")
+local atlantis_constants = require("configs.hydra.treesitter.lib.atlantis.constants")
+local node_types = treesitter_constants.node_types
+local node_tiers = atlantis_constants.node_tiers
+local node_kinds = atlantis_constants.node_kinds
+local resolve_language_mapping = require("configs.hydra.treesitter.languages").resolve
+local treesitter_config = require("configs.hydra.treesitter.config")
 
+-- Specialized parser map
 local parser_map = {
   [node_types.identifier] = parse_identifier,
   [node_types.binary_expression] = parse_binary_expression,
@@ -16,7 +23,7 @@ local parser_map = {
   [node_types.arrow_function] = parse_function,
 }
 
--- Run the selected parser safely and return nil if it fails.
+-- Safe specialized parser run
 local function parse_with_specialized_parser(parser, node_info)
   if type(parser) ~= "function" then
     return nil
@@ -31,15 +38,28 @@ local function parse_with_specialized_parser(parser, node_info)
   return nil
 end
 
--- Fill in any common fields that a parser might have left out.
+-- Parsed node normalization
 local function normalize_parsed_result(parsed, node_info)
+  local config = treesitter_config.get()
+  -- Semantic resolver input
+  local semantic_node_info = parsed.semantic_node_info or node_info
+
   parsed.node_type = parsed.node_type or node_info.node_type
   parsed.text = parsed.text or node_info.text
   parsed.cursor_node_type = node_info.node_type
+  parsed.semantic = resolve_language_mapping(semantic_node_info, {
+    safe_languages = config.safe_languages,
+    languages = config.languages,
+  })
+  parsed.node_tier = parsed.semantic and parsed.semantic.node_tier or node_tiers.reef
+  parsed.semantic_kind = parsed.semantic and parsed.semantic.node_kind or node_kinds.unknown
+  parsed.actionable = parsed.semantic and parsed.semantic.actionable or false
+  parsed.context_mode = config.context_mode or "standard"
+
   return parsed
 end
 
--- Pick the right parser for the current node or fall back to the generic parser.
+-- Parser selection
 local function parse_node(node_info)
   if not node_info then
     return nil

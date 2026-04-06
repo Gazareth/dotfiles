@@ -5,7 +5,7 @@ local supported_nodes = treesitter_constants.supported_nodes
 
 local M = {}
 
--- Parse a function node into its label and metrics.
+-- Function parse result
 function M.parse_function(node_info)
   local method_kind = lib.is_function_or_method(node_info)
   local function_name = targets.extract_function_name(node_info.node, node_info.bufnr)

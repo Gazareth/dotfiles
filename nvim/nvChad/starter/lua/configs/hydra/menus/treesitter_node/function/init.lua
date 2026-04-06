@@ -1,10 +1,11 @@
 local actions = require("configs.hydra.menus.treesitter_node.function.lib.actions")
 local navigation = require("configs.hydra.menus.treesitter_node.function.lib.navigation")
 local parsed_helpers = require("configs.hydra.menus.treesitter_node.function.lib.parsed")
+local action_ids = require("configs.hydra.treesitter.lib.atlantis.constants").action_ids
 
 local M = {}
 
--- Build a structured function menu with grouped metric headings and jump targets.
+-- Menu for parsed function nodes
 function M.build(node_info, parsed)
   local _ = node_info
   local metrics = parsed_helpers.get_metrics(parsed)
@@ -18,17 +19,20 @@ function M.build(node_info, parsed)
   local used = { c = true, h = true }
   local cursor = 1
 
+  -- Rename and navigation actions first
   local items = {
     {
       key = "c",
       icon = ">",
       label = "Change name",
+      action_id = action_ids.change_name,
       action = actions.build_change_name_action(),
     },
     {
       key = "h",
       icon = ">",
       label = "View call hierarchy",
+      action_id = action_ids.view_call_hierarchy,
       action = actions.build_call_hierarchy_action(),
     },
     {
@@ -53,6 +57,7 @@ function M.build(node_info, parsed)
 
   cursor = navigation.append_assignment_rows(items, targets, hotkeys, used, cursor)
 
+  -- Metrics summary at the end
   items[#items + 1] = { separator = true }
   items[#items + 1] = {
     separator = true,

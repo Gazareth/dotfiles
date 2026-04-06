@@ -1,12 +1,12 @@
 local M = {}
 
--- Get the current cursor position.
+-- Cursor row and column
 local function get_cursor()
   local row, col = unpack(vim.api.nvim_win_get_cursor(0))
   return { row = row, col = col }
 end
 
--- Get node text and return an empty string if Treesitter cannot read it.
+-- Node text with empty fallback
 local function get_node_text(node, bufnr)
   local ok, text = pcall(vim.treesitter.get_node_text, node, bufnr)
   if ok then
@@ -16,7 +16,7 @@ local function get_node_text(node, bufnr)
   return ""
 end
 
--- Build the shared node info table used by all parsers.
+-- Node details shared by all parsers
 function M.build_node_info(opts)
   opts = opts or {}
 

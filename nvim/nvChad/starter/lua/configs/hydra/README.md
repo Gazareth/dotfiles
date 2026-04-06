@@ -4,14 +4,26 @@ Plugin-level context behavior for atlantis.nvim.
 
 Tree-sitter parsing semantics (node tiers and node kinds) are documented in [treesitter/README.md](treesitter/README.md).
 
-## 1. Anchor Modes
+## 1. Context Navigation
 
-atlantis.nvim supports two context selection modes:
+atlantis.nvim supports the following context selection modes:
 
-- standard context: select eldest valid proximal node
-- lowest context: select youngest valid proximal node
+Overlapping Tree-sitter nodes are treated as separate anchors. Context navigation picks one anchor at a time, and mode selection controls how you move between those anchors.
 
-This is the tie-break policy when multiple valid anchors are present (for example Chambers and Habitat).
+- standard: select the intuitive actionable anchor for the current edit intent
+- depth_N: select by anchor depth from the highest actionable anchor
+- max: select the deepest actionable anchor (closest to cursor)
+
+Depth mode contract:
+
+- depth_0: highest actionable anchor
+- depth_1: one step below highest
+- depth_2+: continue stepping downward toward cursor
+
+Notes:
+
+- standard is heuristic and can prefer assignment over call inside Habitat
+- max is equivalent to the previous lowest-node behavior
 
 ## 2. Edge-Case Policy
 
@@ -29,8 +41,8 @@ Cursor on then inside an if statement:
 
 - local mapping: Coral + kind=keyword
 - anchor behavior: defer actions to enclosing conditional frame
-- mode effect (standard context): eldest valid anchor
-- mode effect (lowest context): youngest valid anchor
+- mode effect (standard): intuitive actionable anchor
+- mode effect (max): deepest actionable anchor
 
 ## 4. Code Separation
 

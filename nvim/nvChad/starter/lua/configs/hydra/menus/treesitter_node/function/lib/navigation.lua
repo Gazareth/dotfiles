@@ -1,6 +1,7 @@
 local M = {}
+local action_ids = require("configs.hydra.treesitter.lib.atlantis.constants").action_ids
 
--- Return an action that jumps the cursor to a target location.
+-- Cursor jump to a target node
 function M.jump_to_target(target)
   return function()
     if type(target) ~= "table" then
@@ -19,7 +20,7 @@ function M.jump_to_target(target)
   end
 end
 
--- Build the sequence of available one-key shortcuts.
+-- One-key shortcut pool
 function M.build_hotkey_pool()
   local pool = {}
   for char in ("1234567890abcdefghijklmnopqrstuvwxyz"):gmatch(".") do
@@ -28,7 +29,7 @@ function M.build_hotkey_pool()
   return pool
 end
 
--- Pick the next unused one-key hotkey from a pool.
+-- Next unused shortcut key
 function M.next_hotkey(pool, used, cursor)
   local index = cursor
   while index <= #pool do
@@ -43,7 +44,7 @@ function M.next_hotkey(pool, used, cursor)
   return nil, index
 end
 
--- Append parameter navigation rows to the menu.
+-- Jump rows for parameters
 function M.append_parameter_rows(items, targets, hotkeys, used, cursor)
   local parameters = targets.parameters or {}
   local parameter_container = targets.parameter_container
@@ -55,6 +56,7 @@ function M.append_parameter_rows(items, targets, hotkeys, used, cursor)
       key = key,
       icon = ">",
       label = "Go to parameters",
+      action_id = action_ids.jump,
       action = M.jump_to_target(parameter_container),
     }
   end
@@ -66,6 +68,7 @@ function M.append_parameter_rows(items, targets, hotkeys, used, cursor)
       key = key,
       icon = ">",
       label = "Go to parameter " .. tostring(index),
+      action_id = action_ids.jump,
       action = M.jump_to_target(target),
     }
   end
@@ -73,7 +76,7 @@ function M.append_parameter_rows(items, targets, hotkeys, used, cursor)
   return cursor
 end
 
--- Append nested-function navigation rows to the menu.
+-- Jump rows for nested functions
 function M.append_nested_function_rows(items, targets, hotkeys, used, cursor)
   for _, target in ipairs(targets.nested_functions or {}) do
     local label = target.label or "nested function"
@@ -83,6 +86,7 @@ function M.append_nested_function_rows(items, targets, hotkeys, used, cursor)
       key = key,
       icon = ">",
       label = "Go to " .. label,
+      action_id = action_ids.jump,
       action = M.jump_to_target(target),
     }
   end
@@ -90,7 +94,7 @@ function M.append_nested_function_rows(items, targets, hotkeys, used, cursor)
   return cursor
 end
 
--- Append assignment navigation rows with a capped preview.
+-- Jump rows for assignments
 function M.append_assignment_rows(items, targets, hotkeys, used, cursor)
   local assignments = targets.assignments or {}
   local max_preview = math.min(3, #assignments)
@@ -103,6 +107,7 @@ function M.append_assignment_rows(items, targets, hotkeys, used, cursor)
       key = key,
       icon = ">",
       label = "Go to assignment " .. tostring(index),
+      action_id = action_ids.jump,
       action = M.jump_to_target(target),
     }
   end
@@ -114,6 +119,7 @@ function M.append_assignment_rows(items, targets, hotkeys, used, cursor)
       key = key,
       icon = ">",
       label = "Go to assignment n",
+      action_id = action_ids.jump,
       action = function() end,
     }
   end

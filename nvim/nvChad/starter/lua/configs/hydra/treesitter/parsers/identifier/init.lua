@@ -2,7 +2,7 @@ local lib = require("configs.hydra.treesitter.parsers.identifier.lib")
 
 local M = {}
 
--- Parse identifiers by first checking whether they name a function, then fall back to structural role checks.
+-- Function-name check before role lookup
 function M.parse_identifier(node_info)
   local function_context = lib.try_parse_identifier_function_context(node_info)
   if function_context then

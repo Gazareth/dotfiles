@@ -7,7 +7,7 @@ local build_node_info = require("configs.hydra.treesitter.lib").build_node_info
 
 local M = {}
 
--- Check whether one node is inside another node in the syntax tree.
+-- Descendant check
 local function is_descendant_of(node, ancestor)
   local current = node
   while current do
@@ -21,7 +21,7 @@ local function is_descendant_of(node, ancestor)
   return false
 end
 
--- Check whether an identifier node is the name of a function.
+-- Function-name identifier check
 local function is_function_name_identifier(node, function_ancestor)
   local params = function_lib.find_parameter_container(function_ancestor)
   local child_count = function_ancestor:named_child_count()
@@ -40,7 +40,7 @@ local function is_function_name_identifier(node, function_ancestor)
   return false
 end
 
--- Walk up the tree looking for an enclosing function whose name is this identifier.
+-- Enclosing function lookup
 local function find_function_context_ancestor(node)
   local current = node and node:parent() or nil
   while current do
@@ -55,17 +55,19 @@ local function find_function_context_ancestor(node)
   return nil
 end
 
--- Reuse parsed function metadata so a function name identifier is labeled from the enclosing function.
+-- Function-name parse reuse
 local function build_function_identifier_result(function_node_info, parsed_function)
   local function_role = parsed_function.role or roles["function"]
   parsed_function.node_type = function_node_info.node_type
   parsed_function.text = function_node_info.text
+  -- Semantic mapping source node
+  parsed_function.semantic_node_info = function_node_info
   parsed_function.role = function_role .. " " .. roles.identifier
   parsed_function.display_name = parsed_function.role
   return parsed_function
 end
 
--- Parse the enclosing function first when this identifier is the function name.
+-- Function-name context parse
 function M.try_parse_identifier_function_context(node_info)
   local function_ancestor = find_function_context_ancestor(node_info.node)
   if not function_ancestor then

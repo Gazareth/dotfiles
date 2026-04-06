@@ -18,7 +18,7 @@ function M.get_targets(parsed)
   return parsed.targets
 end
 
--- Build the menu title for a parsed function.
+-- Function menu title
 function M.build_title(parsed)
   local name = ""
   if type(parsed) == "table" and type(parsed.function_name) == "string" then
@@ -29,7 +29,7 @@ function M.build_title(parsed)
     return "Function"
   end
 
-  return "Function " .. name
+  return 'Function "' .. name .. '"'
 end
 
 -- Read a metric value with a fallback.

@@ -3,7 +3,7 @@ local parameters = require("configs.hydra.treesitter.parsers.function.lib.parame
 
 local M = {}
 
--- Read text from a Treesitter node safely.
+-- Read node text without raising errors
 local function get_node_text(node, bufnr)
   local ok, text = pcall(vim.treesitter.get_node_text, node, bufnr)
   if not ok then
@@ -13,7 +13,7 @@ local function get_node_text(node, bufnr)
   return text or ""
 end
 
--- Build a jump target from a node position.
+-- Buffer position plus display label
 local function to_target(node, bufnr, label)
   local row, col = node:start()
   return {
@@ -24,7 +24,7 @@ local function to_target(node, bufnr, label)
   }
 end
 
--- Extract a human-readable function name from the function node.
+-- First identifier before the parameter list
 function M.extract_function_name(function_node, bufnr)
   local params = parameters.find_parameter_container(function_node)
   local child_count = function_node:named_child_count()
@@ -51,7 +51,7 @@ function M.extract_function_name(function_node, bufnr)
   return fallback
 end
 
--- Build jump targets for the parameter container and each parameter.
+-- Jump target for the parameter list and each parameter
 function M.build_parameter_targets(node_info)
   local parameter_nodes, parameter_container = parameters.list_parameters(node_info.node)
   local targets = {
@@ -70,7 +70,7 @@ function M.build_parameter_targets(node_info)
   return targets
 end
 
--- Build jump targets for nested functions.
+-- Jump targets for nested functions inside this one
 function M.build_nested_function_targets(node_info)
   local targets = {}
   for _, node in ipairs(metrics.find_nested_functions(node_info.node)) do
@@ -85,7 +85,7 @@ function M.build_nested_function_targets(node_info)
   return targets
 end
 
--- Build jump targets for assignment-like nodes.
+-- Jump targets for assignments inside this function
 function M.build_assignment_targets(node_info)
   local targets = {}
   local all_assignments = {}

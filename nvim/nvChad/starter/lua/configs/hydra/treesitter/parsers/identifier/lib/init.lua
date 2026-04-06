@@ -3,7 +3,7 @@ local role = require("configs.hydra.treesitter.parsers.identifier.lib.role")
 
 local M = {}
 
--- Combine identifier helper modules into one export table.
+-- Identifier helper export
 M = vim.tbl_extend("force", M, context, role)
 
 return M
