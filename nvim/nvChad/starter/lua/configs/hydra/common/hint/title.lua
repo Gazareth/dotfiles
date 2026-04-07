@@ -40,7 +40,7 @@ local function format_title(title)
   return title
 end
 
--- Main title lines
+-- Title header lines
 function M.build_title_lines(title, total_width)
   local formatted_title = format_title(title or "")
   local safe_title = util.escape_hint_text(formatted_title)
@@ -55,7 +55,6 @@ function M.build_title_lines(title, total_width)
   return {
     padded_title,
     string.rep("=", available_width),
-    "",
   }
 end
 

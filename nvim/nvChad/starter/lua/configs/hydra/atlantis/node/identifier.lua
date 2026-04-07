@@ -1,11 +1,16 @@
 local generic = require("configs.hydra.atlantis.node.generic")
+local title_builder = require("configs.hydra.atlantis.node.title")
 
 local M = {}
 
 function M.build(node_info, parsed)
   local spec = generic.build(node_info, parsed)
   local role = parsed.role or "identifier"
-  spec.title = "󰌽 identifier: " .. role
+  spec.title = title_builder.build({
+    semantic_kind = "identifier",
+    node_type     = parsed and parsed.node_type,
+    name          = role,
+  })
   return spec
 end
 

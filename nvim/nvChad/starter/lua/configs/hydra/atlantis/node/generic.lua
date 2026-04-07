@@ -1,5 +1,6 @@
 local M = {}
 local action_ids = require("configs.hydra.atlantis.treesitter.lib.atlantis.constants").action_ids
+local title_builder = require("configs.hydra.atlantis.node.title")
 
 -- Placeholder actions for generic nodes
 local function build_placeholder_action(verb, label)
@@ -31,7 +32,7 @@ function M.build(node_info, parsed)
 
   -- Basic actions for fallback menus
   return {
-    title = "󰘗 " .. label,
+    title = title_builder.build_from_parsed(node_info, parsed),
     items = {
       {
         heading = "Actions",
