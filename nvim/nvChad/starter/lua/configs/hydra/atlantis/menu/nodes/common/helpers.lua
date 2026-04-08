@@ -8,12 +8,12 @@ local function build_capabilities(parsed)
     return {}
   end
 
-  local allowed_action_ids = node_actions.get_allowed_action_ids(parsed.node_kind)
-  if type(allowed_action_ids) ~= "table" then
+  local node_action_ids = node_actions.get_node_action_ids(parsed.node_kind)
+  if type(node_action_ids) ~= "table" then
     return {}
   end
 
-  return allowed_action_ids
+  return node_action_ids
 end
 
 -- Node child summary

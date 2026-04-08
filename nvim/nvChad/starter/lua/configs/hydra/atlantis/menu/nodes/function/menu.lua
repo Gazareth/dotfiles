@@ -1,13 +1,12 @@
-local actions = require("configs.hydra.atlantis.menu.nodes.function.lib.actions")
+local action_rows = require("configs.hydra.atlantis.menu.actions.rows")
 local navigation = require("configs.hydra.atlantis.menu.nodes.function.lib.navigation")
 local parsed_helpers = require("configs.hydra.atlantis.menu.nodes.function.lib.parsed")
-local action_ids = require("configs.hydra.atlantis.registry.node_tiers").action_ids
+local supported_nodes = require("configs.hydra.atlantis.treesitter.common.constants").supported_nodes
 
 local M = {}
 
 -- Menu for parsed function nodes
 function M.build(node_info, parsed)
-  local _ = node_info
   local metrics = parsed_helpers.get_metrics(parsed)
   local targets = parsed_helpers.get_targets(parsed)
   local parameter_count = parsed_helpers.value_or(metrics, "parameter_count", 0)
@@ -16,29 +15,37 @@ function M.build(node_info, parsed)
   local line_span = parsed_helpers.value_or(metrics, "line_span", "?")
   local called_count = parsed_helpers.value_or(metrics, "called_count", 0)
   local hotkeys = navigation.build_hotkey_pool()
-  local used = { c = true, h = true }
+  local used = {}
   local cursor = 1
 
-  -- Rename and navigation actions first
-  local items = {
-    {
-      key = "c",
-      icon = ">",
-      label = "Change name",
-      action_id = action_ids.change_name,
-      action = actions.build_change_name_action(),
-    },
-    {
-      key = "h",
-      icon = ">",
-      label = "View call hierarchy",
-      action_id = action_ids.view_call_hierarchy,
-      action = actions.build_call_hierarchy_action(),
-    },
-    {
-      separator = true,
-      label = "󰆧 Parameters: " .. tostring(parameter_count),
-    },
+  -- Row context payload
+  local row_ctx = {
+    node_info = node_info,
+    parsed = parsed,
+  }
+
+  -- Primary function action rows
+  local primary_rows = action_rows.build_rows(supported_nodes.fn, {
+    "change_name",
+    "view_call_hierarchy",
+  }, {
+    ctx = row_ctx,
+  })
+
+  for _, row in ipairs(primary_rows) do
+    if type(row.key) == "string" and row.key ~= "" then
+      used[row.key] = true
+    end
+  end
+
+  -- Function menu rows
+  local items = {}
+  for _, row in ipairs(primary_rows) do
+    items[#items + 1] = row
+  end
+  items[#items + 1] = {
+    separator = true,
+    label = "󰆧 Parameters: " .. tostring(parameter_count),
   }
 
   cursor = navigation.append_parameter_rows(items, targets, hotkeys, used, cursor)

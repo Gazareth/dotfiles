@@ -34,8 +34,8 @@ M.action_id_by_name = {
   view_call_hierarchy = action_ids.view_call_hierarchy,
 }
 
--- Action names mapped by anchor type
-M.actions_by_anchor_type = {
+-- Action names mapped by node kind
+M.action_names_by_node_kind = {
   [supported_nodes.generic] = {
     change = true,
     select = true,
@@ -70,19 +70,19 @@ M.actions_by_anchor_type = {
   },
 }
 
--- Check action name availability for anchor type
-function M.is_action_name_available(anchor_type, action_name)
-  if not anchor_type or not action_name then
+-- Check whether action name applies to node kind
+function M.is_action_name_applicable(node_kind, action_name)
+  if not node_kind or not action_name then
     return false
   end
 
-  local actions = M.actions_by_anchor_type[anchor_type]
+  local actions = M.action_names_by_node_kind[node_kind]
   return type(actions) == "table" and actions[action_name] == true
 end
 
--- Build action closure from anchor type and action name
-function M.build(anchor_type, action_name, ctx)
-  if not M.is_action_name_available(anchor_type, action_name) then
+-- Build action closure from node kind and action name
+function M.build(node_kind, action_name, ctx)
+  if not M.is_action_name_applicable(node_kind, action_name) then
     return nil
   end
 
@@ -94,37 +94,37 @@ function M.build(anchor_type, action_name, ctx)
   return builder(ctx or {})
 end
 
--- Allowed action ids derived from anchor type action names
-function M.get_allowed_action_ids(anchor_type)
-  if type(anchor_type) ~= "string" then
+-- Node action ids derived from node kind action names
+function M.get_node_action_ids(node_kind)
+  if type(node_kind) ~= "string" then
     return nil
   end
 
-  local action_names = M.actions_by_anchor_type[anchor_type]
+  local action_names = M.action_names_by_node_kind[node_kind]
   if type(action_names) ~= "table" then
     return nil
   end
 
-  local allowed = {}
+  local node_action_ids = {}
   for action_name, enabled in pairs(action_names) do
     if enabled == true then
       local action_id = M.action_id_by_name[action_name]
       if type(action_id) == "string" and action_id ~= "" then
-        allowed[action_id] = true
+        node_action_ids[action_id] = true
       end
     end
   end
 
-  return allowed
+  return node_action_ids
 end
 
--- Check action id availability for node kind
-function M.is_available(node_kind, action_id)
+-- Check whether action id applies to node kind
+function M.is_action_id_applicable(node_kind, action_id)
   if not node_kind or not action_id then
     return false
   end
 
-  local actions = M.get_allowed_action_ids(node_kind)
+  local actions = M.get_node_action_ids(node_kind)
   return actions and actions[action_id] == true
 end
 
