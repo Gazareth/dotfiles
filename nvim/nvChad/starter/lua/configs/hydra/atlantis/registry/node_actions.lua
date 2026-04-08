@@ -1,23 +1,22 @@
 local action_ids = require("configs.hydra.atlantis.registry.node_tiers").action_ids
 local supported_nodes = require("configs.hydra.atlantis.treesitter.common.constants").supported_nodes
+local ops_dispatch = require("configs.hydra.atlantis.ops.dispatch")
 local common_actions = require("configs.hydra.atlantis.ops.common")
 local function_actions = require("configs.hydra.atlantis.ops.functions")
-local assignment_actions = require("configs.hydra.atlantis.ops.assignments")
-local rename_actions = require("configs.hydra.atlantis.ops.rename")
 
 local M = {}
 
 -- Action builders by action name
 M.action_builders = {
   change = common_actions.change,
-  rename = rename_actions.build,
+  rename = ops_dispatch.builder("rename"),
   select = common_actions.select,
   yank = common_actions.yank,
   delete = common_actions.delete,
   inspect = common_actions.inspect,
   jump = common_actions.jump,
-  jump_to_lhs = assignment_actions.jump_to_lhs,
-  jump_to_rhs = assignment_actions.jump_to_rhs,
+  jump_to_lhs = ops_dispatch.builder("jump_to_lhs"),
+  jump_to_rhs = ops_dispatch.builder("jump_to_rhs"),
   view_call_hierarchy = function_actions.view_call_hierarchy,
 }
 
