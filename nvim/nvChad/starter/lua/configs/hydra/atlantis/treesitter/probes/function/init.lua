@@ -24,6 +24,7 @@ function M.parse_function(node_info)
     function_name = function_name,
     metrics = lib.build_function_metrics(node_info),
     targets = {
+      function_name = targets.build_function_name_target(node_info),
       parameter_container = parameter_targets.container,
       parameters = parameter_targets.parameters,
       nested_functions = nested_function_targets,

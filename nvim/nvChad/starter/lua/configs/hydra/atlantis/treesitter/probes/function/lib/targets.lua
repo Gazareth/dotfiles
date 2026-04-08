@@ -15,6 +15,10 @@ end
 
 -- Target role-name fields
 local function to_target(node, bufnr, label, role, name)
+  if not node then
+    return nil
+  end
+
   local row, col = node:start()
   return {
     bufnr = bufnr,
@@ -24,6 +28,30 @@ local function to_target(node, bufnr, label, role, name)
     role = role,
     name = name,
   }
+end
+
+-- Function name node before parameter list
+local function find_function_name_node(function_node)
+  local params = parameters.find_parameter_container(function_node)
+  local child_count = function_node:named_child_count()
+  local fallback_node = nil
+
+  for i = 0, child_count - 1 do
+    local child = function_node:named_child(i)
+    if params and child:id() == params:id() then
+      break
+    end
+
+    if not fallback_node then
+      fallback_node = child
+    end
+
+    if child:type() == "identifier" then
+      return child
+    end
+  end
+
+  return fallback_node
 end
 
 -- First identifier before the parameter list
@@ -51,6 +79,21 @@ function M.extract_function_name(function_node, bufnr)
   end
 
   return fallback
+end
+
+-- Rename target for function name
+function M.build_function_name_target(node_info)
+  local name_node = find_function_name_node(node_info.node)
+  if not name_node then
+    return nil
+  end
+
+  local name = vim.trim(get_node_text(name_node, node_info.bufnr))
+  if name == "" then
+    name = "function name"
+  end
+
+  return to_target(name_node, node_info.bufnr, "function name", "Function", name)
 end
 
 -- Jump target for the parameter list and each parameter

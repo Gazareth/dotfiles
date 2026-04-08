@@ -3,12 +3,14 @@ local supported_nodes = require("configs.hydra.atlantis.treesitter.common.consta
 local common_actions = require("configs.hydra.atlantis.ops.common")
 local function_actions = require("configs.hydra.atlantis.ops.functions")
 local assignment_actions = require("configs.hydra.atlantis.ops.assignments")
+local rename_actions = require("configs.hydra.atlantis.ops.rename")
 
 local M = {}
 
 -- Action builders by action name
 M.action_builders = {
   change = common_actions.change,
+  rename = rename_actions.build,
   select = common_actions.select,
   yank = common_actions.yank,
   delete = common_actions.delete,
@@ -16,13 +18,13 @@ M.action_builders = {
   jump = common_actions.jump,
   jump_to_lhs = assignment_actions.jump_to_lhs,
   jump_to_rhs = assignment_actions.jump_to_rhs,
-  change_name = function_actions.change_name,
   view_call_hierarchy = function_actions.view_call_hierarchy,
 }
 
 -- Action id by action name
 M.action_id_by_name = {
   change = action_ids.change,
+  rename = action_ids.rename,
   select = action_ids.select,
   yank = action_ids.yank,
   delete = action_ids.delete,
@@ -30,7 +32,6 @@ M.action_id_by_name = {
   jump = action_ids.jump,
   jump_to_lhs = action_ids.jump,
   jump_to_rhs = action_ids.jump,
-  change_name = action_ids.change_name,
   view_call_hierarchy = action_ids.view_call_hierarchy,
 }
 
@@ -44,6 +45,7 @@ M.action_names_by_node_kind = {
     inspect = true,
   },
   [supported_nodes.identifier] = {
+    rename = true,
     change = true,
     select = true,
     yank = true,
@@ -51,6 +53,7 @@ M.action_names_by_node_kind = {
     inspect = true,
   },
   [supported_nodes.assignment] = {
+    rename = true,
     jump_to_lhs = true,
     jump_to_rhs = true,
     change = true,
@@ -60,7 +63,7 @@ M.action_names_by_node_kind = {
     inspect = true,
   },
   [supported_nodes.fn] = {
-    change_name = true,
+    rename = true,
     view_call_hierarchy = true,
     jump = true,
     select = true,
@@ -91,7 +94,7 @@ function M.build(node_kind, action_name, ctx)
     return nil
   end
 
-  return builder(ctx or {})
+  return builder(ctx or {}, node_kind)
 end
 
 -- Node action ids derived from node kind action names

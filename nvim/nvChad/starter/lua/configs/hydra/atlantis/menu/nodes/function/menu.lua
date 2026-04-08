@@ -26,7 +26,7 @@ function M.build(node_info, parsed)
 
   -- Primary function action rows
   local primary_rows = action_rows.build_rows(supported_nodes.fn, {
-    "change_name",
+    "rename",
     "view_call_hierarchy",
   }, {
     ctx = row_ctx,

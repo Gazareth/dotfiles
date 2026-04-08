@@ -2,6 +2,11 @@ local M = {}
 
 -- Action row presentation map
 M.action_menu_item = {
+  rename = {
+    key = "r",
+    icon = ">",
+    label = "Rename",
+  },
   change = {
     key = "c",
     icon = ">",
@@ -27,11 +32,6 @@ M.action_menu_item = {
     icon = "?",
     label = "Inspect node mapping",
   },
-  change_name = {
-    key = "c",
-    icon = ">",
-    label = "Change name",
-  },
   view_call_hierarchy = {
     key = "h",
     icon = ">",
@@ -51,6 +51,7 @@ M.action_menu_item = {
 
 -- Generic action order
 M.generic_action_order = {
+  "rename",
   "change",
   "yank",
   "select",
