@@ -1,5 +1,5 @@
 local M = {}
-local title_builder = require("configs.hydra.atlantis.menu.nodes.common.title")
+local title_builder = require("configs.hydra.atlantis.menu.title")
 local common_actions = require("configs.hydra.atlantis.menu.actions.common")
 local supported_nodes = require("configs.hydra.atlantis.treesitter.common.constants").supported_nodes
 

@@ -1,10 +1,20 @@
 local nodes = require("configs.hydra.atlantis.menu.nodes")
+local title = require("configs.hydra.atlantis.menu.title")
+local layout = require("configs.hydra.atlantis.menu.layout")
 
 local M = {}
+
+M.title = title
+M.layout = layout
 
 -- Node menu entrypoint
 function M.get_node_menu_spec()
   return nodes.get_node_menu_spec()
+end
+
+-- Atlantis menu layout entrypoint
+function M.get_layout_menu_spec()
+  return layout.build_menu_spec()
 end
 
 return M

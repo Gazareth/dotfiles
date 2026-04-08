@@ -1,4 +1,4 @@
-local title_builder = require("configs.hydra.atlantis.menu.nodes.common.title")
+local title_builder = require("configs.hydra.atlantis.menu.title")
 local target_builder = require("configs.hydra.atlantis.menu.nodes.assignment.target")
 local value_builder = require("configs.hydra.atlantis.menu.nodes.assignment.value")
 local common_actions = require("configs.hydra.atlantis.menu.actions.common")

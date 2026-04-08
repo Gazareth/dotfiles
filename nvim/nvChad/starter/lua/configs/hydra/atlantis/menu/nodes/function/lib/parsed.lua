@@ -1,5 +1,5 @@
 local M = {}
-local title_builder = require("configs.hydra.atlantis.menu.nodes.common.title")
+local title_builder = require("configs.hydra.atlantis.menu.title")
 
 -- Read metrics from parsed data with a safe fallback.
 function M.get_metrics(parsed)

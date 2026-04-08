@@ -1,5 +1,5 @@
 local generic = require("configs.hydra.atlantis.menu.nodes.generic")
-local title_builder = require("configs.hydra.atlantis.menu.nodes.common.title")
+local title_builder = require("configs.hydra.atlantis.menu.title")
 
 local M = {}
 
