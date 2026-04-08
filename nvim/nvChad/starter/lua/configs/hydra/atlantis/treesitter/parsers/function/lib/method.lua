@@ -41,7 +41,7 @@ function M.is_function_or_method(node_info)
     return roles.method
   end
 
-  return roles["function"]
+  return roles.fn
 end
 
 return M

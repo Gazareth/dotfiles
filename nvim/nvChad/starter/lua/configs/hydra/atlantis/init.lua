@@ -6,11 +6,23 @@ local M = {}
 
 -- Treewalker menu with semantic title
 function M.build_menu_spec()
+  local cursor_node_info = require("configs.hydra.atlantis.treesitter.lib").build_node_info()
+  if not cursor_node_info then
+    return {
+      title = "Treewalker",
+      sections = { treewalker_scope, treewalker_context, treewalker_node_action },
+    }
+  end
+
+  local select_anchor_node_info = require("configs.hydra.atlantis.treesitter.anchor").select_node_info
+  local anchor_node_info = select_anchor_node_info(cursor_node_info)
+
   local context_spec = treewalker_context()
   if type(context_spec) ~= "table" then
     return {
       title = "Treewalker",
       sections = { treewalker_scope, treewalker_context, treewalker_node_action },
+      anchor_node_info = anchor_node_info,
     }
   end
 
@@ -18,6 +30,7 @@ function M.build_menu_spec()
     return {
       title = "Treewalker",
       sections = { treewalker_scope, context_spec, treewalker_node_action },
+      anchor_node_info = anchor_node_info,
     }
   end
 
@@ -29,6 +42,7 @@ function M.build_menu_spec()
   return {
     title = menu_title,
     sections = { treewalker_scope, modify_spec, treewalker_node_action },
+    anchor_node_info = anchor_node_info,
   }
 end
 

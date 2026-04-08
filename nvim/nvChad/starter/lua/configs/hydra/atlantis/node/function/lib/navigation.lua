@@ -1,5 +1,6 @@
 local M = {}
 local action_ids = require("configs.hydra.atlantis.treesitter.lib.atlantis.constants").action_ids
+local common_actions = require("configs.hydra.atlantis.node_actions.common")
 
 -- Jump label role-name format
 local function format_jump_label(target, fallback_role, fallback_name)
@@ -22,21 +23,7 @@ end
 
 -- Cursor jump to a target node
 function M.jump_to_target(target)
-  return function()
-    if type(target) ~= "table" then
-      return
-    end
-
-    if type(target.bufnr) == "number" and vim.api.nvim_buf_is_valid(target.bufnr) then
-      vim.api.nvim_set_current_buf(target.bufnr)
-    end
-
-    local row = (target.row or 0) + 1
-    local col = target.col or 0
-
-    pcall(vim.api.nvim_win_set_cursor, 0, { row, col })
-    pcall(vim.cmd, "normal! zz")
-  end
+  return common_actions.jump_to_target(target)
 end
 
 -- One-key shortcut pool

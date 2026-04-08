@@ -1,26 +1,16 @@
+local node_actions = require("configs.hydra.atlantis.node_actions.config")
+local supported_nodes = require("configs.hydra.atlantis.treesitter.lib.constants").supported_nodes
+
 local M = {}
 
--- Build the rename action for the current symbol.
+-- Rename function/method via LSP
 function M.build_change_name_action()
-  return function()
-    local ok, err = pcall(vim.lsp.buf.rename)
-    if not ok then
-      vim.notify("Rename is unavailable: " .. tostring(err), vim.log.levels.WARN)
-    end
-  end
+  return node_actions.build(supported_nodes.fn, "change_name", {})
 end
 
--- Build the action that opens call hierarchy when available.
+-- Show call hierarchy when available
 function M.build_call_hierarchy_action()
-  return function()
-    local ok_mod, mod = pcall(require, "namu.namu_callhierarchy")
-    if ok_mod and type(mod.show_both_calls) == "function" then
-      mod.show_both_calls()
-      return
-    end
-
-    vim.notify("Call hierarchy provider is unavailable.", vim.log.levels.WARN)
-  end
+  return node_actions.build(supported_nodes.fn, "view_call_hierarchy", {})
 end
 
 return M

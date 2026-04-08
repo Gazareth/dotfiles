@@ -2,7 +2,7 @@ local M = {}
 local node_types = require("configs.hydra.atlantis.treesitter.lib.constants").node_types
 
 M.function_like_types = {
-  [node_types["function"]] = true,
+  [node_types.fn] = true,
   [node_types.function_declaration] = true,
   [node_types.function_definition] = true,
   [node_types.function_expression] = true,

@@ -57,7 +57,7 @@ end
 
 -- Function-name parse reuse
 local function build_function_identifier_result(function_node_info, parsed_function)
-  local function_role = parsed_function.role or roles["function"]
+  local function_role = parsed_function.role or roles.fn
   parsed_function.node_type = function_node_info.node_type
   parsed_function.text = function_node_info.text
   -- Semantic mapping source node

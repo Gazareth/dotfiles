@@ -18,7 +18,7 @@ function M.parse_function(node_info)
   local assignment_targets = targets.build_assignment_targets(node_info)
 
   return {
-    node_kind = supported_nodes["function"],
+    node_kind = supported_nodes.fn,
     role = method_kind,
     display_name = method_kind,
     function_name = function_name,

@@ -24,14 +24,15 @@ M.node_types = {
   function_definition = "function_definition",
   function_expression = "function_expression",
   arrow_function = "arrow_function",
-  ["function"] = "function",
+  fn = "function",
 }
 
 M.supported_nodes = {
   generic = "generic",
   identifier = "identifier",
+  assignment = "assignment",
   binary_expression = "binary_expression",
-  ["function"] = "function",
+  fn = "function",
 }
 
 M.roles = {
@@ -40,7 +41,7 @@ M.roles = {
   parameter = "parameter",
   binding = "binding",
   method = "method",
-  ["function"] = "function",
+  fn = "function",
 }
 
 M.identifier_role_parent_types = {

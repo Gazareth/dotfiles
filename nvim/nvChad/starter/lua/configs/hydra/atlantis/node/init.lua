@@ -2,9 +2,10 @@ local parse_node = require("configs.hydra.atlantis.treesitter")
 local build_node_info = require("configs.hydra.atlantis.treesitter.lib").build_node_info
 local supported_nodes = require("configs.hydra.atlantis.treesitter.lib.constants").supported_nodes
 local select_anchor_node_info = require("configs.hydra.atlantis.treesitter.anchor").select_node_info
-local filter_matrix_items = require("configs.hydra.atlantis.treesitter.action_matrix").filter_items
+local filter_allowed_items = require("configs.hydra.atlantis.node_actions.filter").filter_items
 local generic = require("configs.hydra.atlantis.node.generic")
 local identifier = require("configs.hydra.atlantis.node.identifier")
+local assignment = require("configs.hydra.atlantis.node.assignment")
 local function_spec = require("configs.hydra.atlantis.node.function")
 
 local M = {}
@@ -54,7 +55,8 @@ end
 -- Menu builders by parsed node kind
 local spec_builders = {
   [supported_nodes.identifier] = identifier.build,
-  [supported_nodes["function"]] = function_spec.build,
+  [supported_nodes.assignment] = assignment.build,
+  [supported_nodes.fn] = function_spec.build,
 }
 
 -- Menu for the current Tree-sitter context
@@ -79,7 +81,7 @@ function M.get_node_menu_spec()
     spec = built
     if ok and type(spec) == "table" then
       -- Remove actions the current node does not allow
-      spec.items = filter_matrix_items(parsed, spec.items)
+      spec.items = filter_allowed_items(parsed, spec.items)
       return spec
     end
 
@@ -87,7 +89,7 @@ function M.get_node_menu_spec()
   end
 
   spec = generic.build(node_info, parsed)
-  spec.items = filter_matrix_items(parsed, spec.items)
+  spec.items = filter_allowed_items(parsed, spec.items)
   return spec
 end
 

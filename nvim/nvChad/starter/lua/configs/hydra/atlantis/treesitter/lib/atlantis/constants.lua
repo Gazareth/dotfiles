@@ -36,6 +36,7 @@ M.action_ids = {
   inspect = "inspect",
   jump = "jump",
   jump_parent = "jump_parent",
+  select = "select",
   change = "change",
   change_name = "change_name",
   yank = "yank",

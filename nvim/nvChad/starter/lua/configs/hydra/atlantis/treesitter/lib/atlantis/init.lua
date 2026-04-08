@@ -56,7 +56,7 @@ local function build_unknown_result(language, mapping_source, node_info)
 end
 
 -- Node info for mapped raw nodes
-local function build_supported_result(language, mapping_source, node_info, mapping, merged)
+local function build_supported_result(language, mapping_source, node_info, mapping)
   local node_tier = mapping.node_tier or node_tiers.reef
   local node_kind = mapping.node_kind or node_kinds.unknown
 
@@ -71,12 +71,11 @@ local function build_supported_result(language, mapping_source, node_info, mappi
     node_tier = node_tier,
     node_kind = node_kind,
     actionable = mapping.actionable == true,
-    action_matrix = merged.action_matrix or {},
   }
 end
 
 -- Node info when language mappings are disabled
-local function build_unsupported_result(language, node_info, action_matrix)
+local function build_unsupported_result(language, node_info)
   return {
     status = "unsupported-language",
     language = language,
@@ -87,7 +86,6 @@ local function build_unsupported_result(language, node_info, action_matrix)
     node_tier = node_tiers.reef,
     node_kind = node_kinds.unknown,
     actionable = false,
-    action_matrix = action_matrix,
     mapping_source = "unsupported",
   }
 end
@@ -105,11 +103,7 @@ function M.resolve(node_info, opts)
   local language_base = base_languages[language]
 
   if safe_languages and not language_base and not user_languages[language] then
-    return build_unsupported_result(
-      language,
-      node_info,
-      vim.tbl_deep_extend("force", vim.deepcopy(core.action_matrix or {}), common.action_matrix or {})
-    )
+    return build_unsupported_result(language, node_info)
   end
 
   -- Core rules first, then language overrides
@@ -120,7 +114,7 @@ function M.resolve(node_info, opts)
     return build_unknown_result(language, language_base and "language+common+core" or "common+core", node_info)
   end
 
-  return build_supported_result(language, language_base and "language+common+core" or "common+core", node_info, mapping, merged)
+  return build_supported_result(language, language_base and "language+common+core" or "common+core", node_info, mapping)
 end
 
 return M

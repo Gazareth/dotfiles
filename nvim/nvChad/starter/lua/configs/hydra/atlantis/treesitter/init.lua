@@ -1,4 +1,5 @@
 local parse_identifier = require("configs.hydra.atlantis.treesitter.parsers.identifier").parse_identifier
+local parse_assignment = require("configs.hydra.atlantis.treesitter.parsers.assignment").parse_assignment
 local parse_function = require("configs.hydra.atlantis.treesitter.parsers.function").parse_function
 local parse_binary_expression = require("configs.hydra.atlantis.treesitter.parsers.binary_expression").parse_binary_expression
 local parse_generic = require("configs.hydra.atlantis.treesitter.parsers.generic").parse_generic
@@ -13,9 +14,13 @@ local treesitter_config = require("configs.hydra.atlantis.treesitter.config")
 -- Specialized parser map
 local parser_map = {
   [node_types.identifier] = parse_identifier,
+  [node_types.assignment_expression] = parse_assignment,
+  [node_types.assignment_statement] = parse_assignment,
+  [node_types.variable_declaration] = parse_assignment,
+  [node_types.local_declaration] = parse_assignment,
   [node_types.binary_expression] = parse_binary_expression,
 
-  [node_types["function"]] = parse_function,
+  [node_types.fn] = parse_function,
   [node_types.function_declaration] = parse_function,
   [node_types.function_definition] = parse_function,
   [node_types.function_expression] = parse_function,

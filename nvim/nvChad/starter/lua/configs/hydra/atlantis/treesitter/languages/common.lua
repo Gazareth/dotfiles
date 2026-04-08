@@ -50,6 +50,21 @@ M.mappings = {
     node_kind = node_kinds.assignment,
     actionable = true,
   },
+  assignment_expression = {
+    node_tier = node_tiers.habitat,
+    node_kind = node_kinds.assignment,
+    actionable = true,
+  },
+  variable_declaration = {
+    node_tier = node_tiers.habitat,
+    node_kind = node_kinds.assignment,
+    actionable = true,
+  },
+  local_declaration = {
+    node_tier = node_tiers.habitat,
+    node_kind = node_kinds.assignment,
+    actionable = true,
+  },
   function_call = {
     node_tier = node_tiers.habitat,
     node_kind = node_kinds.call,
