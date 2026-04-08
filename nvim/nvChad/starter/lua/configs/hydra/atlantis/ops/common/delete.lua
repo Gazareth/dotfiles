@@ -4,7 +4,7 @@ local M = {}
 
 -- Delete action behavior
 function M.build(ctx)
-  return lib.placeholder("Delete", lib.resolve_node_label(ctx))
+  return lib.visual_operator("Delete", "d", ctx)
 end
 
 return M

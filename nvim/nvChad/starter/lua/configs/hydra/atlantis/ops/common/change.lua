@@ -4,7 +4,7 @@ local M = {}
 
 -- Change action behavior
 function M.build(ctx)
-  return lib.placeholder("Change", lib.resolve_node_label(ctx))
+  return lib.visual_operator("Change", "c", ctx)
 end
 
 return M

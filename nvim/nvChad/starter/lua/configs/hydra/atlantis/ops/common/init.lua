@@ -6,7 +6,6 @@ local change = require("configs.hydra.atlantis.ops.common.change")
 local select = require("configs.hydra.atlantis.ops.common.select")
 local yank = require("configs.hydra.atlantis.ops.common.yank")
 local delete = require("configs.hydra.atlantis.ops.common.delete")
-local jump = require("configs.hydra.atlantis.ops.common.jump")
 local swap = require("configs.hydra.atlantis.ops.common.swap")
 
 -- Helper exports for node actions
@@ -22,7 +21,6 @@ M.change = change.build
 M.select = select.build
 M.yank = yank.build
 M.delete = delete.build
-M.jump = jump.build
 M.swap = swap.build
 
 return M

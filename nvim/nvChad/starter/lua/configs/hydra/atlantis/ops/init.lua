@@ -26,9 +26,6 @@ M.identifier = {
 M.filter = require("configs.hydra.atlantis.ops.filter")
 M.change = require("configs.hydra.atlantis.ops.common.change")
 M.select = require("configs.hydra.atlantis.ops.common.select")
-M.edit = require("configs.hydra.atlantis.ops.common.edit")
 M.swap = require("configs.hydra.atlantis.ops.common.swap")
-M.remove = require("configs.hydra.atlantis.ops.common.remove")
-M.navigate = require("configs.hydra.atlantis.ops.common.navigate")
 
 return M

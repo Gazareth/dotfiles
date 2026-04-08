@@ -4,7 +4,7 @@ local M = {}
 
 -- Yank action behavior
 function M.build(ctx)
-  return lib.placeholder("Yank", lib.resolve_node_label(ctx))
+  return lib.visual_operator("Yank", "y", ctx)
 end
 
 return M
