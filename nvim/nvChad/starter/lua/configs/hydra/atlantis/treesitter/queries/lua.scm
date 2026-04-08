@@ -1,0 +1,1 @@
+; Atlantis Lua query placeholder

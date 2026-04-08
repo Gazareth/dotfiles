@@ -1,4 +1,4 @@
-local build_node_info = require("configs.hydra.atlantis.treesitter.lib").build_node_info
+local build_node_info = require("configs.hydra.atlantis.treesitter.common.node_info").build_node_info
 local resolve_language_mapping = require("configs.hydra.atlantis.treesitter.languages").resolve
 local treesitter_config = require("configs.hydra.atlantis.treesitter.config")
 local constants = require("configs.hydra.atlantis.treesitter.anchor.constants")

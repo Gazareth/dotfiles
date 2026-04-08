@@ -6,7 +6,7 @@ local M = {}
 
 -- Treewalker menu with semantic title
 function M.build_menu_spec()
-  local cursor_node_info = require("configs.hydra.atlantis.treesitter.lib").build_node_info()
+  local cursor_node_info = require("configs.hydra.atlantis.treesitter.common.node_info").build_node_info()
   if not cursor_node_info then
     return {
       title = "Treewalker",

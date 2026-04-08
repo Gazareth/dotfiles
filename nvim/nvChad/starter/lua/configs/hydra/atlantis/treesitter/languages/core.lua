@@ -1,5 +1,5 @@
 local M = {}
-local atlantis_constants = require("configs.hydra.atlantis.treesitter.lib.atlantis.constants")
+local atlantis_constants = require("configs.hydra.atlantis.registry.node_tiers")
 
 local nt = atlantis_constants.node_tiers
 local nk = atlantis_constants.node_kinds

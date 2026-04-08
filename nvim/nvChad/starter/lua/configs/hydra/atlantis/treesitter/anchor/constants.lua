@@ -1,4 +1,4 @@
-local atlantis_constants = require("configs.hydra.atlantis.treesitter.lib.atlantis.constants")
+local atlantis_constants = require("configs.hydra.atlantis.registry.node_tiers")
 local node_tiers = atlantis_constants.node_tiers
 local node_kinds = atlantis_constants.node_kinds
 
@@ -9,18 +9,18 @@ M.node_tiers = node_tiers
 
 -- Standard anchor tiers
 M.standard_preferred_tiers = {
-  [node_tiers.habitat] = true,
-  [node_tiers.cluster] = true,
-  [node_tiers.settlement] = true,
   [node_tiers.colony] = true,
+  [node_tiers.settlement] = true,
+  [node_tiers.cluster] = true,
+  [node_tiers.habitat] = true,
 }
 
 -- Standard tier context_depth score
 M.standard_tier_context_depth = {
-  [node_tiers.habitat] = 1,
-  [node_tiers.cluster] = 2,
-  [node_tiers.settlement] = 3,
   [node_tiers.colony] = 4,
+  [node_tiers.settlement] = 3,
+  [node_tiers.cluster] = 2,
+  [node_tiers.habitat] = 1,
 }
 
 -- Habitat kind context_depth score

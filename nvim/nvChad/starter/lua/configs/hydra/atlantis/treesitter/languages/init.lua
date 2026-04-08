@@ -1,6 +1,6 @@
 local core = require("configs.hydra.atlantis.treesitter.languages.core")
 local common = require("configs.hydra.atlantis.treesitter.languages.common")
-local resolve_atlantis_mapping = require("configs.hydra.atlantis.treesitter.lib.atlantis").resolve
+local resolve_atlantis_mapping = require("configs.hydra.atlantis.registry.dispatch").resolve
 
 -- Built-in language tables
 local base_languages = {
