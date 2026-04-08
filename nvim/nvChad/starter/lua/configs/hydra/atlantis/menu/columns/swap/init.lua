@@ -5,6 +5,7 @@ local items = {
   { key = "a", icon = "→", label = "Swap toward child node", cmd = "SwapRight" },
 }
 
+-- Swap column menu
 return {
   title = " ⇅ Swap",
   items = vim.tbl_map(function(item)

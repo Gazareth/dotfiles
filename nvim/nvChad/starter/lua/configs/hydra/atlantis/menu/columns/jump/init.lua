@@ -42,14 +42,14 @@ local function format_node_name(node_info, parsed)
   return text
 end
 
--- Semantic node label text
+-- Anchor label text
 local function build_anchor_label(node_info, parsed)
   local name = format_node_name(node_info, parsed)
   local role = format_role_label(parsed)
   return "[" .. role .. "] " .. name
 end
 
--- Cursor move to target node
+-- Cursor jump action
 local function jump_to_node_info(target_node_info)
   return function()
     if not target_node_info then
@@ -62,7 +62,7 @@ local function jump_to_node_info(target_node_info)
   end
 end
 
--- Build node info for jump target
+-- Related node resolver
 local function resolve_target_node_info(selected_node_info, relation)
   if not selected_node_info or not selected_node_info.node then
     return nil
@@ -73,7 +73,6 @@ local function resolve_target_node_info(selected_node_info, relation)
 
   if relation == "parent" then
     target = node:parent()
-    -- Fallback to previous sibling if no parent (at top level)
     if not target then
       target = node:prev_named_sibling()
     end
@@ -95,7 +94,7 @@ local function resolve_target_node_info(selected_node_info, relation)
   })
 end
 
--- Jump row for destination node
+-- Jump row builder
 local function build_target_jump_item(key, icon, target_node_info)
   if not target_node_info then
     return nil
@@ -110,8 +109,8 @@ local function build_target_jump_item(key, icon, target_node_info)
   }
 end
 
--- Dynamic jump section with organized subsections
-local function build_jump_section()
+-- Jump column section
+local function build_jump_column()
   local cursor_node_info = build_node_info()
   local selected_node_info = anchor.select_node_info(cursor_node_info)
   local items = {}
@@ -121,7 +120,7 @@ local function build_jump_section()
   local next_sibling_target = resolve_target_node_info(selected_node_info, "next_sibling")
   local child_target = resolve_target_node_info(selected_node_info, "child")
 
-  -- Parent/Child section
+  -- Parent child group
   items[#items + 1] = { separator = true }
   items[#items + 1] = {
     separator = true,
@@ -139,7 +138,7 @@ local function build_jump_section()
     items[#items + 1] = child_item
   end
 
-  -- Sibling section
+  -- Sibling group
   items[#items + 1] = { separator = true }
   items[#items + 1] = {
     separator = true,
@@ -160,7 +159,7 @@ local function build_jump_section()
   local candidates = anchor.get_candidates(cursor_node_info)
   local selected_index = anchor.find_candidate_index(candidates, selected_node_info)
 
-  -- Context navigation section
+  -- Context group
   local has_context_items = false
   if type(selected_index) == "number" then
     if selected_index < #candidates then
@@ -210,4 +209,4 @@ local function build_jump_section()
   }
 end
 
-return build_jump_section
+return build_jump_column
