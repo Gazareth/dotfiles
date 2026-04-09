@@ -1,17 +1,17 @@
-local nodes = require("configs.hydra.atlantis.menu.nodes")
-local title = require("configs.hydra.atlantis.menu.title")
-local layout = require("configs.hydra.atlantis.menu.layout")
-local columns = require("configs.hydra.atlantis.menu.columns")
+local renderer = require("configs.hydra.atlantis.menu.renderer")
+local title    = require("configs.hydra.atlantis.menu.components.title")
+local layout   = require("configs.hydra.atlantis.menu.layout")
+local sections = require("configs.hydra.atlantis.menu.sections")
 
 local M = {}
 
-M.title = title
-M.layout = layout
-M.columns = columns
+M.title    = title
+M.layout   = layout
+M.sections = sections
 
--- Node menu entrypoint
+-- Render node menu spec from pre-built runtime context
 function M.get_node_menu_spec(runtime_ctx)
-  return nodes.get_node_menu_spec(runtime_ctx)
+  return renderer.build_from_context(runtime_ctx)
 end
 
 -- Atlantis menu layout entrypoint

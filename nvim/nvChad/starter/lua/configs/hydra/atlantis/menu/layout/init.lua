@@ -1,58 +1,28 @@
-local jump_column = require("configs.hydra.atlantis.menu.columns.jump")
-local modify_column = require("configs.hydra.atlantis.menu.columns.modify")
-local swap_column = require("configs.hydra.atlantis.menu.columns.swap")
 local runtime_context = require("configs.hydra.atlantis.runtime.context")
+local section_assembly = require("configs.hydra.atlantis.menu.layout.assembly")
+local modify_section = require("configs.hydra.atlantis.menu.sections.modify")
 
 local M = {}
-
--- Base section order
-local function build_default_sections()
-  return { jump_column, modify_column, swap_column }
-end
-
--- Modify column title wrapper
-local function build_modify_spec(modify_spec)
-  return vim.tbl_extend("force", {}, modify_spec, {
-    title = " ✦ Modify",
-  })
-end
 
 -- Atlantis menu structure
 function M.build_menu_spec(opts)
   local ctx = runtime_context.build(opts)
   if not ctx.cursor_node_info then
-    return {
-      title = "Treewalker",
-      sections = build_default_sections(),
-    }
+    return section_assembly.build_without_cursor()
   end
 
   local positioned_anchor_node_info = ctx.positioned_anchor_node_info
 
-  local modify_spec = modify_column(ctx)
+  local modify_spec = modify_section(ctx)
   if type(modify_spec) ~= "table" then
-    return {
-      title = "Treewalker",
-      sections = build_default_sections(),
-      anchor_node_info = positioned_anchor_node_info,
-    }
+    return section_assembly.build_with_invalid_modify(positioned_anchor_node_info)
   end
 
   if modify_spec.__abort_open == true then
-    return {
-      title = "Treewalker",
-      sections = { jump_column, modify_spec, swap_column },
-      anchor_node_info = positioned_anchor_node_info,
-    }
+    return section_assembly.build_with_abort_modify(modify_spec, positioned_anchor_node_info)
   end
 
-  local menu_title = modify_spec.title or "Treewalker"
-
-  return {
-    title = menu_title,
-    sections = { jump_column, build_modify_spec(modify_spec), swap_column },
-    anchor_node_info = positioned_anchor_node_info,
-  }
+  return section_assembly.build_with_modify(modify_spec, positioned_anchor_node_info)
 end
 
 return M
