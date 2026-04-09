@@ -2,11 +2,10 @@ local M = {}
 
 -- Default Tree-sitter settings
 local defaults = {
-  context_mode = "standard",
+  context_mode = "depth_0",
   safe_languages = false,
   languages = {},
   modes = {
-    standard = "standard",
     lowest_node = "lowest_node",
     max = "max",
     depth_0 = "depth_0",

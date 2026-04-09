@@ -59,7 +59,7 @@ local function normalize_parsed_result(parsed, node_info)
   parsed.node_tier = parsed.semantic and parsed.semantic.node_tier or node_tiers.reef
   parsed.semantic_kind = parsed.semantic and parsed.semantic.node_kind or node_kinds.unknown
   parsed.actionable = parsed.semantic and parsed.semantic.actionable or false
-  parsed.context_mode = config.context_mode or "standard"
+  parsed.context_mode = config.context_mode or "depth_0"
 
   return parsed
 end

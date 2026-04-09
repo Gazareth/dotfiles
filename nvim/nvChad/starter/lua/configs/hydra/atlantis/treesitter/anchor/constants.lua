@@ -23,6 +23,15 @@ M.standard_tier_context_depth = {
   [node_tiers.habitat] = 1,
 }
 
+-- Tier depth map for depth_N filtering
+M.depth_tier_context_depth = {
+  [node_tiers.colony] = 4,
+  [node_tiers.settlement] = 3,
+  [node_tiers.grove] = 2,
+  [node_tiers.cluster] = 2,
+  [node_tiers.habitat] = 1,
+}
+
 -- Habitat kind context_depth score
 M.habitat_kind_context_depth = {
   [node_kinds.assignment] = 1,

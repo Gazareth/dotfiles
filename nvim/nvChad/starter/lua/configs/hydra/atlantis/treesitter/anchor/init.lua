@@ -37,7 +37,8 @@ local function parse_depth_mode(mode)
   return tonumber(value)
 end
 
--- Standard candidate score
+-- Score a candidate node for depth_0 selection
+-- Returns tier and kind scores used to rank which node is "best"
 local function get_standard_score(entry)
   local tier = entry.semantic.node_tier
   local kind = entry.semantic.node_kind
@@ -53,10 +54,12 @@ local function get_standard_score(entry)
   return tier_context_depth, 1
 end
 
--- Standard mode anchor index
+-- Find best anchor by scoring: prefer higher tiers, then simpler kinds, then closest
 local function select_standard_anchor_index(candidates)
   local best = nil
 
+  -- Score each node from the tree above the cursor to find the best one to open the menu on
+  -- - prefer functions over assignments, assignments over calls
   for index, entry in ipairs(candidates) do
     if constants.standard_preferred_tiers[entry.semantic.node_tier] then
       local tier_context_depth, kind_context_depth = get_standard_score(entry)
@@ -82,29 +85,40 @@ local function select_standard_anchor_index(candidates)
   return #candidates
 end
 
--- Mode based anchor pick
+-- Pick anchor based on depth mode
+-- depth_0: find the best node overall (preference-based)
+-- depth_N: only consider shallower tiers, pick closest
 local function select_by_mode(candidates, mode)
   if mode == "lowest_node" or mode == "max" then
     return candidates[1].node_info
   end
 
-  local standard_index = select_standard_anchor_index(candidates)
-  if mode == "standard" then
+  -- Closest Settlement with tier/kind preference
+  if mode == "depth_0" then
+    local standard_index = select_standard_anchor_index(candidates)
     return candidates[standard_index].node_info
   end
 
+  -- For depth_1+, filter out upper tiers and pick the closest remaining node
   local depth = parse_depth_mode(mode)
   if type(depth) == "number" then
-    -- Depth offset from highest actionable
-    local highest_index = #candidates
-    local target = highest_index - depth
-    if target < 1 then
-      target = 1
+    local max_tier_depth = 3 - depth
+    local filtered = {}
+    
+    for _, entry in ipairs(candidates) do
+      local tier_depth = constants.depth_tier_context_depth[entry.semantic.node_tier]
+      if tier_depth and tier_depth <= max_tier_depth then
+        filtered[#filtered + 1] = entry
+      end
     end
 
-    return candidates[target].node_info
+    if #filtered > 0 then
+      return filtered[#filtered].node_info
+    end
   end
 
+  -- Fallback to closest Settlement behavior
+  local standard_index = select_standard_anchor_index(candidates)
   return candidates[standard_index].node_info
 end
 
@@ -180,7 +194,7 @@ function M.select_node_info(node_info)
   end
 
   local config = treesitter_config.get()
-  local mode = config.context_mode or "standard"
+  local mode = config.context_mode or "depth_0"
   local candidates = M.get_candidates(node_info)
 
   if #candidates == 0 then

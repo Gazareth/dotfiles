@@ -20,7 +20,9 @@ function M.setup(opts)
   end, { desc = "Namu Symbols Menu" })
 
   vim.keymap.set("n", "<leader>tt", function()
-    Menu.open(atlantis.build_menu_spec())
+    treesitter_config.with_context_mode(modes.depth_0, function()
+      Menu.open(atlantis.build_menu_spec())
+    end)
   end, { desc = "Treewalker Scope & Actions" })
 
   vim.keymap.set("n", "<leader>tn", function()

@@ -20,6 +20,16 @@ M.mappings = {
     node_kind = node_kinds.collection,
     actionable = true,
   },
+  parameter_list = {
+    node_tier = node_tiers.grove,
+    node_kind = node_kinds.collection,
+    actionable = true,
+  },
+  formal_parameters = {
+    node_tier = node_tiers.grove,
+    node_kind = node_kinds.collection,
+    actionable = true,
+  },
   arguments = {
     node_tier = node_tiers.grove,
     node_kind = node_kinds.collection,

@@ -1,7 +1,9 @@
 local jump_column = require("configs.hydra.atlantis.menu.columns.jump")
 local modify_column = require("configs.hydra.atlantis.menu.columns.modify")
 local swap_column = require("configs.hydra.atlantis.menu.columns.swap")
-local supported_nodes = require("configs.hydra.atlantis.treesitter.common.constants").supported_nodes
+local treesitter_constants = require("configs.hydra.atlantis.treesitter.common.constants")
+local supported_nodes = treesitter_constants.supported_nodes
+local parameter_container_types = treesitter_constants.parameter_container_types
 
 local M = {}
 
@@ -18,22 +20,33 @@ local function build_modify_spec(modify_spec)
 end
 
 -- Parsed anchor targets
-local function resolve_anchor_target(parsed)
+local function resolve_anchor_target(parsed, anchor_node_info)
   if type(parsed) ~= "table" then
     return nil
   end
 
   local targets = type(parsed.targets) == "table" and parsed.targets or nil
-  if type(targets) ~= "table" then
-    return nil
-  end
 
-  if parsed.node_kind == supported_nodes.fn and type(targets.function_name) == "table" then
+  if parsed.node_kind == supported_nodes.fn and type(targets) == "table" and type(targets.function_name) == "table" then
     return targets.function_name
   end
 
-  if parsed.node_kind == supported_nodes.assignment and type(targets.left) == "table" then
+  if parsed.node_kind == supported_nodes.assignment and type(targets) == "table" and type(targets.left) == "table" then
     return targets.left
+  end
+
+  -- First parameter child target
+  if type(anchor_node_info) == "table"
+    and anchor_node_info.node
+    and parameter_container_types[anchor_node_info.node_type] == true then
+    local first_named = anchor_node_info.node:named_child(0)
+    if first_named then
+      local row, col = first_named:start()
+      return {
+        row = row,
+        col = col,
+      }
+    end
   end
 
   return nil
@@ -46,7 +59,7 @@ local function build_positioned_anchor(anchor_node_info)
   end
 
   local parsed = require("configs.hydra.atlantis.treesitter")(anchor_node_info)
-  local target = resolve_anchor_target(parsed)
+  local target = resolve_anchor_target(parsed, anchor_node_info)
   if type(target) ~= "table" then
     return anchor_node_info
   end

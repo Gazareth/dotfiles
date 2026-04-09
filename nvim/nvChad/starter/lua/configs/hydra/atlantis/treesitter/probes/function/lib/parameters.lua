@@ -61,6 +61,14 @@ function M.list_parameters(node)
     end
   end
 
+  -- Fallback first named child
+  if #list == 0 and named_count > 0 then
+    local first_named = params:named_child(0)
+    if first_named then
+      list[#list + 1] = first_named
+    end
+  end
+
   return list, params
 end
 

@@ -1,5 +1,6 @@
 local action_rows = require("configs.hydra.atlantis.menu.actions.rows")
 local navigation = require("configs.hydra.atlantis.menu.nodes.function.lib.navigation")
+local navigate = require("configs.hydra.atlantis.menu.nodes.function.lib.navigate")
 local parsed_helpers = require("configs.hydra.atlantis.menu.nodes.function.lib.parsed")
 local supported_nodes = require("configs.hydra.atlantis.treesitter.common.constants").supported_nodes
 
@@ -43,26 +44,38 @@ function M.build(node_info, parsed)
   for _, row in ipairs(primary_rows) do
     items[#items + 1] = row
   end
-  items[#items + 1] = {
-    separator = true,
-    label = "󰆧 Parameters: " .. tostring(parameter_count),
-  }
 
-  cursor = navigation.append_parameter_rows(items, targets, hotkeys, used, cursor)
+  -- Submenu navigation items
+  items[#items + 1] = { separator = true }
+  
+  if targets.parameter_container then
+    -- Open parameters from first parameter when available
+    local parameter_anchor = (targets.parameters and targets.parameters[1]) or targets.parameter_container
+    items[#items + 1] = {
+      key = "p",
+      icon = "󰆧",
+      label = "Parameters...",
+      action = navigate.navigate_and_open_at_depth(parameter_anchor, "depth_1"),
+    }
+  end
 
-  items[#items + 1] = {
-    separator = true,
-    label = "󰅲 Nested Functions: " .. tostring(nested_count),
-  }
-
-  cursor = navigation.append_nested_function_rows(items, targets, hotkeys, used, cursor)
-
-  items[#items + 1] = {
-    separator = true,
-    label = "󰌭 Assigns: " .. tostring(assignment_count),
-  }
-
-  cursor = navigation.append_assignment_rows(items, targets, hotkeys, used, cursor)
+  if #(targets.nested_functions or {}) > 0 or #(targets.assignments or {}) > 0 then
+    items[#items + 1] = {
+      key = "b",
+      icon = "󰅲",
+      label = "Body...",
+      action = function()
+        -- Navigate to first body item (nested function or assignment)
+        local body_start = targets.nested_functions and targets.nested_functions[1]
+        if not body_start and targets.assignments then
+          body_start = targets.assignments[1]
+        end
+        if body_start then
+          navigate.navigate_and_open_at_depth(body_start, "depth_1")()
+        end
+      end,
+    }
+  end
 
   -- Metrics summary at the end
   items[#items + 1] = { separator = true }

@@ -33,6 +33,9 @@ M.supported_nodes = {
   assignment = "assignment",
   binary_expression = "binary_expression",
   fn = "function",
+  parameter = "parameter",
+  body = "body",
+  return_stmt = "return",
 }
 
 M.roles = {
