@@ -5,7 +5,7 @@ local constants = require("configs.hydra.atlantis.treesitter.anchor.constants")
 
 local M = {}
 
--- Resolver options from current config
+-- Build semantic resolver options from active Tree-sitter config
 local function build_resolve_options(config)
   return {
     safe_languages = config.safe_languages,
@@ -13,7 +13,7 @@ local function build_resolve_options(config)
   }
 end
 
--- Check whether this node can drive actions
+-- Check whether node is actionable under semantic mappings
 local function is_actionable(node_info, resolve_options)
   local semantic = resolve_language_mapping(node_info, resolve_options)
   if semantic and semantic.actionable == true then
@@ -23,7 +23,7 @@ local function is_actionable(node_info, resolve_options)
   return false, semantic
 end
 
--- Depth mode parse
+-- Parse depth mode token like depth_0 into numeric depth
 local function parse_depth_mode(mode)
   if type(mode) ~= "string" then
     return nil
@@ -37,8 +37,8 @@ local function parse_depth_mode(mode)
   return tonumber(value)
 end
 
--- Score a candidate node for depth_0 selection
--- Returns tier and kind scores used to rank which node is "best"
+-- Score candidate anchor for standard depth selection
+-- Lower tier score wins then lower kind score
 local function get_standard_score(entry)
   local tier = entry.semantic.node_tier
   local kind = entry.semantic.node_kind
@@ -54,12 +54,11 @@ local function get_standard_score(entry)
   return tier_context_depth, 1
 end
 
--- Find best anchor by scoring: prefer higher tiers, then simpler kinds, then closest
+-- Select best standard anchor from actionable candidate chain
 local function select_standard_anchor_index(candidates)
   local best = nil
 
-  -- Score each node from the tree above the cursor to find the best one to open the menu on
-  -- - prefer functions over assignments, assignments over calls
+  -- Rank parent-chain nodes by tier and kind, then prefer closest tie
   for index, entry in ipairs(candidates) do
     if constants.standard_preferred_tiers[entry.semantic.node_tier] then
       local tier_context_depth, kind_context_depth = get_standard_score(entry)
@@ -85,21 +84,20 @@ local function select_standard_anchor_index(candidates)
   return #candidates
 end
 
--- Pick anchor based on depth mode
--- depth_0: find the best node overall (preference-based)
--- depth_N: only consider shallower tiers, pick closest
+-- Select anchor by depth mode policy
+-- depth_0 picks best scored anchor, depth_N narrows tiers then picks closest
 local function select_by_mode(candidates, mode)
   if mode == "lowest_node" or mode == "max" then
     return candidates[1].node_info
   end
 
-  -- Closest Settlement with tier/kind preference
+  -- Standard scored anchor selection
   if mode == "depth_0" then
     local standard_index = select_standard_anchor_index(candidates)
     return candidates[standard_index].node_info
   end
 
-  -- For depth_1+, filter out upper tiers and pick the closest remaining node
+  -- Depth filter then closest surviving candidate
   local depth = parse_depth_mode(mode)
   if type(depth) == "number" then
     local max_tier_depth = 3 - depth
@@ -117,12 +115,12 @@ local function select_by_mode(candidates, mode)
     end
   end
 
-  -- Fallback to closest Settlement behavior
+  -- Fallback to standard scored selection
   local standard_index = select_standard_anchor_index(candidates)
   return candidates[standard_index].node_info
 end
 
--- Actionable candidates from cursor chain
+-- Collect actionable nodes from cursor node to root
 local function collect_candidates(node_info, resolve_options)
   local current = node_info and node_info.node or nil
   local candidates = {}
@@ -151,7 +149,7 @@ local function collect_candidates(node_info, resolve_options)
   return candidates
 end
 
--- Public anchor candidate list
+-- Public actionable candidate list for debugging and UI
 function M.get_candidates(node_info)
   if not node_info or not node_info.node then
     return {}
@@ -162,7 +160,7 @@ function M.get_candidates(node_info)
   return collect_candidates(node_info, resolve_options)
 end
 
--- Candidate index for selected node
+-- Find selected anchor index within candidate list
 function M.find_candidate_index(candidates, selected_node_info)
   if type(candidates) ~= "table" or not selected_node_info or not selected_node_info.node then
     return nil
@@ -187,21 +185,21 @@ function M.find_candidate_index(candidates, selected_node_info)
   return nil
 end
 
--- Choose the action anchor from the cursor node chain
-function M.select_node_info(node_info)
+-- Select final anchor node info from cursor chain and mode
+function M.select_node_info(node_info, mode)
   if not node_info or not node_info.node then
     return node_info
   end
 
   local config = treesitter_config.get()
-  local mode = config.context_mode or "depth_0"
+  local resolved_mode = mode or config.context_mode or "depth_0"
   local candidates = M.get_candidates(node_info)
 
   if #candidates == 0 then
     return node_info
   end
 
-  return select_by_mode(candidates, mode)
+  return select_by_mode(candidates, resolved_mode)
 end
 
 return M

@@ -1,12 +1,12 @@
 local M = {}
 
--- Cursor row and column
+-- Read current window cursor position
 local function get_cursor()
   local row, col = unpack(vim.api.nvim_win_get_cursor(0))
   return { row = row, col = col }
 end
 
--- Node text with empty fallback
+-- Read node text safely with empty-string fallback
 local function get_node_text(node, bufnr)
   local ok, text = pcall(vim.treesitter.get_node_text, node, bufnr)
   if ok then
@@ -16,7 +16,7 @@ local function get_node_text(node, bufnr)
   return ""
 end
 
--- Node details shared by all parsers
+-- Build normalized node_info payload shared by probes
 function M.build_node_info(opts)
   opts = opts or {}
 

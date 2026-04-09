@@ -8,7 +8,6 @@ function M.navigate_and_open_at_depth(target, depth)
 
   return function()
     local Menu = require("configs.hydra.common.menu")
-    local treesitter_config = require("configs.hydra.atlantis.treesitter.config")
     local atlantis = require("configs.hydra.atlantis")
 
     -- Position cursor at target
@@ -21,10 +20,10 @@ function M.navigate_and_open_at_depth(target, depth)
       vim.cmd("normal! zz")
     end
 
-    -- Open menu at specified depth
-    treesitter_config.with_context_mode(depth, function()
-      Menu.open(atlantis.build_menu_spec())
-    end)
+    -- Depth mode menu open
+    Menu.open(atlantis.build_menu_spec({
+      depth_mode = depth,
+    }))
   end
 end
 

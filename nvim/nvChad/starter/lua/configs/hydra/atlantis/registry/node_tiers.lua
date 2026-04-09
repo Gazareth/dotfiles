@@ -1,6 +1,6 @@
 local M = {}
 
--- Atlantis node tiers
+-- Semantic tier constants used for anchor depth scoring
 M.node_tiers = {
   colony = "colony",
   settlement = "settlement",
@@ -12,7 +12,7 @@ M.node_tiers = {
   reef = "reef",
 }
 
--- Atlantis node kinds
+-- Semantic kind constants used for titles and mappings
 M.node_kinds = {
   unknown = "unknown",
   declaration = "declaration",
@@ -31,7 +31,7 @@ M.node_kinds = {
   string = "string",
 }
 
--- Atlantis action ids
+-- Canonical action ids used by menu row filtering
 M.action_ids = {
   inspect = "inspect",
   jump = "jump",

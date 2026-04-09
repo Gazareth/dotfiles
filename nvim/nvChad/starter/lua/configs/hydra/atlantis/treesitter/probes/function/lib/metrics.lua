@@ -1,5 +1,6 @@
 local constants = require("configs.hydra.atlantis.treesitter.probes.function.lib.constants")
 local parameters = require("configs.hydra.atlantis.treesitter.probes.function.lib.parameters")
+local node_common = require("configs.hydra.atlantis.treesitter.probes.common.node")
 
 local M = {}
 local call_types = {
@@ -8,7 +9,7 @@ local call_types = {
   function_call = true,
 }
 
--- Recursive node walk
+-- Walk named descendant tree depth-first
 local function walk(node, fn)
   if not node then
     return
@@ -16,13 +17,12 @@ local function walk(node, fn)
 
   fn(node)
 
-  local child_count = node:named_child_count()
-  for i = 0, child_count - 1 do
-    walk(node:named_child(i), fn)
+  for _, child in ipairs(node_common.list_named_children(node)) do
+    walk(child, fn)
   end
 end
 
--- Matching descendant count
+-- Count descendants matching predicate
 function M.count_descendants(node, predicate)
   local count = 0
   walk(node, function(current)
@@ -33,7 +33,7 @@ function M.count_descendants(node, predicate)
   return count
 end
 
--- Matching descendant list
+-- Collect descendants matching predicate
 function M.collect_descendants(node, predicate)
   local list = {}
   walk(node, function(current)
@@ -44,63 +44,63 @@ function M.collect_descendants(node, predicate)
   return list
 end
 
--- Nested function count
+-- Count nested function-like descendants
 local function count_nested_functions(node)
   return M.count_descendants(node, function(current)
     return constants.function_like_types[current:type()] == true
   end)
 end
 
--- Nested function list
+-- Collect nested function-like descendants
 function M.find_nested_functions(node)
   return M.collect_descendants(node, function(current)
     return constants.function_like_types[current:type()] == true
   end)
 end
 
--- Assignment count
+-- Count assignment-like descendants
 local function count_assignments(node)
   return M.count_descendants(node, function(current)
     return constants.assignment_types[current:type()] == true
   end)
 end
 
--- Assignment list
+-- Collect assignment-like descendants
 function M.find_assignments(node)
   return M.collect_descendants(node, function(current)
     return constants.assignment_types[current:type()] == true
   end)
 end
 
--- Table assignment count
+-- Count table assignment descendants
 local function count_table_assignments(node)
   return M.count_descendants(node, function(current)
     return constants.table_assignment_types[current:type()] == true
   end)
 end
 
--- Table assignment list
+-- Collect table assignment descendants
 function M.find_table_assignments(node)
   return M.collect_descendants(node, function(current)
     return constants.table_assignment_types[current:type()] == true
   end)
 end
 
--- Call count
+-- Count call-like descendants
 local function count_calls(node)
   return M.count_descendants(node, function(current)
     return call_types[current:type()] == true
   end)
 end
 
--- Call list
+-- Collect call-like descendants
 function M.find_calls(node)
   return M.collect_descendants(node, function(current)
     return call_types[current:type()] == true
   end)
 end
 
--- Function metrics
+-- Build function metrics used by menu titles and summaries
 function M.build_function_metrics(node_info)
   return {
     parameter_count = parameters.count_parameters(node_info.node),

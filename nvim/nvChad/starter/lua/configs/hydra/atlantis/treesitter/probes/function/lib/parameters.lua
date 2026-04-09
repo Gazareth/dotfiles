@@ -1,16 +1,14 @@
 local constants = require("configs.hydra.atlantis.treesitter.probes.function.lib.constants")
 local treesitter_constants = require("configs.hydra.atlantis.treesitter.common.constants")
+local node_common = require("configs.hydra.atlantis.treesitter.probes.common.node")
 local parameter_container_types = treesitter_constants.parameter_container_types
 
 local M = {}
 
--- Matching child count
+-- Count named children matching provided predicate
 local function count_named_children(node, predicate)
   local count = 0
-  local named_count = node:named_child_count()
-
-  for i = 0, named_count - 1 do
-    local child = node:named_child(i)
+  for _, child in ipairs(node_common.list_named_children(node)) do
     if predicate(child) then
       count = count + 1
     end
@@ -19,11 +17,9 @@ local function count_named_children(node, predicate)
   return count
 end
 
--- Parameter container lookup
+-- Find parameter container node for function-like node
 function M.find_parameter_container(node)
-  local named_count = node:named_child_count()
-  for i = 0, named_count - 1 do
-    local child = node:named_child(i)
+  for _, child in ipairs(node_common.list_named_children(node)) do
     if parameter_container_types[child:type()] then
       return child
     end
@@ -32,7 +28,7 @@ function M.find_parameter_container(node)
   return nil
 end
 
--- Parameter count
+-- Count parameter nodes inside function parameter container
 function M.count_parameters(node)
   local params = M.find_parameter_container(node)
   if not params then
@@ -44,7 +40,7 @@ function M.count_parameters(node)
   end)
 end
 
--- Parameter node list
+-- List parameter nodes with fallback for uncommon grammars
 function M.list_parameters(node)
   local params = M.find_parameter_container(node)
   if not params then
@@ -52,18 +48,17 @@ function M.list_parameters(node)
   end
 
   local list = {}
-  local named_count = params:named_child_count()
+  local named_children = node_common.list_named_children(params)
 
-  for i = 0, named_count - 1 do
-    local child = params:named_child(i)
+  for _, child in ipairs(named_children) do
     if constants.parameter_types[child:type()] == true then
       list[#list + 1] = child
     end
   end
 
-  -- Fallback first named child
-  if #list == 0 and named_count > 0 then
-    local first_named = params:named_child(0)
+  -- Fallback to first named child when grammar omits parameter node type
+  if #list == 0 and #named_children > 0 then
+    local first_named = named_children[1]
     if first_named then
       list[#list + 1] = first_named
     end

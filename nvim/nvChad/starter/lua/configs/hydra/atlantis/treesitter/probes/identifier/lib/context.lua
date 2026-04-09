@@ -4,24 +4,11 @@ local function_constants = require("configs.hydra.atlantis.treesitter.probes.fun
 local function_lib = require("configs.hydra.atlantis.treesitter.probes.function.lib")
 local parse_function = require("configs.hydra.atlantis.treesitter.probes.function").parse_function
 local build_node_info = require("configs.hydra.atlantis.treesitter.common.node_info").build_node_info
+local node_common = require("configs.hydra.atlantis.treesitter.probes.common.node")
 
 local M = {}
 
--- Descendant check
-local function is_descendant_of(node, ancestor)
-  local current = node
-  while current do
-    if current:id() == ancestor:id() then
-      return true
-    end
-
-    current = current:parent()
-  end
-
-  return false
-end
-
--- Function-name identifier check
+-- Check whether identifier belongs to function name region
 local function is_function_name_identifier(node, function_ancestor)
   local params = function_lib.find_parameter_container(function_ancestor)
   local child_count = function_ancestor:named_child_count()
@@ -32,7 +19,7 @@ local function is_function_name_identifier(node, function_ancestor)
       break
     end
 
-    if is_descendant_of(node, child) then
+    if node_common.is_descendant_of(node, child) then
       return true
     end
   end
@@ -40,34 +27,29 @@ local function is_function_name_identifier(node, function_ancestor)
   return false
 end
 
--- Enclosing function lookup
+-- Find enclosing function where identifier is part of function name
 local function find_function_context_ancestor(node)
-  local current = node and node:parent() or nil
-  while current do
-    if function_constants.function_like_types[current:type()]
-      and is_function_name_identifier(node, current) then
-      return current
-    end
-
-    current = current:parent()
-  end
-
-  return nil
+  return node_common.find_ancestor_of_types(node, function_constants.function_like_types, {
+    include_self = false,
+    predicate = function(current)
+      return is_function_name_identifier(node, current)
+    end,
+  })
 end
 
--- Function-name parse reuse
+-- Reuse parsed function payload as identifier context payload
 local function build_function_identifier_result(function_node_info, parsed_function)
   local function_role = parsed_function.role or roles.fn
   parsed_function.node_type = function_node_info.node_type
   parsed_function.text = function_node_info.text
-  -- Semantic mapping source node
+  -- Force semantic mapping to use function node context
   parsed_function.semantic_node_info = function_node_info
   parsed_function.role = function_role .. " " .. roles.identifier
   parsed_function.display_name = parsed_function.role
   return parsed_function
 end
 
--- Function-name context parse
+-- Parse identifier as function-name context when applicable
 function M.try_parse_identifier_function_context(node_info)
   local function_ancestor = find_function_context_ancestor(node_info.node)
   if not function_ancestor then

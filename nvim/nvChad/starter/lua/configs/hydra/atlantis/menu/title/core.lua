@@ -2,7 +2,7 @@ local node_kinds_const = require("configs.hydra.atlantis.registry.node_tiers").n
 
 local M = {}
 
--- Kind icons map
+-- Fallback icon by semantic kind for title badges
 local kind_icons = {
   [node_kinds_const.declaration]   = "ƒ",
   [node_kinds_const.comment]       = "🗨",
@@ -16,7 +16,7 @@ local kind_icons = {
   [node_kinds_const.statement]     = "·",
 }
 
--- Kind labels map
+-- Fallback label by semantic kind for title badges
 local kind_labels = {
   [node_kinds_const.declaration]   = "Function",
   [node_kinds_const.comment]       = "Comment",
@@ -30,7 +30,7 @@ local kind_labels = {
   [node_kinds_const.statement]     = "Statement",
 }
 
--- Type labels map
+-- Node-type label overrides for clearer titles
 local type_labels = {
   for_statement = "For loop",
   for_in_statement = "For loop",
@@ -39,9 +39,15 @@ local type_labels = {
   repeat_statement = "Repeat",
   function_call = "Call",
   method_definition = "Method",
+  parameter = "Parameter",
+  parameter_declaration = "Parameter",
+  typed_parameter = "Parameter",
+  parameters = "Parameters",
+  parameter_list = "Parameters",
+  formal_parameters = "Parameters",
 }
 
--- Type icons map
+-- Node-type icon overrides for clearer titles
 local type_icons = {
   for_statement = "➰",
   for_in_statement = "➰",
@@ -49,19 +55,25 @@ local type_icons = {
   while_statement = "↺",
   repeat_statement = "↺",
   method_definition = "·",
+  parameter = "󰆧",
+  parameter_declaration = "󰆧",
+  typed_parameter = "󰆧",
+  parameters = "󰆧",
+  parameter_list = "󰆧",
+  formal_parameters = "󰆧",
 }
 
--- Resolve title label
+-- Resolve title label from node-type override then semantic fallback
 function M.resolve_label(semantic_kind, node_type)
   return type_labels[node_type] or kind_labels[semantic_kind] or "Node"
 end
 
--- Resolve title icon
+-- Resolve title icon from node-type override then semantic fallback
 function M.resolve_icon(semantic_kind, node_type)
   return type_icons[node_type] or kind_icons[semantic_kind] or ""
 end
 
--- Format metrics list
+-- Format metric strings for title suffix display
 local function format_metrics(list)
   if type(list) ~= "table" or #list == 0 then
     return ""
@@ -81,7 +93,7 @@ local function format_metrics(list)
   return "{ " .. table.concat(parts, ", ") .. " }"
 end
 
--- Build title text
+-- Build final title string with label, icon, name, and metrics
 function M.build(opts)
   local label = opts.label or M.resolve_label(opts.semantic_kind, opts.node_type)
   local icon = opts.icon or M.resolve_icon(opts.semantic_kind, opts.node_type)
@@ -101,7 +113,7 @@ function M.build(opts)
   return result
 end
 
--- Truncate title text
+-- Truncate long title fragments for compact menus
 function M.truncate(text, max_len)
   max_len = max_len or 40
   if not text or text == "" then
@@ -113,7 +125,7 @@ function M.truncate(text, max_len)
   return text:sub(1, max_len) .. "..."
 end
 
--- Extract comment preview
+-- Extract first comment content for title name preview
 function M.extract_comment_name(raw_text)
   if not raw_text then
     return nil, nil
@@ -135,7 +147,7 @@ function M.extract_comment_name(raw_text)
   return M.truncate(fallback, 24), #fallback
 end
 
--- Extract loop name
+-- Extract loop iterator or clause snippet for loop titles
 function M.extract_for_name(raw_text)
   if not raw_text then
     return nil
@@ -154,7 +166,7 @@ function M.extract_for_name(raw_text)
   return nil
 end
 
--- Extract if condition
+-- Extract if-condition snippet for branch titles
 function M.extract_if_name(raw_text)
   if not raw_text then
     return nil
@@ -168,7 +180,7 @@ function M.extract_if_name(raw_text)
   return nil
 end
 
--- Extract assignment name
+-- Extract assignment target name for assignment titles
 function M.extract_assignment_name(raw_text)
   if not raw_text then
     return nil
@@ -187,7 +199,7 @@ function M.extract_assignment_name(raw_text)
   return nil
 end
 
--- Count node lines
+-- Count lines spanned by node for title metrics
 local function count_lines(node_info, raw_text)
   if node_info and node_info.start_row and node_info.end_row then
     return (node_info.end_row - node_info.start_row) + 1
@@ -204,7 +216,7 @@ local function count_lines(node_info, raw_text)
   return math.max(count, 1)
 end
 
--- Build parsed title
+-- Build node title text from parsed semantic data
 function M.build_from_parsed(node_info, parsed)
   local semantic_kind = (parsed and parsed.semantic_kind) or ""
   local node_type = (parsed and parsed.node_type)

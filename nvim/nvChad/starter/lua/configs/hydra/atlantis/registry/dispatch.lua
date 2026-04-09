@@ -4,7 +4,7 @@ local node_kinds = atlantis_constants.node_kinds
 
 local M = {}
 
--- Tree-sitter language first, filetype fallback second
+-- Detect semantic mapping language from node then buffer fallback
 local function detect_language(node_info)
   if node_info and node_info.node then
     local ok, lang = pcall(function()
@@ -26,7 +26,7 @@ local function detect_language(node_info)
   return vim.bo.filetype
 end
 
--- Whether the raw node is named or anonymous
+-- Resolve whether raw syntax node is named for diagnostics
 local function get_node_named_flag(node_info)
   if not node_info or not node_info.node then
     return false
@@ -39,7 +39,7 @@ local function get_node_named_flag(node_info)
   return ok and named == true
 end
 
--- Node info for unmapped raw nodes
+-- Build semantic payload for unsupported raw node type
 local function build_unknown_result(language, mapping_source, node_info)
   return {
     status = "unknown-node",
@@ -55,7 +55,7 @@ local function build_unknown_result(language, mapping_source, node_info)
   }
 end
 
--- Node info for mapped raw nodes
+-- Build semantic payload for supported mapped node type
 local function build_supported_result(language, mapping_source, node_info, mapping)
   local node_tier = mapping.node_tier or node_tiers.reef
   local node_kind = mapping.node_kind or node_kinds.unknown
@@ -74,7 +74,7 @@ local function build_supported_result(language, mapping_source, node_info, mappi
   }
 end
 
--- Node info when language mappings are disabled
+-- Build semantic payload when language mappings are disabled
 local function build_unsupported_result(language, node_info)
   return {
     status = "unsupported-language",
@@ -90,7 +90,7 @@ local function build_unsupported_result(language, node_info)
   }
 end
 
--- Merge mapping layers and return Atlantis node info
+-- Merge mapping layers and resolve semantic node metadata
 function M.resolve(node_info, opts)
   opts = opts or {}
 
@@ -106,7 +106,7 @@ function M.resolve(node_info, opts)
     return build_unsupported_result(language, node_info)
   end
 
-  -- Core rules first, then language overrides
+  -- Layer precedence core -> common -> language base -> user overrides
   local merged = vim.tbl_deep_extend("force", vim.deepcopy(core), common, language_base or {}, user_languages[language] or {})
   local mapping = (merged.mappings or {})[node_info.node_type]
 

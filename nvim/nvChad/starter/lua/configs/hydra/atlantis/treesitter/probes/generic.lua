@@ -1,7 +1,7 @@
 local M = {}
 local supported_nodes = require("configs.hydra.atlantis.treesitter.common.constants").supported_nodes
 
--- Fallback parse result
+-- Build fallback parse payload for unsupported probe node types
 function M.parse_generic(node_info)
   return {
     node_kind = supported_nodes.generic,

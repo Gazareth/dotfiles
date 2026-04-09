@@ -1,4 +1,6 @@
 local lib = require("configs.hydra.atlantis.treesitter.probes.identifier.lib")
+local parse_parameter = require("configs.hydra.atlantis.treesitter.probes.parameter").parse_parameter
+local roles = require("configs.hydra.atlantis.treesitter.common.constants").roles
 
 local M = {}
 
@@ -9,7 +11,12 @@ function M.parse_identifier(node_info)
     return function_context
   end
 
-  return lib.build_identifier_result(node_info, lib.classify_identifier_role(node_info))
+  local role = lib.classify_identifier_role(node_info)
+  if role == roles.parameter then
+    return parse_parameter(node_info)
+  end
+
+  return lib.build_identifier_result(node_info, role)
 end
 
 return M

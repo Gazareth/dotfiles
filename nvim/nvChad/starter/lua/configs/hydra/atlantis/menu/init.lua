@@ -10,13 +10,13 @@ M.layout = layout
 M.columns = columns
 
 -- Node menu entrypoint
-function M.get_node_menu_spec()
-  return nodes.get_node_menu_spec()
+function M.get_node_menu_spec(runtime_ctx)
+  return nodes.get_node_menu_spec(runtime_ctx)
 end
 
 -- Atlantis menu layout entrypoint
-function M.get_layout_menu_spec()
-  return layout.build_menu_spec()
+function M.get_layout_menu_spec(opts)
+  return layout.build_menu_spec(opts)
 end
 
 return M

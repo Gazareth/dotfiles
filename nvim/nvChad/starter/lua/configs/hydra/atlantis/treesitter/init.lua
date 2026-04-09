@@ -1,6 +1,7 @@
 local parse_identifier = require("configs.hydra.atlantis.treesitter.probes.identifier").parse_identifier
 local parse_assignment = require("configs.hydra.atlantis.treesitter.probes.assignment").parse_assignment
 local parse_function = require("configs.hydra.atlantis.treesitter.probes.function").parse_function
+local parse_parameter = require("configs.hydra.atlantis.treesitter.probes.parameter").parse_parameter
 local parse_binary_expression = require("configs.hydra.atlantis.treesitter.probes.binary_expression").parse_binary_expression
 local parse_generic = require("configs.hydra.atlantis.treesitter.probes.generic").parse_generic
 local treesitter_constants = require("configs.hydra.atlantis.treesitter.common.constants")
@@ -11,7 +12,7 @@ local node_kinds = atlantis_constants.node_kinds
 local resolve_language_mapping = require("configs.hydra.atlantis.treesitter.languages").resolve
 local treesitter_config = require("configs.hydra.atlantis.treesitter.config")
 
--- Specialized parser map
+-- Node-type to specialized probe parser mapping
 local parser_map = {
   [node_types.identifier] = parse_identifier,
   [node_types.assignment_expression] = parse_assignment,
@@ -26,9 +27,16 @@ local parser_map = {
   [node_types.function_expression] = parse_function,
   [node_types.method_definition] = parse_function,
   [node_types.arrow_function] = parse_function,
+
+  [node_types.parameters] = parse_parameter,
+  [node_types.parameter_list] = parse_parameter,
+  [node_types.formal_parameters] = parse_parameter,
+  [node_types.parameter] = parse_parameter,
+  [node_types.parameter_declaration] = parse_parameter,
+  [node_types.typed_parameter] = parse_parameter,
 }
 
--- Safe specialized parser run
+-- Run specialized parser safely with fallback warning
 local function parse_with_specialized_parser(parser, node_info)
   if type(parser) ~= "function" then
     return nil
@@ -43,10 +51,10 @@ local function parse_with_specialized_parser(parser, node_info)
   return nil
 end
 
--- Parsed node normalization
+-- Normalize parsed payload with semantic mapping and defaults
 local function normalize_parsed_result(parsed, node_info)
   local config = treesitter_config.get()
-  -- Semantic resolver input
+  -- Resolve semantics from remapped node when probe overrides source
   local semantic_node_info = parsed.semantic_node_info or node_info
 
   parsed.node_type = parsed.node_type or node_info.node_type
@@ -64,7 +72,7 @@ local function normalize_parsed_result(parsed, node_info)
   return parsed
 end
 
--- Parser selection
+-- Parse node with specialized probe then normalize result
 local function parse_node(node_info)
   if not node_info then
     return nil

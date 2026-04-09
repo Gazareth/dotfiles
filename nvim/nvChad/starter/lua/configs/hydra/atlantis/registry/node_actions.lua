@@ -6,7 +6,7 @@ local function_actions = require("configs.hydra.atlantis.ops.functions")
 
 local M = {}
 
--- Action builders by action name
+-- Action builder callbacks by action name
 M.action_builders = {
   change = common_actions.change,
   rename = ops_dispatch.builder("rename"),
@@ -19,7 +19,7 @@ M.action_builders = {
   view_call_hierarchy = function_actions.view_call_hierarchy,
 }
 
--- Action id by action name
+-- Canonical action id lookup by action name
 M.action_id_by_name = {
   change = action_ids.change,
   rename = action_ids.rename,
@@ -32,7 +32,7 @@ M.action_id_by_name = {
   view_call_hierarchy = action_ids.view_call_hierarchy,
 }
 
--- Action names mapped by node kind
+-- Allowed action names by node kind
 M.action_names_by_node_kind = {
   [supported_nodes.generic] = {
     change = true,
@@ -69,7 +69,7 @@ M.action_names_by_node_kind = {
   },
 }
 
--- Check whether action name applies to node kind
+-- Check whether action name is allowed for node kind
 function M.is_action_name_applicable(node_kind, action_name)
   if not node_kind or not action_name then
     return false
@@ -79,7 +79,7 @@ function M.is_action_name_applicable(node_kind, action_name)
   return type(actions) == "table" and actions[action_name] == true
 end
 
--- Build action closure from node kind and action name
+-- Build node action closure when action is allowed
 function M.build(node_kind, action_name, ctx)
   if not M.is_action_name_applicable(node_kind, action_name) then
     return nil
@@ -93,7 +93,7 @@ function M.build(node_kind, action_name, ctx)
   return builder(ctx or {}, node_kind)
 end
 
--- Node action ids derived from node kind action names
+-- Derive allowed action ids table for given node kind
 function M.get_node_action_ids(node_kind)
   if type(node_kind) ~= "string" then
     return nil
@@ -117,7 +117,7 @@ function M.get_node_action_ids(node_kind)
   return node_action_ids
 end
 
--- Check whether action id applies to node kind
+-- Check whether action id is allowed for node kind
 function M.is_action_id_applicable(node_kind, action_id)
   if not node_kind or not action_id then
     return false

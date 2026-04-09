@@ -1,4 +1,5 @@
 local M = {}
+local parameter_sibling = require("configs.hydra.atlantis.ops.function.parameter.sibling")
 
 M.common = require("configs.hydra.atlantis.ops.common")
 M.dispatch = require("configs.hydra.atlantis.ops.dispatch")
@@ -10,9 +11,11 @@ M.assignment = {
 		rhs = require("configs.hydra.atlantis.ops.assignment.jump.rhs"),
 	},
 }
-M.assignments = M.assignment
 M["function"] = {
 	rename = require("configs.hydra.atlantis.ops.function.rename"),
+	parameter = {
+		sibling = parameter_sibling,
+	},
 	jump = {
 		parameters = require("configs.hydra.atlantis.ops.function.jump.parameters"),
 		body = require("configs.hydra.atlantis.ops.function.jump.body"),
@@ -24,8 +27,5 @@ M.identifier = {
 	rename = require("configs.hydra.atlantis.ops.identifier.rename"),
 }
 M.filter = require("configs.hydra.atlantis.ops.filter")
-M.change = require("configs.hydra.atlantis.ops.common.change")
-M.select = require("configs.hydra.atlantis.ops.common.select")
-M.swap = require("configs.hydra.atlantis.ops.common.swap")
 
 return M

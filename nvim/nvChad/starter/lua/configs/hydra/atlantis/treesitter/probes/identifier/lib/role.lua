@@ -9,7 +9,7 @@ local DECLARATION_PARENT_TYPES = identifier_role_parent_types.binding
 
 local M = {}
 
--- Infer identifier role from parent and grandparent nodes
+-- Classify identifier role from immediate and ancestor syntax context
 function M.classify_identifier_role(node_info)
   if FIELD_PARENT_TYPES[node_info.parent_type] then
     return roles.field
@@ -34,7 +34,7 @@ function M.classify_identifier_role(node_info)
   return roles.identifier
 end
 
--- Menu label for the chosen identifier role
+-- Build display label for classified identifier role
 local function build_display_name(role)
   if role == roles.binding then
     return roles.identifier .. " " .. roles.binding
@@ -43,7 +43,7 @@ local function build_display_name(role)
   return role
 end
 
--- Parsed identifier data for menu builders
+-- Build normalized identifier parse payload for menu routing
 function M.build_identifier_result(node_info, role)
   return {
     node_kind = supported_nodes.identifier,

@@ -1,6 +1,6 @@
 local M = {}
 
--- Default Tree-sitter settings
+-- Default Atlantis Tree-sitter behavior and depth modes
 local defaults = {
   context_mode = "depth_0",
   safe_languages = false,
@@ -13,38 +13,19 @@ local defaults = {
   },
 }
 
--- Live Tree-sitter settings
+-- Mutable runtime settings initialized from defaults
 local state = vim.deepcopy(defaults)
 
--- Merge user Tree-sitter settings
+-- Merge user overrides into runtime Tree-sitter settings
 function M.setup(opts)
   opts = opts or {}
   state = vim.tbl_deep_extend("force", vim.deepcopy(defaults), opts)
   return state
 end
 
--- Current Tree-sitter settings
+-- Return active Tree-sitter settings snapshot
 function M.get()
   return state
-end
-
--- Temporary context mode override
-function M.with_context_mode(mode, fn)
-  if type(fn) ~= "function" then
-    return nil
-  end
-
-  local previous_mode = state.context_mode
-  state.context_mode = mode or previous_mode
-
-  local ok, result = pcall(fn)
-  state.context_mode = previous_mode
-
-  if not ok then
-    error(result)
-  end
-
-  return result
 end
 
 return M

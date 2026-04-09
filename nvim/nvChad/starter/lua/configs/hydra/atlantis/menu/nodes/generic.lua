@@ -4,12 +4,19 @@ local common_actions = require("configs.hydra.atlantis.menu.actions.common")
 local supported_nodes = require("configs.hydra.atlantis.treesitter.common.constants").supported_nodes
 
 -- Fallback menu for unsupported node kinds
-function M.build(node_info, parsed)
+function M.build(node_info, parsed, runtime_ctx)
   local label = (parsed and parsed.display_name) or (node_info and node_info.node_type) or "node"
-  -- Shared generic action rows
-  local generic_rows = common_actions.build_generic_action_rows(supported_nodes.generic, label, {
+
+  -- Generic row context payload
+  local row_ctx = {
     node_info = node_info,
     parsed = parsed,
+  }
+
+  -- Shared generic action rows
+  local generic_rows = common_actions.build_generic_action_rows(supported_nodes.generic, label, {
+    ctx = row_ctx,
+    capabilities = type(runtime_ctx) == "table" and runtime_ctx.capabilities or nil,
   })
   local items = {
     {

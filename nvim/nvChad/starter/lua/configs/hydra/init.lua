@@ -20,15 +20,15 @@ function M.setup(opts)
   end, { desc = "Namu Symbols Menu" })
 
   vim.keymap.set("n", "<leader>tt", function()
-    treesitter_config.with_context_mode(modes.depth_0, function()
-      Menu.open(atlantis.build_menu_spec())
-    end)
+    Menu.open(atlantis.build_menu_spec({
+      depth_mode = modes.depth_0,
+    }))
   end, { desc = "Treewalker Scope & Actions" })
 
   vim.keymap.set("n", "<leader>tn", function()
-    treesitter_config.with_context_mode(modes.max or modes.lowest_node, function()
-      Menu.open(atlantis.build_menu_spec())
-    end)
+    Menu.open(atlantis.build_menu_spec({
+      depth_mode = modes.max or modes.lowest_node,
+    }))
   end, { desc = "Treewalker Max Depth Node" })
 end
 

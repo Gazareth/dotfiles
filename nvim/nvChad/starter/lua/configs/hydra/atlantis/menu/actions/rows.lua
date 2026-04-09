@@ -31,7 +31,17 @@ function M.build_row(anchor_type, action_name, opts)
   end
 
   local ctx = type(opts) == "table" and opts.ctx or nil
-  local action = node_actions.build(anchor_type, action_name, ctx)
+  local capabilities = type(opts) == "table" and opts.capabilities or nil
+
+  -- Capability lookup action resolver
+  local action = nil
+  if type(capabilities) == "table"
+    and type(capabilities.lookup) == "table"
+    and type(capabilities.lookup[action_name]) == "function" then
+    action = capabilities.lookup[action_name]
+  else
+    action = node_actions.build(anchor_type, action_name, ctx)
+  end
   if type(action) ~= "function" then
     return nil
   end
@@ -62,6 +72,7 @@ function M.build_rows(anchor_type, action_names, opts)
         label = opts.label,
         label_builder = opts.label_builder,
         ctx = opts.ctx,
+        capabilities = opts.capabilities,
       }
 
       local key_overrides = opts.key_overrides
