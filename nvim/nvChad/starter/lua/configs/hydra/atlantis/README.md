@@ -48,10 +48,10 @@ Cursor on then inside an if statement:
 
 Keep modules isolated by responsibility:
 
-- language mapping: raw Tree-sitter -> tier/kind/actionable candidate
-- actionability policy: direct vs deferred action eligibility
-- anchor resolver: mode-aware anchor selection
-- action registry: allowed action names by resolved anchor kind
+- `schema/languages`: raw Tree-sitter node type -> tier/kind/actionable (per language + shared tables)
+- `schema/constants`: shared tier/kind ids, action ids, probe routing tables
+- `schema/actions`: allowed action names by resolved anchor kind
+- anchor resolver: mode-aware anchor selection (uses language schema via `anchor/languages`)
 - ops resolver: resolve each action name to specific/common executable action code
 - menu renderer: render and dispatch only; no anchor policy decisions
 

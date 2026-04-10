@@ -1,5 +1,5 @@
--- Common syntax node mappings shared by language registries
-local constants = require("configs.hydra.atlantis.registry.constants")
+-- Common syntax node mappings shared by language schemas
+local constants = require("configs.hydra.atlantis.schema.constants")
 
 local nt = constants.node_tiers
 local nk = constants.node_kinds

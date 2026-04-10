@@ -23,9 +23,4 @@ M.actions = {
 	},
 }
 
--- Export non-action operations that remain node-kind oriented
-M.parameter = {
-	sibling = require("configs.hydra.atlantis.ops.actions.specific.parameter.sibling"),
-}
-
 return M

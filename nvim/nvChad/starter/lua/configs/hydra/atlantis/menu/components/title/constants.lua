@@ -1,5 +1,5 @@
 -- Holds title badge maps and resolver rules for semantic kinds and node types
-local node_kinds_const = require("configs.hydra.atlantis.registry.constants").node_kinds
+local node_kinds_const = require("configs.hydra.atlantis.schema.constants").node_kinds
 
 local M = {}
 

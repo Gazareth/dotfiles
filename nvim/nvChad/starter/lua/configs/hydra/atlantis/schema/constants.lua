@@ -1,4 +1,4 @@
--- Core Atlantis constants used by probe, title, and action registries
+-- Core Atlantis constants used by probe, title, and schema tables
 local M = {}
 
 -- Semantic tier constants used for anchor depth scoring

@@ -1,10 +1,10 @@
 local node_actions = require("configs.hydra.atlantis.anchor.actions")
-local action_ids = require("configs.hydra.atlantis.registry.constants").action_ids
+local action_ids = require("configs.hydra.atlantis.schema.constants").action_ids
 local action_registry = require("configs.hydra.atlantis.menu.components.action.registry")
 
 local M = {}
 
--- Build one action row from menu presentation and direct registry+ops action lookup
+-- Build one action row from menu presentation and direct schema+ops action lookup
 local function build_row(anchor_type, action_name, opts)
   if type(anchor_type) ~= "string" or type(action_name) ~= "string" then
     return nil
@@ -43,7 +43,7 @@ local function build_row(anchor_type, action_name, opts)
   }
 end
 
--- Build ordered action rows from action names pre-selected by registry policy
+-- Build ordered action rows from action names pre-selected by schema policy
 function M.build_rows(anchor_type, action_names, opts)
   local rows = {}
   if type(action_names) ~= "table" then

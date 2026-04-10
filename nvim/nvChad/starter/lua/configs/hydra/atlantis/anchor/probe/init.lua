@@ -4,7 +4,7 @@ local parse_function = require("configs.hydra.atlantis.anchor.probe.node_kinds.f
 local parse_parameter = require("configs.hydra.atlantis.anchor.probe.node_kinds.parameter").parse_parameter
 local parse_binary_expression = require("configs.hydra.atlantis.anchor.probe.node_kinds.binary_expression").parse_binary_expression
 local parse_generic = require("configs.hydra.atlantis.anchor.probe.node_kinds.generic").parse_generic
-local kinds = require("configs.hydra.atlantis.registry.constants")
+local kinds = require("configs.hydra.atlantis.schema.constants")
 local resolve_language_mapping = require("configs.hydra.atlantis.anchor.languages").resolve
 local treesitter_config = require("configs.hydra.atlantis.anchor.probe.treesitter.config")
 
@@ -13,7 +13,7 @@ local node_kinds = kinds.node_kinds
 
 local M = {}
 
--- Probe parser callbacks by registry probe id
+-- Probe parser callbacks by schema probe id
 local parser_by_probe_id = {
 	identifier = parse_identifier,
 	assignment = parse_assignment,
@@ -79,7 +79,7 @@ local function normalize_parsed_result(parsed, node_info, semantic, config)
 	return parsed
 end
 
--- Parse node by semantic kind registry mapping and return normalized payload
+-- Parse node by semantic kind schema mapping and return normalized payload
 function M.parse(node_info)
 	if not node_info then
 		return nil

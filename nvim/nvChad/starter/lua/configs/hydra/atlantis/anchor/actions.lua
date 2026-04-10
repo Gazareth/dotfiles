@@ -1,6 +1,6 @@
--- Resolve and build anchor actions using registry tables and runtime builders
-local action_registry = require("configs.hydra.atlantis.registry.actions")
-local action_ids = require("configs.hydra.atlantis.registry.constants").action_ids
+-- Resolve and build anchor actions using schema tables and runtime builders
+local action_schema = require("configs.hydra.atlantis.schema.actions")
+local action_ids = require("configs.hydra.atlantis.schema.constants").action_ids
 local ops_resolver = require("configs.hydra.atlantis.ops.resolver")
 
 local M = {}
@@ -32,7 +32,7 @@ function M.is_action_name_applicable(anchor_kind, action_name)
     return false
   end
 
-  local actions = action_registry.action_names_by_anchor_kind[anchor_kind]
+  local actions = action_schema.action_names_by_anchor_kind[anchor_kind]
   return type(actions) == "table" and actions[action_name] == true
 end
 
@@ -56,7 +56,7 @@ function M.get_anchor_action_ids(anchor_kind)
     return nil
   end
 
-  local action_names = action_registry.action_names_by_anchor_kind[anchor_kind]
+  local action_names = action_schema.action_names_by_anchor_kind[anchor_kind]
   if type(action_names) ~= "table" then
     return nil
   end

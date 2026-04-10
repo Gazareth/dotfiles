@@ -1,5 +1,5 @@
 -- Lua-specific syntax node mappings layered over common mappings
-local constants = require("configs.hydra.atlantis.registry.constants")
+local constants = require("configs.hydra.atlantis.schema.constants")
 
 local nt = constants.node_tiers
 local nk = constants.node_kinds

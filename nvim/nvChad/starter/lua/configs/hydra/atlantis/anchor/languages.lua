@@ -1,5 +1,5 @@
 -- Resolve semantic language mappings from table-only language registries
-local languages = require("configs.hydra.atlantis.registry.languages")
+local languages = require("configs.hydra.atlantis.schema.languages")
 local resolve_atlantis_mapping = require("configs.hydra.atlantis.anchor.probe.resolver").resolve
 
 local M = {}

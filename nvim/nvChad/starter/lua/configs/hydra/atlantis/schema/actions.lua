@@ -3,7 +3,7 @@ local supported_nodes = require("configs.hydra.atlantis.anchor.probe.treesitter.
 
 local M = {}
 
--- Reusable generic action groups for composing anchor capabilities
+-- Reusable generic action groups for composing anchor action sets
 local generic_anchor_actions = {
   change = true,
   select = true,

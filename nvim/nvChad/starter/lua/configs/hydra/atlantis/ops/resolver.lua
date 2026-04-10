@@ -87,7 +87,7 @@ function M.build(action_name, node_kind, ctx)
   return builder(ctx or {}, node_kind)
 end
 
--- Wrap action name into registry-compatible builder function
+-- Wrap action name into schema-compatible builder function
 function M.builder(action_name)
   return function(ctx, node_kind)
     return M.build(action_name, node_kind, ctx)

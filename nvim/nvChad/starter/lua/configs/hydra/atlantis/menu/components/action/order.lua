@@ -1,6 +1,6 @@
 -- Build action name order for an anchor kind so rows appear in a stable menu order
 local action_registry = require("configs.hydra.atlantis.menu.components.action.registry")
-local action_tables = require("configs.hydra.atlantis.registry.actions")
+local action_tables = require("configs.hydra.atlantis.schema.actions")
 
 local M = {}
 
