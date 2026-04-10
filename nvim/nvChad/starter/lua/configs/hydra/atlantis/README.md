@@ -2,7 +2,7 @@
 
 Plugin-level context behavior for atlantis.nvim.
 
-Tree-sitter parsing semantics (node tiers and node kinds) are documented in [treesitter/README.md](treesitter/README.md).
+Tree-sitter parsing semantics (node tiers and node kinds) are documented in [treesitter/README.md](treesitter/README.md). Probe modules (per node kind) are summarized in [anchor/probe/README.md](anchor/probe/README.md).
 
 ## 1. Context Navigation
 
@@ -50,9 +50,21 @@ Keep modules isolated by responsibility:
 
 - `schema/languages`: raw Tree-sitter node type -> tier/kind/actionable (per language + shared tables)
 - `schema/constants`: shared tier/kind ids, probe routing tables
-- `schema/actions`: package root (`init.lua` merges `anchor/` allowlists + `menu/` row keys/labels/order)
-- anchor resolver: mode-aware anchor selection (uses language schema via `anchor/languages`)
-- ops resolver: resolve each action name to specific/common executable action code
-- menu: Hydra menu from `render_spec` (title, rows, key handling)
+- `schema/actions`: package root — `init.lua` merges **`anchor/`** (per–anchor-kind action allowlists) and **`menu/`** (Hydra row `key`/`icon`/`label`, plus `default_action_order`). Tables only; no application logic in this package.
+- `anchor/`: mode-aware anchor selection, probe → parsed payload, jump section data (`anchor/languages` consumes language schema)
+- `ops/`: executable behavior — `ops/resolver.lua` loads `ops/actions/common/<action>` and `ops/actions/specific/<action>`, then an optional `<anchor_kind>` module suffix before the base package
+- `menu/`: `render_spec` (title + rows), `components/action/order.lua` (stable ordering from allowlist + `default_action_order`), `renderer.lua`, Hydra layout assembly
+
+Allowlists and Hydra row copy live under `schema/actions`; executable actions are wired through `anchor/actions` and `ops/resolver`.
+
+### 4.1 Runtime flow (summary)
+
+Hydra entry (`configs/hydra/init.lua`) → `menu/layout.build_menu_spec` → `anchor/build` (cursor, depth, probe, jumps) → `menu/render_spec` builds rows using schema + `anchor/actions.build` for each closure → Hydra renders and dispatches.
+
+### 4.2 Adding an action
+
+1. Turn the action on for the right anchor kinds in `schema/actions/anchor/init.lua`.
+2. Add row metadata (and `default_action_order` if it should appear in the primary block) in `schema/actions/menu/init.lua`.
+3. Provide implementation modules under `ops/actions/` so the resolver can find `build(ctx, anchor_kind)`.
 
 This is the baseline contract for extracting these semantics into atlantis.nvim.
