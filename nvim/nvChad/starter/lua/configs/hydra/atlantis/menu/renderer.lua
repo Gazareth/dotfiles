@@ -1,7 +1,5 @@
--- Formats a pre-resolved render spec from runtime context into a menu item list; knows nothing about node semantics
 local M = {}
 
--- Assemble render spec into a hydra-ready menu spec with title and item list
 function M.build_from_context(runtime_ctx)
   if type(runtime_ctx) ~= "table" or not runtime_ctx.cursor_node_info then
     return {

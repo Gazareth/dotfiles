@@ -1,13 +1,10 @@
--- Build action name order for an anchor kind so rows appear in a stable menu order
-local action_registry = require("configs.hydra.atlantis.menu.components.action.registry")
-local action_tables = require("configs.hydra.atlantis.schema.actions")
+local action_schema = require("configs.hydra.atlantis.schema.actions")
 
 local M = {}
 
--- Build deterministic action order with generic actions first
 function M.build(anchor_kind)
-  local enabled = action_tables.action_names_by_anchor_kind
-    and action_tables.action_names_by_anchor_kind[anchor_kind]
+  local enabled = action_schema.action_names_by_anchor_kind
+    and action_schema.action_names_by_anchor_kind[anchor_kind]
   if type(enabled) ~= "table" then
     return {}
   end
@@ -15,7 +12,7 @@ function M.build(anchor_kind)
   local ordered = {}
   local seen = {}
 
-  for _, action_name in ipairs(action_registry.generic_action_order or {}) do
+  for _, action_name in ipairs(action_schema.default_action_order or {}) do
     if enabled[action_name] == true then
       ordered[#ordered + 1] = action_name
       seen[action_name] = true

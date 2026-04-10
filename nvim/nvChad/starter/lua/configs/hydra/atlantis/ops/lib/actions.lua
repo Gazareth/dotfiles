@@ -1,4 +1,3 @@
--- Aggregate action helpers behind a stable ops.lib.actions import path
 local node = require("configs.hydra.atlantis.ops.lib.node")
 local target = require("configs.hydra.atlantis.ops.lib.target")
 local visual = require("configs.hydra.atlantis.ops.lib.visual")

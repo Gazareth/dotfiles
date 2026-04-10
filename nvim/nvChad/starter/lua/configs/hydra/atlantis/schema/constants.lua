@@ -32,23 +32,6 @@ M.node_kinds = {
   string = "string",
 }
 
--- Canonical action ids used by menu row filtering
-M.action_ids = {
-  inspect = "inspect",
-  jump = "jump",
-  jump_to_body = "jump_to_body",
-  jump_to_parameter = "jump_to_parameter",
-  jump_lhs = "jump_lhs",
-  jump_rhs = "jump_rhs",
-  jump_parent = "jump_parent",
-  select = "select",
-  change = "change",
-  rename = "rename",
-  yank = "yank",
-  delete = "delete",
-  view_call_hierarchy = "view_call_hierarchy",
-}
-
 -- Probe id by semantic node kind for data-driven anchor parsing
 M.probe_by_node_kind = {
   [M.node_kinds.declaration] = "function",

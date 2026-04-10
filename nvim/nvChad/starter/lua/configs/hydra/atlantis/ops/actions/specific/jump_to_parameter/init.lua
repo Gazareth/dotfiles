@@ -3,7 +3,6 @@ local common_actions = require("configs.hydra.atlantis.ops.lib.actions")
 
 local M = {}
 
--- Resolve first function parameter target from parsed payload
 local function resolve_parameter_target(ctx)
   local parsed = type(ctx) == "table" and ctx.parsed or nil
   local targets = type(parsed) == "table" and parsed.targets or nil
@@ -21,7 +20,6 @@ local function resolve_parameter_target(ctx)
   return nil
 end
 
--- Build closure that jumps then reopens menu at the requested depth
 local function jump_and_open_at_depth(target, depth)
   return function()
     common_actions.jump_to_target(target)()
@@ -32,7 +30,6 @@ local function jump_and_open_at_depth(target, depth)
   end
 end
 
--- Build jump-to-parameter closure with fallback placeholder
 function M.build(ctx)
   local target = resolve_parameter_target(ctx)
   if not target then

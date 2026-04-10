@@ -1,11 +1,9 @@
--- Build render spec from anchor context; menu owns presentation assembly
 local title_builder = require("configs.hydra.atlantis.menu.components.title.builder")
 local action_rows = require("configs.hydra.atlantis.menu.components.action.rows")
 local action_order = require("configs.hydra.atlantis.menu.components.action.order")
 
 local M = {}
 
--- Build render spec from parsed node_kind and runtime context
 function M.build(runtime_ctx)
   local parsed = type(runtime_ctx) == "table" and runtime_ctx.parsed_anchor or nil
   local node_info = type(runtime_ctx) == "table" and runtime_ctx.anchor_node_info or nil

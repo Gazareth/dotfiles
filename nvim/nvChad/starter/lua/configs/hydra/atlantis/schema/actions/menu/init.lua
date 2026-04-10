@@ -1,6 +1,5 @@
 local M = {}
 
--- Action row presentation map
 M.action_menu_item = {
   rename = {
     key = "r",
@@ -59,8 +58,7 @@ M.action_menu_item = {
   },
 }
 
--- Generic action order
-M.generic_action_order = {
+M.default_action_order = {
   "rename",
   "change",
   "yank",

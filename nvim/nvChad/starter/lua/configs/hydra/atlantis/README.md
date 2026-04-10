@@ -49,10 +49,10 @@ Cursor on then inside an if statement:
 Keep modules isolated by responsibility:
 
 - `schema/languages`: raw Tree-sitter node type -> tier/kind/actionable (per language + shared tables)
-- `schema/constants`: shared tier/kind ids, action ids, probe routing tables
-- `schema/actions`: allowed action names by resolved anchor kind
+- `schema/constants`: shared tier/kind ids, probe routing tables
+- `schema/actions`: package root (`init.lua` merges `anchor/` allowlists + `menu/` row keys/labels/order)
 - anchor resolver: mode-aware anchor selection (uses language schema via `anchor/languages`)
 - ops resolver: resolve each action name to specific/common executable action code
-- menu renderer: render and dispatch only; no anchor policy decisions
+- menu: Hydra menu from `render_spec` (title, rows, key handling)
 
 This is the baseline contract for extracting these semantics into atlantis.nvim.

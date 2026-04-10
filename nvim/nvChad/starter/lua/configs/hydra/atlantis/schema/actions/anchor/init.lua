@@ -1,9 +1,7 @@
--- Action lookup tables keyed by semantic node kind
 local supported_nodes = require("configs.hydra.atlantis.anchor.probe.treesitter.constants").supported_nodes
 
 local M = {}
 
--- Reusable generic action groups for composing anchor action sets
 local generic_anchor_actions = {
   change = true,
   select = true,
@@ -20,7 +18,6 @@ local function_anchor_actions = vim.tbl_extend("force", {
   view_call_hierarchy = true,
 }, rename_anchor_actions)
 
--- Allowed action names by anchor kind
 M.action_names_by_anchor_kind = {
   [supported_nodes.generic] = generic_anchor_actions,
   [supported_nodes.identifier] = rename_anchor_actions,
