@@ -1,6 +1,7 @@
 local title_builder = require("configs.hydra.atlantis.menu.components.title.builder")
 local action_rows = require("configs.hydra.atlantis.menu.components.action.rows")
 local action_order = require("configs.hydra.atlantis.menu.components.action.order")
+local action_labels = require("configs.hydra.atlantis.menu.components.action.labels")
 
 local M = {}
 
@@ -17,6 +18,7 @@ function M.build(runtime_ctx)
       cursor_node_info = type(runtime_ctx) == "table" and runtime_ctx.cursor_node_info or nil,
       depth = type(runtime_ctx) == "table" and runtime_ctx.depth or nil,
     },
+    label_overrides = action_labels.build_overrides(runtime_ctx),
   })
 
   return {
