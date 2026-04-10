@@ -1,0 +1,31 @@
+---
+description: Atlantis (Treewalker) plugin architecture and boundaries under configs/hydra/atlantis
+globs: "**/hydra/atlantis/**/*.lua"
+alwaysApply: false
+---
+
+# Atlantis design
+
+## Runtime flow
+
+1. **Hydra** (`configs/hydra/init.lua`, `common/menu.lua`) opens the menu from `menu/layout.build_menu_spec`.
+2. **Anchor** (`anchor/build/*`) selects the Treesitter anchor from cursor + depth, parses via `anchor/probe`, builds jump metadata (`anchor/build/capabilities/jump_section.lua`).
+3. **Menu** (`menu/render_spec.lua`) builds `render_spec`: title + action rows. It does **not** decide which actions are allowed; it consumes schema + `anchor/actions` for closures.
+4. **Actions** (`anchor/actions.lua`): for a given `anchor_kind`, checks `schema.actions` allowlist, then `ops.resolver` to build the executable closure.
+
+## Layer boundaries
+
+- **`schema/`** — declarative only: languages, constants (tiers/kinds/probe routing), `schema/actions` (merge of `anchor/` allowlists + `menu/` row keys/labels + `default_action_order` data). No behavior beyond table merges in `schema/actions/init.lua`.
+- **`anchor/`** — selection, probe, parsed payload, jump candidates. No Hydra row strings; no ops implementations.
+- **`ops/`** — behavior: `resolver.lua` loads `ops.actions.<scope>.<action_name>` then optional `<anchor_kind>` override file; implementations under `ops/actions/common|specific/`.
+- **`menu/`** — presentation: `render_spec`, `components/action/order.lua` (ordering algorithm), `components/action/rows.lua`, `renderer.lua`, layout/sections.
+
+## Adding an action
+
+1. Enable in `schema/actions/anchor/init.lua` for the right `supported_nodes` kinds.
+2. Add `action_menu_item` + include in `default_action_order` if it should sort with the primary block (`schema/actions/menu/init.lua`).
+3. Implement under `ops/actions/common/<name>/` and/or `ops/actions/specific/<name>/` so `ops.resolver` can resolve it.
+
+## Entry
+
+Treewalker keymaps live in `configs/hydra/init.lua` calling `atlantis.menu.layout.build_menu_spec({ depth = ... })`.

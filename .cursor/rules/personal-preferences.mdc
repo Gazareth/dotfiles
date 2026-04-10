@@ -1,0 +1,35 @@
+---
+description: Personal code style, communication, and workflow preferences for this repo
+alwaysApply: true
+---
+
+# Personal preferences
+
+## Execution
+
+- Treat the environment as real: run commands and investigate; do not only suggest commands for the user to run.
+- On failure, try alternatives or diagnose before stopping.
+- Use the workspace `Today's date` from user context when the current year matters.
+
+## Communication
+
+- Use the required code citation format for existing code: opening fence on its own line, ` ```startLine:endLine:filepath `.
+- Prefer full URLs and full file paths in links and references.
+- Write clear, complete sentences; keep answers proportional to task complexity.
+- Use **bold** and backticks sparingly (only for real emphasis or identifiers).
+- Do not use the § character in user-facing text.
+- Avoid engagement-style closings; optional follow-ups only when clearly useful.
+
+## Code changes
+
+- Change only what the task requires. No drive-by refactors, unrelated files, or scope creep.
+- Match surrounding naming, structure, imports, and comment density; extend existing patterns.
+- Prefer one clear module/job over thin wrappers, single-use locals, or chains of tiny files. Split by **concept**, not by micro-helper category.
+- Remove glue layers that no longer earn their keep; optimize for a lean, readable **finished** codebase, not speculative foundations.
+- Do not add markdown/docs unless the user asked for them.
+- **Comments:** describe stable behavior or non-obvious rationale only. Never write comments that reference a specific chat, request, or refactor decision (they age immediately).
+
+## Skills and tools
+
+- When a listed Agent Skill applies, read and follow it at the start of the task.
+- Use MCP/other provided tools when they fit the task.
