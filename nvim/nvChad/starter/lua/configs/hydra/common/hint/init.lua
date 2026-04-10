@@ -5,6 +5,20 @@ local title = require("configs.hydra.common.hint.title")
 
 local M = {}
 
+-- One line with left text at start and right text at end (Hydra-safe escaped strings)
+local function build_footer_line(left, right, width)
+  local lw = util.str_width(left)
+  local rw = util.str_width(right)
+  local gap = width - lw - rw
+  if gap > 0 then
+    return left .. string.rep(" ", gap) .. right
+  end
+  if gap == 0 then
+    return left .. right
+  end
+  return left .. " " .. right
+end
+
 -- Build hint text layout
 function M.build(sections, opts)
   opts = opts or {}
@@ -45,6 +59,18 @@ function M.build(sections, opts)
       with_header[#with_header + 1] = line
     end
     output = with_header
+  end
+
+  local footer = type(opts.footer) == "table" and opts.footer or nil
+  if footer then
+    local left = util.escape_hint_text(type(footer.left) == "string" and footer.left or "")
+    local right = util.escape_hint_text(type(footer.right) == "string" and footer.right or "")
+    local footer_width = total_width
+    for _, line in ipairs(output) do
+      footer_width = math.max(footer_width, util.str_width(line))
+    end
+    output[#output + 1] = string.rep("-", footer_width)
+    output[#output + 1] = build_footer_line(left, right, footer_width)
   end
 
   return {

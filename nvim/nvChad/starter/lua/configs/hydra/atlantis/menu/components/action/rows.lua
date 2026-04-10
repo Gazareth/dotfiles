@@ -4,7 +4,7 @@ local action_registry = require("configs.hydra.atlantis.menu.components.action.r
 
 local M = {}
 
--- Build one action row from menu presentation and resolved callback
+-- Build one action row from menu presentation and direct registry+ops action lookup
 local function build_row(anchor_type, action_name, opts)
   if type(anchor_type) ~= "string" or type(action_name) ~= "string" then
     return nil
@@ -16,16 +16,8 @@ local function build_row(anchor_type, action_name, opts)
   end
 
   local ctx = type(opts) == "table" and opts.ctx or nil
-  local capabilities = type(opts) == "table" and opts.capabilities or nil
 
-  local action = nil
-  if type(capabilities) == "table"
-    and type(capabilities.lookup) == "table"
-    and type(capabilities.lookup[action_name]) == "function" then
-    action = capabilities.lookup[action_name]
-  else
-    action = node_actions.build(anchor_type, action_name, ctx)
-  end
+  local action = node_actions.build(anchor_type, action_name, ctx)
   if type(action) ~= "function" then
     return nil
   end
@@ -51,7 +43,7 @@ local function build_row(anchor_type, action_name, opts)
   }
 end
 
--- Build ordered action rows with per-action overrides applied inline
+-- Build ordered action rows from action names pre-selected by registry policy
 function M.build_rows(anchor_type, action_names, opts)
   local rows = {}
   if type(action_names) ~= "table" then
@@ -61,7 +53,6 @@ function M.build_rows(anchor_type, action_names, opts)
   for _, action_name in ipairs(action_names) do
     local row_opts = {
       ctx = type(opts) == "table" and opts.ctx or nil,
-      capabilities = type(opts) == "table" and opts.capabilities or nil,
       label = type(opts) == "table" and opts.label or nil,
       label_builder = type(opts) == "table" and opts.label_builder or nil,
     }

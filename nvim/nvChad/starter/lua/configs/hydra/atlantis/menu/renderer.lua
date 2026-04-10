@@ -1,6 +1,4 @@
 -- Formats a pre-resolved render spec from runtime context into a menu item list; knows nothing about node semantics
-local filter_allowed_items = require("configs.hydra.atlantis.menu.components.action.filter").filter_items
-
 local M = {}
 
 -- Assemble render spec into a hydra-ready menu spec with title and item list
@@ -28,8 +26,6 @@ function M.build_from_context(runtime_ctx)
   for _, row in ipairs(render_spec.action_rows or {}) do
     items[#items + 1] = row
   end
-
-  items = filter_allowed_items(runtime_ctx.parsed_anchor, items, render_spec.action_ids)
 
   return {
     title = render_spec.title,

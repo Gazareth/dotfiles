@@ -9,7 +9,6 @@ function M.build(anchor_kind)
   local enabled = action_tables.action_names_by_anchor_kind
     and action_tables.action_names_by_anchor_kind[anchor_kind]
   if type(enabled) ~= "table" then
-    -- No anchor-kind map means no rows
     return {}
   end
 

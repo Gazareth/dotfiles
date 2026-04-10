@@ -51,6 +51,8 @@ Keep modules isolated by responsibility:
 - language mapping: raw Tree-sitter -> tier/kind/actionable candidate
 - actionability policy: direct vs deferred action eligibility
 - anchor resolver: mode-aware anchor selection
-- action generator: user-facing actions from resolved anchor
+- action registry: allowed action names by resolved anchor kind
+- ops resolver: resolve each action name to specific/common executable action code
+- menu renderer: render and dispatch only; no anchor policy decisions
 
 This is the baseline contract for extracting these semantics into atlantis.nvim.

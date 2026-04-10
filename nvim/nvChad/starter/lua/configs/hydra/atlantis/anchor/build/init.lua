@@ -6,7 +6,7 @@ local get_build_status = require("configs.hydra.atlantis.anchor.build.get_build_
 
 local M = {}
 
--- Build single anchor payload from cursor, depth, probe, and capabilities
+-- Build single anchor payload from cursor, depth, probe, and anchor heuristics
 function M.build(opts)
   local depth = type(opts) == "table" and opts.depth or nil
   local cursor_node_info = build_node_info()
@@ -17,8 +17,6 @@ function M.build(opts)
       anchor_node_info = nil,
       positioned_anchor_node_info = nil,
       parsed_anchor = nil,
-      capabilities = nil,
-      render_spec = nil,
     }
   end
 
@@ -26,7 +24,7 @@ function M.build(opts)
   local found = find_from_node.find(cursor_node_info, depth)
   local anchor_node_info = found.anchor_node_info
 
-  -- Step 2: Fill anchor payload with parsed data, jump candidates, and menu payload
+  -- Step 2: Fill anchor payload with parsed data and jump candidates
   local filled = capabilities.fill(anchor_node_info, cursor_node_info, depth, found)
   local parsed_anchor = filled.parsed_anchor
 
@@ -45,8 +43,6 @@ function M.build(opts)
     jump_candidates = found.candidates,
     selected_jump_candidate_index = found.selected_candidate_index,
     jump_spec = filled.jump_spec,
-    capabilities = filled.capabilities,
-    render_spec = filled.render_spec,
   }
 end
 

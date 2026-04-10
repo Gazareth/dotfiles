@@ -70,7 +70,7 @@ local function resolve_sections(menu_spec)
   return resolved
 end
 
-local function build_heads(rendered)
+local function build_heads(rendered, on_toggle_hint)
   local heads = {}
 
   for _, section in ipairs(rendered.sections) do
@@ -89,11 +89,22 @@ local function build_heads(rendered)
 
   heads[#heads + 1] = { "q", nil, { exit = true, desc = false } }
   heads[#heads + 1] = { "<Esc>", nil, { exit = true, desc = false } }
+  heads[#heads + 1] = {
+    "?",
+    function()
+      if type(on_toggle_hint) == "function" then
+        on_toggle_hint()
+      end
+    end,
+    { exit = true, desc = false },
+  }
 
   return heads
 end
 
-function M.open(menu_spec)
+function M.open(menu_spec, opts)
+  opts = type(opts) == "table" and opts or {}
+  local show_hint = opts.show_hint ~= false
   local sections = resolve_sections(menu_spec)
   if sections == nil or #sections == 0 then
     return
@@ -107,13 +118,23 @@ function M.open(menu_spec)
   -- Hint render options
   local rendered = hint.build(sections, {
     title = menu_spec.title,
+    footer = {
+      left = "[?] toggle hint",
+      right = "[q]/[Esc] exit",
+    },
   })
-  local heads = build_heads(rendered)
+  local heads = build_heads(rendered, function()
+    vim.schedule(function()
+      M.open(menu_spec, {
+        show_hint = not show_hint,
+      })
+    end)
+  end)
 
   local hydra = Hydra({
     name = menu_spec.title or "Actions",
     mode = "n",
-    hint = rendered.hint,
+    hint = show_hint and rendered.hint or false,
     heads = heads,
     config = {
       color = "red",
