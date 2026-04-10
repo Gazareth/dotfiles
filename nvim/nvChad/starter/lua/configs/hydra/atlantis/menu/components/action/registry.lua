@@ -37,15 +37,25 @@ M.action_menu_item = {
     icon = ">",
     label = "View call hierarchy",
   },
-  jump_to_lhs = {
+  jump_lhs = {
     key = "h",
     icon = ">",
     label = "Left hand side",
   },
-  jump_to_rhs = {
+  jump_rhs = {
     key = "l",
     icon = ">",
     label = "Right hand side",
+  },
+  jump_to_body = {
+    key = "b",
+    icon = ">",
+    label = "Jump to body",
+  },
+  jump_to_parameter = {
+    key = "p",
+    icon = ">",
+    label = "Jump to parameter",
   },
 }
 

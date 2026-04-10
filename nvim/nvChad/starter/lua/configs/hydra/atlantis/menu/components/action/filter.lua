@@ -1,15 +1,15 @@
-local node_actions = require("configs.hydra.atlantis.anchor.registry.actions")
+local node_actions = require("configs.hydra.atlantis.anchor.actions")
 
 local M = {}
 
 -- Resolve allowed action ids for current parsed anchor kind
-function M.get_node_action_ids(parsed_anchor)
-  local node_kind = parsed_anchor and parsed_anchor.node_kind
-  if type(node_kind) ~= "string" then
+function M.get_anchor_action_ids(parsed_anchor)
+  local anchor_kind = parsed_anchor and parsed_anchor.node_kind
+  if type(anchor_kind) ~= "string" then
     return nil
   end
 
-  return node_actions.get_node_action_ids(node_kind)
+  return node_actions.get_anchor_action_ids(anchor_kind)
 end
 
 -- Check whether a menu item action id is allowed for this anchor
@@ -22,12 +22,12 @@ function M.is_action_applicable(parsed_anchor, action_id, action_ids)
     return action_ids[action_id] == true
   end
 
-  local node_kind = parsed_anchor and parsed_anchor.node_kind
-  if type(node_kind) ~= "string" then
+  local anchor_kind = parsed_anchor and parsed_anchor.node_kind
+  if type(anchor_kind) ~= "string" then
     return true
   end
 
-  return node_actions.is_action_id_applicable(node_kind, action_id)
+  return node_actions.is_anchor_action_id_applicable(anchor_kind, action_id)
 end
 
 -- Filter menu items down to action rows valid for this anchor

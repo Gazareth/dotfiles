@@ -1,7 +1,7 @@
 local treesitter_constants = require("configs.hydra.atlantis.anchor.probe.treesitter.constants")
 local roles = treesitter_constants.roles
 local function_constants = require("configs.hydra.atlantis.anchor.probe.node_kinds.function.lib.constants")
-local function_lib = require("configs.hydra.atlantis.anchor.probe.node_kinds.function.lib")
+local function_parameters = require("configs.hydra.atlantis.anchor.probe.node_kinds.function.lib.parameters")
 local parse_function = require("configs.hydra.atlantis.anchor.probe.node_kinds.function").parse_function
 local build_node_info = require("configs.hydra.atlantis.anchor.probe.treesitter.node_info").build_node_info
 local node_common = require("configs.hydra.atlantis.anchor.probe.common.node")
@@ -10,7 +10,7 @@ local M = {}
 
 -- Check whether identifier belongs to function name region
 local function is_function_name_identifier(node, function_ancestor)
-  local params = function_lib.find_parameter_container(function_ancestor)
+  local params = function_parameters.find_parameter_container(function_ancestor)
   local child_count = function_ancestor:named_child_count()
 
   for i = 0, child_count - 1 do

@@ -1,15 +1,15 @@
--- Build action name order for a node kind so rows appear in a stable menu order
+-- Build action name order for an anchor kind so rows appear in a stable menu order
 local action_registry = require("configs.hydra.atlantis.menu.components.action.registry")
-local node_actions = require("configs.hydra.atlantis.anchor.registry.actions")
+local action_tables = require("configs.hydra.atlantis.registry.actions")
 
 local M = {}
 
 -- Build deterministic action order with generic actions first
-function M.build(node_kind)
-  local enabled = node_actions.action_names_by_node_kind
-    and node_actions.action_names_by_node_kind[node_kind]
+function M.build(anchor_kind)
+  local enabled = action_tables.action_names_by_anchor_kind
+    and action_tables.action_names_by_anchor_kind[anchor_kind]
   if type(enabled) ~= "table" then
-    -- No node-kind map means no rows
+    -- No anchor-kind map means no rows
     return {}
   end
 

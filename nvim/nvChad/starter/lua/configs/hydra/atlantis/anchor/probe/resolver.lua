@@ -1,4 +1,4 @@
-local atlantis_constants = require("configs.hydra.atlantis.anchor.registry.kinds")
+local atlantis_constants = require("configs.hydra.atlantis.registry.constants")
 local node_tiers = atlantis_constants.node_tiers
 local node_kinds = atlantis_constants.node_kinds
 

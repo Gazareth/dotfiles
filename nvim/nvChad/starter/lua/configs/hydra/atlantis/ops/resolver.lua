@@ -1,26 +1,6 @@
-local supported_nodes = require("configs.hydra.atlantis.anchor.probe.treesitter.constants").supported_nodes
-
 local M = {}
 
--- Action-to-module map keyed by node kind
-local action_modules = {
-  rename = {
-    [supported_nodes.assignment] = "configs.hydra.atlantis.ops.node_kinds.assignment.rename",
-    [supported_nodes.fn] = "configs.hydra.atlantis.ops.node_kinds.function.rename",
-    [supported_nodes.identifier] = "configs.hydra.atlantis.ops.node_kinds.identifier.rename",
-  },
-  jump_to_lhs = {
-    [supported_nodes.assignment] = "configs.hydra.atlantis.ops.node_kinds.assignment.jump.lhs",
-  },
-  jump_to_rhs = {
-    [supported_nodes.assignment] = "configs.hydra.atlantis.ops.node_kinds.assignment.jump.rhs",
-  },
-}
-
--- Fallback modules used when node-specific action module is absent
-local fallback_modules = {
-  rename = "configs.hydra.atlantis.ops.node_kinds.common",
-}
+local action_scopes = { "specific", "common" }
 
 -- Require module safely and return nil on load failure
 local function load_module(module_path)
@@ -36,19 +16,61 @@ local function load_module(module_path)
   return mod
 end
 
--- Resolve action builder for action name and node kind
-function M.resolve(action_name, node_kind)
-  local by_node = action_modules[action_name]
-  local module_path = type(by_node) == "table" and by_node[node_kind] or nil
-  local mod = load_module(module_path)
-  if type(mod) == "table" and type(mod.build) == "function" then
-    return mod.build
+-- Resolve builder callback from action module exports
+local function resolve_builder_from_module(mod)
+  if type(mod) ~= "table" then
+    return nil
   end
 
-  local fallback = load_module(fallback_modules[action_name])
-  if type(fallback) == "table" and type(fallback.placeholder) == "function" then
-    return function(ctx)
-      return fallback.placeholder("Rename", fallback.resolve_node_label(ctx))
+  local builder = mod.build
+  if type(builder) == "function" then
+    return builder
+  end
+
+  return nil
+end
+
+-- Normalize node kind into module suffix token
+local function normalize_node_kind(node_kind)
+  if type(node_kind) ~= "string" or node_kind == "" then
+    return nil
+  end
+
+  local normalized = node_kind:gsub("[^%w_]", "_")
+  if normalized == "" then
+    return nil
+  end
+
+  return normalized
+end
+
+-- Resolve action builder from scope path and optional node-kind override file
+local function resolve_from_scope(action_name, node_kind, scope)
+  if type(action_name) ~= "string" or action_name == "" then
+    return nil
+  end
+
+  local base_path = "configs.hydra.atlantis.ops.actions." .. scope .. "." .. action_name
+  local node_suffix = normalize_node_kind(node_kind)
+
+  if node_suffix then
+    local override_mod = load_module(base_path .. "." .. node_suffix)
+    local override_builder = resolve_builder_from_module(override_mod)
+    if type(override_builder) == "function" then
+      return override_builder
+    end
+  end
+
+  local base_mod = load_module(base_path .. ".init")
+  return resolve_builder_from_module(base_mod)
+end
+
+-- Resolve action builder for action name and node kind
+function M.resolve(action_name, node_kind)
+  for _, scope in ipairs(action_scopes) do
+    local builder = resolve_from_scope(action_name, node_kind, scope)
+    if type(builder) == "function" then
+      return builder
     end
   end
 
@@ -71,5 +93,16 @@ function M.builder(action_name)
     return M.build(action_name, node_kind, ctx)
   end
 end
+
+setmetatable(M, {
+  -- Expose action-name builder API like resolver.rename
+  __index = function(_, key)
+    if type(key) ~= "string" or key == "" then
+      return nil
+    end
+
+    return M.builder(key)
+  end,
+})
 
 return M

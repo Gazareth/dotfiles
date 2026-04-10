@@ -1,7 +1,7 @@
 -- Assembles final title strings from badge, name, and metric parts
-local node_kinds_const = require("configs.hydra.atlantis.anchor.registry.kinds").node_kinds
-local badges = require("configs.hydra.atlantis.menu.components.title.badges")
-  local extract = require("configs.hydra.atlantis.menu.components.title.extract")
+local node_kinds_const = require("configs.hydra.atlantis.registry.constants").node_kinds
+local constants = require("configs.hydra.atlantis.menu.components.title.constants")
+local extract = require("configs.hydra.atlantis.menu.components.title.extract")
 
 local M = {}
 
@@ -44,8 +44,8 @@ end
 
 -- Build final title string with label, icon, name, and metrics
 function M.build(opts)
-  local label = opts.label or badges.resolve_label(opts.semantic_kind, opts.node_type)
-  local icon = opts.icon or badges.resolve_icon(opts.semantic_kind, opts.node_type)
+  local label = opts.label or constants.resolve_label(opts.semantic_kind, opts.node_type)
+  local icon = opts.icon or constants.resolve_icon(opts.semantic_kind, opts.node_type)
 
   local bracket = icon ~= "" and ("[" .. label .. " " .. icon .. "]") or ("[" .. label .. "]")
   local name = (type(opts.name) == "string" and opts.name ~= "") and opts.name or nil

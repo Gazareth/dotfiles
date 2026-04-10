@@ -1,11 +1,11 @@
 local treesitter_config = require("configs.hydra.atlantis.anchor.probe.treesitter.config")
-local candidate_chain = require("configs.hydra.atlantis.anchor.build.find_from_node.candidates")
-local scoring = require("configs.hydra.atlantis.anchor.build.find_from_node.scoring")
+local candidates = require("configs.hydra.atlantis.anchor.build.find_from_node.candidates")
+local selection = require("configs.hydra.atlantis.anchor.build.find_from_node.selection")
 
 local M = {}
 
 -- Build step result with anchor node, candidate chain, and selected chain index
-function M.find(node_info, mode)
+function M.find(node_info, depth)
   if not node_info or not node_info.node then
     return {
       anchor_node_info = node_info,
@@ -15,23 +15,23 @@ function M.find(node_info, mode)
   end
 
   local config = treesitter_config.get()
-  local resolved_mode = mode or config.context_mode or "depth_0"
-  local candidates = candidate_chain.get_candidates(node_info)
+  local resolved_depth = type(depth) == "number" and depth or config.depth or 0
+  local candidate_chain = candidates.collect(node_info, config)
 
-  if #candidates == 0 then
+  if #candidate_chain == 0 then
     return {
       anchor_node_info = node_info,
-      candidates = candidates,
+      candidates = candidate_chain,
       selected_candidate_index = nil,
     }
   end
 
-  local anchor_node_info = scoring.select_by_mode(candidates, resolved_mode)
-  local selected_candidate_index = candidate_chain.find_candidate_index(candidates, anchor_node_info)
+  local anchor_node_info = selection.select_anchor_node_info(candidate_chain, resolved_depth)
+  local selected_candidate_index = selection.find_candidate_index(candidate_chain, anchor_node_info)
 
   return {
     anchor_node_info = anchor_node_info,
-    candidates = candidates,
+    candidates = candidate_chain,
     selected_candidate_index = selected_candidate_index,
   }
 end

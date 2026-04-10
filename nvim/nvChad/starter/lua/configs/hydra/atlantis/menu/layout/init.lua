@@ -1,4 +1,4 @@
-local anchor_context = require("configs.hydra.atlantis.anchor")
+local anchor_build = require("configs.hydra.atlantis.anchor.build")
 local section_assembly = require("configs.hydra.atlantis.menu.layout.assembly")
 local modify_section = require("configs.hydra.atlantis.menu.sections.modify")
 
@@ -6,7 +6,7 @@ local M = {}
 
 -- Atlantis menu structure
 function M.build_menu_spec(opts)
-  local anchor_ctx = anchor_context.build(opts)
+  local anchor_ctx = anchor_build.build(opts)
   local jump_spec = anchor_ctx and anchor_ctx.jump_spec or nil
   if not anchor_ctx.cursor_node_info then
     return section_assembly.build_without_cursor(jump_spec)

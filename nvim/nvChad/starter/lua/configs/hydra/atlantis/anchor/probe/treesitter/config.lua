@@ -1,16 +1,10 @@
 local M = {}
 
--- Default Atlantis Tree-sitter behavior and depth modes
+-- Default Atlantis Tree-sitter behavior and default anchor depth
 local defaults = {
-  context_mode = "depth_0",
+  depth = 0,
   safe_languages = false,
   languages = {},
-  modes = {
-    lowest_node = "lowest_node",
-    max = "max",
-    depth_0 = "depth_0",
-    depth_1 = "depth_1",
-  },
 }
 
 -- Mutable runtime settings initialized from defaults

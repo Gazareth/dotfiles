@@ -1,26 +1,11 @@
-local node_actions = require("configs.hydra.atlantis.anchor.registry.actions")
+local node_actions = require("configs.hydra.atlantis.anchor.actions")
+local action_ids = require("configs.hydra.atlantis.registry.constants").action_ids
 local action_registry = require("configs.hydra.atlantis.menu.components.action.registry")
 
 local M = {}
 
--- Action label formatter
-local function format_label(action_name, label, opts)
-  local label_override = type(opts) == "table" and type(opts.label) == "string" and opts.label or nil
-  local label_builder = type(opts) == "table" and opts.label_builder or nil
-
-  if type(label_builder) == "function" then
-    return label_builder(label, action_name)
-  end
-
-  if type(label_override) == "string" and label_override ~= "" then
-    return label .. " " .. label_override
-  end
-
-  return label
-end
-
--- Single action row builder
-function M.build_row(anchor_type, action_name, opts)
+-- Build one action row from menu presentation and resolved callback
+local function build_row(anchor_type, action_name, opts)
   if type(anchor_type) ~= "string" or type(action_name) ~= "string" then
     return nil
   end
@@ -33,7 +18,6 @@ function M.build_row(anchor_type, action_name, opts)
   local ctx = type(opts) == "table" and opts.ctx or nil
   local capabilities = type(opts) == "table" and opts.capabilities or nil
 
-  -- Capability lookup action resolver
   local action = nil
   if type(capabilities) == "table"
     and type(capabilities.lookup) == "table"
@@ -48,17 +32,26 @@ function M.build_row(anchor_type, action_name, opts)
 
   local key = (type(opts) == "table" and type(opts.key) == "string" and opts.key) or presentation.key
   local icon = (type(opts) == "table" and type(opts.icon) == "string" and opts.icon) or presentation.icon
+  local label = presentation.label
+  local label_builder = type(opts) == "table" and opts.label_builder or nil
+  local label_suffix = type(opts) == "table" and type(opts.label) == "string" and opts.label or nil
+
+  if type(label_builder) == "function" then
+    label = label_builder(label, action_name)
+  elseif type(label_suffix) == "string" and label_suffix ~= "" then
+    label = label .. " " .. label_suffix
+  end
 
   return {
     key = key,
     icon = icon,
-    label = format_label(action_name, presentation.label, opts),
-    action_id = node_actions.action_id_by_name[action_name],
+    label = label,
+    action_id = action_ids[action_name],
     action = action,
   }
 end
 
--- Multi action row builder
+-- Build ordered action rows with per-action overrides applied inline
 function M.build_rows(anchor_type, action_names, opts)
   local rows = {}
   if type(action_names) ~= "table" then
@@ -66,39 +59,36 @@ function M.build_rows(anchor_type, action_names, opts)
   end
 
   for _, action_name in ipairs(action_names) do
-    local action_opts = {}
-    if type(opts) == "table" then
-      action_opts = {
-        label = opts.label,
-        label_builder = opts.label_builder,
-        ctx = opts.ctx,
-        capabilities = opts.capabilities,
-      }
+    local row_opts = {
+      ctx = type(opts) == "table" and opts.ctx or nil,
+      capabilities = type(opts) == "table" and opts.capabilities or nil,
+      label = type(opts) == "table" and opts.label or nil,
+      label_builder = type(opts) == "table" and opts.label_builder or nil,
+    }
 
+    if type(opts) == "table" then
       local key_overrides = opts.key_overrides
       if type(key_overrides) == "table" and type(key_overrides[action_name]) == "string" then
-        action_opts.key = key_overrides[action_name]
+        row_opts.key = key_overrides[action_name]
       end
 
       local icon_overrides = opts.icon_overrides
       if type(icon_overrides) == "table" and type(icon_overrides[action_name]) == "string" then
-        action_opts.icon = icon_overrides[action_name]
+        row_opts.icon = icon_overrides[action_name]
       end
 
       local label_overrides = opts.label_overrides
-      if type(label_overrides) == "table" then
-        local override = label_overrides[action_name]
-        if type(override) == "string" then
-          action_opts.label_builder = function()
-            return override
-          end
-        elseif type(override) == "function" then
-          action_opts.label_builder = override
+      local label_override = type(label_overrides) == "table" and label_overrides[action_name] or nil
+      if type(label_override) == "string" then
+        row_opts.label_builder = function()
+          return label_override
         end
+      elseif type(label_override) == "function" then
+        row_opts.label_builder = label_override
       end
     end
 
-    local row = M.build_row(anchor_type, action_name, action_opts)
+    local row = build_row(anchor_type, action_name, row_opts)
     if type(row) == "table" then
       rows[#rows + 1] = row
     end

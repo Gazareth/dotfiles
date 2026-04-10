@@ -29,13 +29,6 @@ function M.build_from_context(runtime_ctx)
     items[#items + 1] = row
   end
 
-  if #(render_spec.submenu_rows or {}) > 0 then
-    items[#items + 1] = { separator = true }
-    for _, row in ipairs(render_spec.submenu_rows) do
-      items[#items + 1] = row
-    end
-  end
-
   items = filter_allowed_items(runtime_ctx.parsed_anchor, items, render_spec.action_ids)
 
   return {

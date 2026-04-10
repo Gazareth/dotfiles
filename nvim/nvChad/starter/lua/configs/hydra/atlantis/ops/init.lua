@@ -1,29 +1,31 @@
 local M = {}
-local parameter_sibling = require("configs.hydra.atlantis.ops.node_kinds.function.parameter.sibling")
 
-M.common = require("configs.hydra.atlantis.ops.node_kinds.common")
+-- Export action resolver and non-action operation groups
 M.resolver = require("configs.hydra.atlantis.ops.resolver")
-M.assignment = {
-	rename = require("configs.hydra.atlantis.ops.node_kinds.assignment.rename"),
-	jump = {
-		lhs = require("configs.hydra.atlantis.ops.node_kinds.assignment.jump.lhs"),
-		rhs = require("configs.hydra.atlantis.ops.node_kinds.assignment.jump.rhs"),
+
+-- Export action modules by scope for direct inspection and testing
+M.actions = {
+	common = {
+		change = require("configs.hydra.atlantis.ops.actions.common.change.init"),
+		rename = require("configs.hydra.atlantis.ops.actions.common.rename.init"),
+		select = require("configs.hydra.atlantis.ops.actions.common.select.init"),
+		yank = require("configs.hydra.atlantis.ops.actions.common.yank.init"),
+		delete = require("configs.hydra.atlantis.ops.actions.common.delete.init"),
+		inspect = require("configs.hydra.atlantis.ops.actions.common.inspect.init"),
+		view_call_hierarchy = require("configs.hydra.atlantis.ops.actions.common.view_call_hierarchy.init"),
+	},
+	specific = {
+		rename = require("configs.hydra.atlantis.ops.actions.specific.rename.init"),
+		jump_lhs = require("configs.hydra.atlantis.ops.actions.specific.jump_lhs.init"),
+		jump_rhs = require("configs.hydra.atlantis.ops.actions.specific.jump_rhs.init"),
+		jump_to_body = require("configs.hydra.atlantis.ops.actions.specific.jump_to_body.function"),
+		jump_to_parameter = require("configs.hydra.atlantis.ops.actions.specific.jump_to_parameter.function"),
 	},
 }
-M["function"] = {
-	rename = require("configs.hydra.atlantis.ops.node_kinds.function.rename"),
-	call_hierarchy = require("configs.hydra.atlantis.ops.node_kinds.function.call_hierarchy"),
-	parameter = {
-		sibling = parameter_sibling,
-	},
-	jump = {
-		parameters = require("configs.hydra.atlantis.ops.node_kinds.function.jump.parameters"),
-		body = require("configs.hydra.atlantis.ops.node_kinds.function.jump.body"),
-		["return"] = require("configs.hydra.atlantis.ops.node_kinds.function.jump.return"),
-		comment = require("configs.hydra.atlantis.ops.node_kinds.function.jump.comment"),
-	},
+
+-- Export non-action operations that remain node-kind oriented
+M.parameter = {
+	sibling = require("configs.hydra.atlantis.ops.actions.specific.parameter.sibling"),
 }
-M.identifier = {
-	rename = require("configs.hydra.atlantis.ops.node_kinds.identifier.rename"),
-}
+
 return M

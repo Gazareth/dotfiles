@@ -1,11 +1,17 @@
 local build_node_info = require("configs.hydra.atlantis.anchor.probe.treesitter.node_info").build_node_info
-local resolve_language_mapping = require("configs.hydra.atlantis.anchor.registry.languages").resolve
-local treesitter_config = require("configs.hydra.atlantis.anchor.probe.treesitter.config")
-local options = require("configs.hydra.atlantis.anchor.build.find_from_node.options")
+local resolve_language_mapping = require("configs.hydra.atlantis.anchor.languages").resolve
 
 local M = {}
 
--- Check whether node is actionable under semantic mappings
+-- Build semantic resolver options from active tree-sitter config
+local function build_resolve_options(config)
+  return {
+    safe_languages = config.safe_languages,
+    languages = config.languages,
+  }
+end
+
+-- Check whether node is an "anchor" for current language
 local function is_actionable(node_info, resolve_options)
   local semantic = resolve_language_mapping(node_info, resolve_options)
   if semantic and semantic.actionable == true then
@@ -15,10 +21,11 @@ local function is_actionable(node_info, resolve_options)
   return false, semantic
 end
 
--- Collect actionable nodes from cursor node to root
-local function collect_candidates(node_info, resolve_options)
+-- Collect potential "anchor" candidate nodes from cursor node to root
+function M.collect(node_info, config)
   local current = node_info and node_info.node or nil
-  local candidates = {}
+  local candidate_chain = {}
+  local resolve_options = build_resolve_options(config or {})
 
   while current do
     local candidate = build_node_info({
@@ -32,7 +39,7 @@ local function collect_candidates(node_info, resolve_options)
     end
 
     if candidate and actionable then
-      candidates[#candidates + 1] = {
+      candidate_chain[#candidate_chain + 1] = {
         node_info = candidate,
         semantic = semantic,
       }
@@ -41,43 +48,7 @@ local function collect_candidates(node_info, resolve_options)
     current = current:parent()
   end
 
-  return candidates
-end
-
--- Build actionable candidate chain used while finding anchor node
-function M.get_candidates(node_info)
-  if not node_info or not node_info.node then
-    return {}
-  end
-
-  local config = treesitter_config.get()
-  local resolve_options = options.build_resolve_options(config)
-  return collect_candidates(node_info, resolve_options)
-end
-
--- Find selected anchor index inside candidate chain
-function M.find_candidate_index(candidates, selected_node_info)
-  if type(candidates) ~= "table" or not selected_node_info or not selected_node_info.node then
-    return nil
-  end
-
-  local ok, selected_id = pcall(function()
-    return selected_node_info.node:id()
-  end)
-  if not ok then
-    return nil
-  end
-
-  for index, entry in ipairs(candidates) do
-    local match_ok, entry_id = pcall(function()
-      return entry.node_info.node:id()
-    end)
-    if match_ok and entry_id == selected_id then
-      return index
-    end
-  end
-
-  return nil
+  return candidate_chain
 end
 
 return M

@@ -1,0 +1,85 @@
+-- Common syntax node mappings shared by language registries
+local constants = require("configs.hydra.atlantis.registry.constants")
+
+local nt = constants.node_tiers
+local nk = constants.node_kinds
+
+return {
+  mappings = {
+    function_declaration = {
+      node_tier = nt.settlement,
+      node_kind = nk.declaration,
+      actionable = true,
+    },
+    function_definition = {
+      node_tier = nt.settlement,
+      node_kind = nk.declaration,
+      actionable = true,
+    },
+    parameters = {
+      node_tier = nt.grove,
+      node_kind = nk.collection,
+      actionable = true,
+    },
+    parameter_list = {
+      node_tier = nt.grove,
+      node_kind = nk.collection,
+      actionable = true,
+    },
+    formal_parameters = {
+      node_tier = nt.grove,
+      node_kind = nk.collection,
+      actionable = true,
+    },
+    arguments = {
+      node_tier = nt.grove,
+      node_kind = nk.collection,
+      actionable = true,
+    },
+    if_statement = {
+      node_tier = nt.cluster,
+      node_kind = nk.control_frame,
+      actionable = true,
+    },
+    for_statement = {
+      node_tier = nt.cluster,
+      node_kind = nk.control_frame,
+      actionable = true,
+    },
+    while_statement = {
+      node_tier = nt.cluster,
+      node_kind = nk.control_frame,
+      actionable = true,
+    },
+    repeat_statement = {
+      node_tier = nt.cluster,
+      node_kind = nk.control_frame,
+      actionable = true,
+    },
+    assignment_statement = {
+      node_tier = nt.habitat,
+      node_kind = nk.assignment,
+      actionable = true,
+    },
+    assignment_expression = {
+      node_tier = nt.habitat,
+      node_kind = nk.assignment,
+      actionable = true,
+    },
+    variable_declaration = {
+      node_tier = nt.habitat,
+      node_kind = nk.assignment,
+      actionable = true,
+    },
+    local_declaration = {
+      node_tier = nt.habitat,
+      node_kind = nk.assignment,
+      actionable = true,
+    },
+    function_call = {
+      node_tier = nt.habitat,
+      node_kind = nk.call,
+      actionable = true,
+    },
+  },
+}

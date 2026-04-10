@@ -1,4 +1,5 @@
-local lib = require("configs.hydra.atlantis.anchor.probe.node_kinds.function.lib")
+local method = require("configs.hydra.atlantis.anchor.probe.node_kinds.function.lib.method")
+local metrics = require("configs.hydra.atlantis.anchor.probe.node_kinds.function.lib.metrics")
 local targets = require("configs.hydra.atlantis.anchor.probe.node_kinds.function.lib.targets")
 local treesitter_constants = require("configs.hydra.atlantis.anchor.probe.treesitter.constants")
 local supported_nodes = treesitter_constants.supported_nodes
@@ -7,7 +8,7 @@ local M = {}
 
 -- Function parse result
 function M.parse_function(node_info)
-  local method_kind = lib.is_function_or_method(node_info)
+  local method_kind = method.is_function_or_method(node_info)
   local function_name = targets.extract_function_name(node_info.node, node_info.bufnr)
   if function_name == "" then
     function_name = "anonymous"
@@ -22,7 +23,7 @@ function M.parse_function(node_info)
     role = method_kind,
     display_name = method_kind,
     function_name = function_name,
-    metrics = lib.build_function_metrics(node_info),
+    metrics = metrics.build_function_metrics(node_info),
     targets = {
       function_name = targets.build_function_name_target(node_info),
       parameter_container = parameter_targets.container,

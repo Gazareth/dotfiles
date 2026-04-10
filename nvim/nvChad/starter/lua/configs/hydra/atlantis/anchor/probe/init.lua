@@ -4,8 +4,8 @@ local parse_function = require("configs.hydra.atlantis.anchor.probe.node_kinds.f
 local parse_parameter = require("configs.hydra.atlantis.anchor.probe.node_kinds.parameter").parse_parameter
 local parse_binary_expression = require("configs.hydra.atlantis.anchor.probe.node_kinds.binary_expression").parse_binary_expression
 local parse_generic = require("configs.hydra.atlantis.anchor.probe.node_kinds.generic").parse_generic
-local kinds = require("configs.hydra.atlantis.anchor.registry.kinds")
-local resolve_language_mapping = require("configs.hydra.atlantis.anchor.registry.languages").resolve
+local kinds = require("configs.hydra.atlantis.registry.constants")
+local resolve_language_mapping = require("configs.hydra.atlantis.anchor.languages").resolve
 local treesitter_config = require("configs.hydra.atlantis.anchor.probe.treesitter.config")
 
 local node_tiers = kinds.node_tiers
@@ -74,7 +74,7 @@ local function normalize_parsed_result(parsed, node_info, semantic, config)
 	parsed.semantic_kind = semantic and semantic.node_kind or node_kinds.unknown
 	parsed.node_kind = parsed.node_kind or parsed.semantic_kind
 	parsed.actionable = semantic and semantic.actionable or false
-	parsed.context_mode = config.context_mode or "depth_0"
+	parsed.depth = config.depth or 0
 
 	return parsed
 end

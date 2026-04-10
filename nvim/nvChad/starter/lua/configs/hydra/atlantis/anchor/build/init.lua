@@ -6,13 +6,13 @@ local get_build_status = require("configs.hydra.atlantis.anchor.build.get_build_
 
 local M = {}
 
--- Build single anchor payload from cursor, depth mode, probe, and capabilities
+-- Build single anchor payload from cursor, depth, probe, and capabilities
 function M.build(opts)
-  local depth_mode = type(opts) == "table" and opts.depth_mode or nil
+  local depth = type(opts) == "table" and opts.depth or nil
   local cursor_node_info = build_node_info()
   if not cursor_node_info then
     return {
-      depth_mode = depth_mode,
+      depth = depth,
       cursor_node_info = nil,
       anchor_node_info = nil,
       positioned_anchor_node_info = nil,
@@ -22,12 +22,12 @@ function M.build(opts)
     }
   end
 
-  -- Step 1: Find anchor node from cursor location and depth mode
-  local found = find_from_node.find(cursor_node_info, depth_mode)
+  -- Step 1: Find anchor node from cursor location and depth
+  local found = find_from_node.find(cursor_node_info, depth)
   local anchor_node_info = found.anchor_node_info
 
   -- Step 2: Fill anchor payload with parsed data, jump candidates, and menu payload
-  local filled = capabilities.fill(anchor_node_info, cursor_node_info, depth_mode, found)
+  local filled = capabilities.fill(anchor_node_info, cursor_node_info, depth, found)
   local parsed_anchor = filled.parsed_anchor
 
   -- Step 3: Surface semantic build status for unknown nodes or disabled languages
@@ -37,7 +37,7 @@ function M.build(opts)
   local positioned_anchor_node_info = cursor_offset.build_positioned_anchor(anchor_node_info, parsed_anchor)
 
   return {
-    depth_mode = depth_mode,
+    depth = depth,
     cursor_node_info = cursor_node_info,
     anchor_node_info = anchor_node_info,
     positioned_anchor_node_info = positioned_anchor_node_info,
