@@ -1,6 +1,6 @@
-local build_node_info = require("configs.hydra.atlantis.treesitter.common.node_info").build_node_info
-local parse_node = require("configs.hydra.atlantis.treesitter")
-local anchor = require("configs.hydra.atlantis.treesitter.anchor")
+local build_node_info = require("configs.hydra.atlantis.anchor.probe.treesitter.node_info").build_node_info
+local parse_node = require("configs.hydra.atlantis.anchor.probe")
+local anchor = require("configs.hydra.atlantis.anchor")
 
 -- Role label text
 local function format_role_label(parsed)

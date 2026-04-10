@@ -1,6 +1,6 @@
 -- Build submenu specs by node kind for menu rendering from pre-resolved capability data
-local supported_nodes = require("configs.hydra.atlantis.treesitter.common.constants").supported_nodes
-local navigate = require("configs.hydra.atlantis.ops.function.navigate")
+local supported_nodes = require("configs.hydra.atlantis.anchor.probe.treesitter.constants").supported_nodes
+local navigate = require("configs.hydra.atlantis.ops.node_kinds.function.navigate")
 
 local M = {}
 

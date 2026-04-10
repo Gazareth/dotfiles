@@ -1,4 +1,4 @@
-local runtime_context = require("configs.hydra.atlantis.runtime.context")
+local runtime_context = require("configs.hydra.atlantis.anchor")
 local section_assembly = require("configs.hydra.atlantis.menu.layout.assembly")
 local modify_section = require("configs.hydra.atlantis.menu.sections.modify")
 

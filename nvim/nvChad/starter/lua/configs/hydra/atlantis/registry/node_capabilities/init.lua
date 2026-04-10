@@ -1,5 +1,5 @@
 -- Build capability payload for a node kind by combining action ids, adapter, lookup, and submenu specs
-local node_actions = require("configs.hydra.atlantis.registry.node_actions")
+local node_actions = require("configs.hydra.atlantis.anchor.registry.actions")
 local adapters = require("configs.hydra.atlantis.registry.node_capabilities.adapters")
 local lookup = require("configs.hydra.atlantis.registry.node_capabilities.lookup")
 local submenus = require("configs.hydra.atlantis.registry.node_capabilities.submenus")

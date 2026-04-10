@@ -1,4 +1,4 @@
-local node_actions = require("configs.hydra.atlantis.registry.node_actions")
+local node_actions = require("configs.hydra.atlantis.anchor.registry.actions")
 local action_registry = require("configs.hydra.atlantis.menu.components.action.registry")
 
 local M = {}

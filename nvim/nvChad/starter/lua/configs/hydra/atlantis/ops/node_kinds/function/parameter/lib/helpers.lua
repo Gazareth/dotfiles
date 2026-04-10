@@ -1,5 +1,5 @@
-local build_node_info = require("configs.hydra.atlantis.treesitter.common.node_info").build_node_info
-local parse_parameter = require("configs.hydra.atlantis.treesitter.probes.node_kinds.parameter").parse_parameter
+local build_node_info = require("configs.hydra.atlantis.anchor.probe.treesitter.node_info").build_node_info
+local parse_parameter = require("configs.hydra.atlantis.anchor.probe.node_kinds.parameter").parse_parameter
 local common_actions = require("configs.hydra.atlantis.ops.node_kinds.common")
 
 local M = {}

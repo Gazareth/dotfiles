@@ -1,5 +1,5 @@
 -- Build adapter instances for node kinds that expose richer behavior
-local supported_nodes = require("configs.hydra.atlantis.treesitter.common.constants").supported_nodes
+local supported_nodes = require("configs.hydra.atlantis.anchor.probe.treesitter.constants").supported_nodes
 local parameter_sibling = require("configs.hydra.atlantis.ops.node_kinds.function.parameter.sibling")
 
 local M = {}

@@ -1,5 +1,5 @@
 -- Icon and label lookup tables for node kind badges in menu titles
-local node_kinds_const = require("configs.hydra.atlantis.registry.node_tiers").node_kinds
+local node_kinds_const = require("configs.hydra.atlantis.anchor.registry.kinds").node_kinds
 
 local M = {}
 

@@ -1,5 +1,5 @@
 -- Assembles final title strings from badge, name, and metric parts
-local node_kinds_const = require("configs.hydra.atlantis.registry.node_tiers").node_kinds
+local node_kinds_const = require("configs.hydra.atlantis.anchor.registry.kinds").node_kinds
 local badges = require("configs.hydra.atlantis.menu.components.title.badges")
   local extract = require("configs.hydra.atlantis.menu.components.title.extract")
 
