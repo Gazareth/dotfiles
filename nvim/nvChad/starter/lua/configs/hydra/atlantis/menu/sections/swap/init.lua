@@ -1,16 +1,13 @@
-local items = {
-  { key = "u", icon = "↑", label = "Swap with previous statement", cmd = "SwapUp" },
-  { key = "i", icon = "↓", label = "Swap with next statement", cmd = "SwapDown" },
-  { key = "w", icon = "←", label = "Swap toward parent node", cmd = "SwapLeft" },
-  { key = "a", icon = "→", label = "Swap toward child node", cmd = "SwapRight" },
-}
+local menu_schema = require("configs.hydra.atlantis.schema.menu")
 
--- Swap column menu
+local items = {}
+for _, row in ipairs(menu_schema.swap.items) do
+  items[#items + 1] = vim.tbl_extend("force", {
+    action = "Treewalker " .. row.cmd,
+  }, row)
+end
+
 return {
-  title = " ⇅ Swap",
-  items = vim.tbl_map(function(item)
-    return vim.tbl_extend("force", {
-      action = "Treewalker " .. item.cmd,
-    }, item)
-  end, items),
+  title = menu_schema.swap.title,
+  items = items,
 }

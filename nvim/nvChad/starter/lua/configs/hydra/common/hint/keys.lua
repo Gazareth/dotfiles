@@ -28,7 +28,7 @@ function M.normalize_sections(sections)
       local item = clone_item(raw_item)
 
       if type(item.key) == "string" and item.key ~= "" then
-        local key = string.lower(item.key)
+        local key = item.key
         if used[key] then
           key = next_hotkey(used)
         else

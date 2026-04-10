@@ -1,23 +1,82 @@
 local build_node_info = require("configs.hydra.atlantis.anchor.probe.treesitter.node_info").build_node_info
 local parse_node = require("configs.hydra.atlantis.anchor.probe")
+local menu_schema = require("configs.hydra.atlantis.schema.menu")
+local title_const = require("configs.hydra.atlantis.menu.components.title.constants")
+local node_kinds = require("configs.hydra.atlantis.schema.constants").node_kinds
 
 local M = {}
 
--- Build readable role label text for jump rows
-local function format_role_label(parsed)
-  local raw = nil
-  if type(parsed) == "table" then
-    raw = parsed.node_kind or parsed.semantic_kind or parsed.node_type
-  end
+local jump_cfg = menu_schema.jump
 
-  raw = tostring(raw or "node")
-  raw = raw:gsub("_", " ")
-  return (raw:gsub("(%a)([%w_']*)", function(a, b)
-    return string.upper(a) .. string.lower(b)
-  end))
+local JUMP_LABEL_MAX_CHARS = 24
+
+local function is_comment_target(parsed, node_type)
+  if type(parsed) == "table" and parsed.semantic_kind == node_kinds.comment then
+    return true
+  end
+  if type(node_type) == "string" and node_type:lower():find("comment", 1, true) then
+    return true
+  end
+  return false
 end
 
--- Build readable node name text for jump rows
+local function strip_comment_leaders(text)
+  local t = vim.trim(text)
+  t = t:gsub("^/%*%*?%s*", "")
+  t = t:gsub("^//%s*", "")
+  t = t:gsub("^#+%s*", "")
+  while true do
+    local n = t:gsub("^%-%-+%s*", "")
+    if n == t then
+      break
+    end
+    t = vim.trim(n)
+  end
+  t = t:gsub("%s*%*/%s*$", "")
+  return vim.trim(t)
+end
+
+local function compact_code_snippet(text)
+  local t = vim.trim(text)
+  while true do
+    local n = t:gsub("^local%s+", "")
+    if n == t then
+      break
+    end
+    t = vim.trim(n)
+  end
+  t = vim.trim(t:gsub("^export%s+", ""))
+
+  local fn_only = t:match("^function%s+([%a_][%w_]*)")
+  if fn_only then
+    return fn_only
+  end
+
+  return t
+end
+
+local function scrub_jump_preview_text(text, parsed, node_type)
+  if type(text) ~= "string" or text == "" then
+    return text
+  end
+  text = vim.trim(text:gsub("\n+", " "))
+  if is_comment_target(parsed, node_type) then
+    return strip_comment_leaders(text)
+  end
+  return compact_code_snippet(text)
+end
+
+local function truncate_label_text(str, max_chars)
+  if type(str) ~= "string" or str == "" then
+    return str or ""
+  end
+  local n = vim.fn.strchars(str)
+  if n <= max_chars then
+    return str
+  end
+  return vim.fn.strcharpart(str, 0, max_chars) .. "..."
+end
+
 local function format_node_name(node_info, parsed)
   if type(parsed) == "table" and type(parsed.function_name) == "string" then
     local function_name = vim.trim(parsed.function_name)
@@ -31,26 +90,26 @@ local function format_node_name(node_info, parsed)
     text = node_info and node_info.text or ""
   end
 
-  text = vim.trim((text or ""):gsub("\n+", " "))
+  local node_type = type(parsed) == "table" and parsed.node_type or (node_info and node_info.node_type) or nil
+  text = scrub_jump_preview_text(text, parsed, node_type)
   if text == "" then
     return type(parsed) == "table" and tostring(parsed.display_name or parsed.node_type or "node") or "node"
-  end
-
-  if #text > 40 then
-    text = text:sub(1, 40) .. "..."
   end
 
   return text
 end
 
--- Build jump row label from parsed role and node name
 local function build_anchor_label(node_info, parsed)
-  local name = format_node_name(node_info, parsed)
-  local role = format_role_label(parsed)
-  return "[" .. role .. "] " .. name
+  local semantic = type(parsed) == "table" and parsed.semantic_kind or nil
+  local node_type = type(parsed) == "table" and parsed.node_type or nil
+  local icon = title_const.resolve_icon(semantic, node_type)
+  local name = truncate_label_text(format_node_name(node_info, parsed), JUMP_LABEL_MAX_CHARS)
+  if name == "" then
+    return icon
+  end
+  return icon .. " " .. name
 end
 
--- Build cursor jump action closure for the target node
 local function jump_to_node_info(target_node_info)
   return function()
     if not target_node_info then
@@ -63,7 +122,6 @@ local function jump_to_node_info(target_node_info)
   end
 end
 
--- Resolve neighboring target node info from selected anchor
 local function resolve_target_node_info(selected_node_info, relation)
   if not selected_node_info or not selected_node_info.node then
     return nil
@@ -95,7 +153,14 @@ local function resolve_target_node_info(selected_node_info, relation)
   })
 end
 
--- Build jump row for one relation target
+local function is_document_root_target(node_info)
+  local node = node_info and node_info.node
+  if not node then
+    return false
+  end
+  return node:parent() == nil
+end
+
 local function build_target_jump_item(key, icon, target_node_info)
   if not target_node_info then
     return nil
@@ -110,75 +175,72 @@ local function build_target_jump_item(key, icon, target_node_info)
   }
 end
 
--- Add parent and child jump rows
-local function append_parent_child_items(items, selected_node_info)
-  items[#items + 1] = { separator = true }
-  items[#items + 1] = {
-    separator = true,
-    label = " ↥ Parent / Child",
-  }
-  items[#items + 1] = { separator = true }
-
-  local parent_target = resolve_target_node_info(selected_node_info, "parent")
-  local child_target = resolve_target_node_info(selected_node_info, "child")
-
-  local parent_item = build_target_jump_item("n", "⬆", parent_target)
-  if parent_item then
-    items[#items + 1] = parent_item
+local function append_group_heading(items, group_id)
+  local label = jump_cfg.group_labels and jump_cfg.group_labels[group_id]
+  if type(label) ~= "string" or label == "" then
+    return
   end
+  items[#items + 1] = { separator = true }
+  items[#items + 1] = { separator = true, label = label }
+  items[#items + 1] = { separator = true }
+end
 
-  local child_item = build_target_jump_item("y", "⬇", child_target)
-  if child_item then
-    items[#items + 1] = child_item
+local function append_relation_items(items, selected_node_info)
+  local last_group = nil
+  for _, row in ipairs(jump_cfg.items or {}) do
+    if type(row.relation) == "string" then
+      if row.group ~= last_group then
+        append_group_heading(items, row.group)
+        last_group = row.group
+      end
+      local target = resolve_target_node_info(selected_node_info, row.relation)
+      local item
+      if row.relation == "parent" and target and is_document_root_target(target) then
+        local dr = jump_cfg.document_root_jump
+        item = {
+          key = row.key,
+          icon = type(dr) == "table" and dr.icon or "⇪",
+          label = type(dr) == "table" and dr.label or "Go to top",
+          action = jump_to_node_info(target),
+        }
+      else
+        item = build_target_jump_item(row.key, row.icon, target)
+      end
+      if item then
+        items[#items + 1] = item
+      end
+    end
   end
 end
 
--- Add previous and next sibling jump rows
-local function append_sibling_items(items, selected_node_info)
-  items[#items + 1] = { separator = true }
-  items[#items + 1] = {
-    separator = true,
-    label = " ↔ Sibling",
-  }
-  items[#items + 1] = { separator = true }
-
-  local prev_sibling_target = resolve_target_node_info(selected_node_info, "prev_sibling")
-  local next_sibling_target = resolve_target_node_info(selected_node_info, "next_sibling")
-
-  local prev_item = build_target_jump_item("m", "⬅", prev_sibling_target)
-  if prev_item then
-    items[#items + 1] = prev_item
+local function context_row_spec(which)
+  for _, row in ipairs(jump_cfg.items or {}) do
+    if row.context == which then
+      return row
+    end
   end
-
-  local next_item = build_target_jump_item("t", "➡", next_sibling_target)
-  if next_item then
-    items[#items + 1] = next_item
-  end
+  return nil
 end
 
--- Add context jump rows for higher and lower actionable anchors
 local function append_context_items(items, candidates, selected_index)
   if type(selected_index) ~= "number" then
     return
   end
 
+  local higher_spec = context_row_spec("higher")
+  local lower_spec = context_row_spec("lower")
   local has_context_items = false
 
   if selected_index < #candidates then
     local higher = candidates[selected_index + 1]
     local higher_parsed = higher and parse_node(higher.node_info) or nil
     if not has_context_items then
-      items[#items + 1] = { separator = true }
-      items[#items + 1] = {
-        separator = true,
-        label = " ⇧ Context",
-      }
-      items[#items + 1] = { separator = true }
+      append_group_heading(items, "context")
       has_context_items = true
     end
     items[#items + 1] = {
-      key = "h",
-      icon = "⬆",
+      key = higher_spec and higher_spec.key or "h",
+      icon = higher_spec and higher_spec.icon or "⬆",
       label = build_anchor_label(higher and higher.node_info, higher_parsed),
       action = jump_to_node_info(higher and higher.node_info),
     }
@@ -188,35 +250,28 @@ local function append_context_items(items, candidates, selected_index)
     local lower = candidates[selected_index - 1]
     local lower_parsed = lower and parse_node(lower.node_info) or nil
     if not has_context_items then
-      items[#items + 1] = { separator = true }
-      items[#items + 1] = {
-        separator = true,
-        label = " ⇧ Context",
-      }
-      items[#items + 1] = { separator = true }
+      append_group_heading(items, "context")
       has_context_items = true
     end
     items[#items + 1] = {
-      key = "l",
-      icon = "⬇",
+      key = lower_spec and lower_spec.key or "l",
+      icon = lower_spec and lower_spec.icon or "⬇",
       label = build_anchor_label(lower and lower.node_info, lower_parsed),
       action = jump_to_node_info(lower and lower.node_info),
     }
   end
 end
 
--- Build pre-resolved jump section from anchor build state
 function M.build(anchor_node_info, find_result)
   local items = {}
   local candidates = type(find_result) == "table" and find_result.candidates or {}
   local selected_index = type(find_result) == "table" and find_result.selected_candidate_index or nil
 
-  append_parent_child_items(items, anchor_node_info)
-  append_sibling_items(items, anchor_node_info)
+  append_relation_items(items, anchor_node_info)
   append_context_items(items, candidates, selected_index)
 
   return {
-    title = " 󰌑 Jump",
+    title = jump_cfg.title,
     items = items,
   }
 end

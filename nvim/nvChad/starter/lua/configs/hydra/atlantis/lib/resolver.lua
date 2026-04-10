@@ -35,7 +35,6 @@ local function build_export(mod)
   return mod.build
 end
 
--- find the build function for the given action name and kind in the given scope
 local function resolve_from_scope(root_prefix, action_name, kind, scope)
   if type(root_prefix) ~= "string" or root_prefix == "" then
     return nil
@@ -59,7 +58,6 @@ local function resolve_from_scope(root_prefix, action_name, kind, scope)
   return build_export(base_mod)
 end
 
--- root_prefix e.g. configs.hydra.atlantis.ops.actions (no trailing dot)
 function M.resolve(root_prefix, action_name, kind, opts)
   opts = type(opts) == "table" and opts or {}
   local scopes = type(opts.scopes) == "table" and opts.scopes or default_scopes

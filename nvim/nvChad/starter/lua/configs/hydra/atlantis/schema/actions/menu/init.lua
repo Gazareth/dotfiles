@@ -27,22 +27,22 @@ M.action_menu_item = {
     label = "Delete",
   },
   inspect = {
-    key = "i",
+    key = "o",
     icon = "?",
     label = "Inspect node mapping",
   },
   view_call_hierarchy = {
-    key = "h",
+    key = "g",
     icon = ">",
     label = "View call hierarchy",
   },
   jump_lhs = {
-    key = "h",
+    key = "z",
     icon = ">",
     label = "Left hand side",
   },
   jump_rhs = {
-    key = "l",
+    key = "x",
     icon = ">",
     label = "Right hand side",
   },
