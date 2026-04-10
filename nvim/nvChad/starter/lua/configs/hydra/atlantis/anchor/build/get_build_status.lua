@@ -11,9 +11,20 @@ local function format_cursor(cursor)
 end
 
 -- Notify user when a node is unrecognized or the language is unsupported
-function M.notify(parsed)
+-- Return semantic build status payload from parsed result
+function M.get(parsed)
   local semantic = parsed and parsed.semantic
   if type(semantic) ~= "table" then
+    return nil
+  end
+
+  return semantic
+end
+
+-- Notify user when semantic build status needs attention
+function M.notify(parsed)
+  local semantic = M.get(parsed)
+  if not semantic then
     return
   end
 
