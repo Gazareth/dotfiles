@@ -1,7 +1,7 @@
 -- Shared node label and placeholder helpers for action messaging
 local M = {}
 
--- Resolve adapter label from action context payload
+-- Resolve label from action context payload
 function M.resolve_node_label(ctx)
   local parsed = type(ctx) == "table" and ctx.parsed or nil
   local node_info = type(ctx) == "table" and ctx.node_info or nil

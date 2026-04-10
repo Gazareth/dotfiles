@@ -1,5 +1,5 @@
 -- Shared range and visual operator helpers for action closures
-local node = require("configs.hydra.atlantis.ops.lib.actions.node")
+local node = require("configs.hydra.atlantis.ops.lib.node")
 
 local M = {}
 
