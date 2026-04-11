@@ -79,13 +79,22 @@ local function normalize_parsed_result(parsed, node_info, semantic, config)
 	return parsed
 end
 
--- Parse node by semantic kind schema mapping and return normalized payload
-function M.parse(node_info)
+-- Parse node by semantic kind schema mapping and return normalized payload.
+-- opts.semantic + opts.config: skip languages.resolve when caller already resolved (e.g. anchor_actionable.check).
+function M.parse(node_info, opts)
 	if not node_info then
 		return nil
 	end
 
-	local semantic, config = resolve_semantic(node_info)
+	opts = type(opts) == "table" and opts or {}
+	local semantic, config
+	if type(opts.semantic) == "table" then
+		semantic = opts.semantic
+		config = type(opts.config) == "table" and opts.config or treesitter_config.get()
+	else
+		semantic, config = resolve_semantic(node_info)
+	end
+
 	local probe_id = resolve_probe_id(node_info, semantic)
 	local parser = parser_by_probe_id[probe_id]
 
@@ -100,8 +109,8 @@ end
 
 setmetatable(M, {
 	-- Keep callable module behavior for existing call sites
-	__call = function(_, node_info)
-		return M.parse(node_info)
+	__call = function(_, node_info, opts)
+		return M.parse(node_info, opts)
 	end,
 })
 

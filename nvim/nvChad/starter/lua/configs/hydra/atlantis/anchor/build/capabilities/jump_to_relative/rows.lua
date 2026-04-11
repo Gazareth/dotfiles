@@ -1,6 +1,5 @@
 local menu_schema = require("configs.hydra.atlantis.schema.menu")
 local menu_labels = require("configs.hydra.atlantis.anchor.build.capabilities.jump_to_relative.menu_labels")
-local probe = require("configs.hydra.atlantis.anchor.probe")
 local relative_jumps = require("configs.hydra.atlantis.anchor.build.capabilities.jump_to_relative.relative_jumps")
 local targets = require("configs.hydra.atlantis.anchor.build.capabilities.jump_to_relative.targets")
 
@@ -94,7 +93,7 @@ local function context_neighbor_label(candidate_index, candidate, jump_labels)
   if type(q) == "string" and q ~= "" then
     return q
   end
-  return menu_labels.quoted_target(candidate.node_info, probe.parse(candidate.node_info))
+  return menu_labels.quoted_for_node(candidate.node_info, candidate.parsed)
 end
 
 local function append_context_items(items, candidates, selected_index, jump_labels)

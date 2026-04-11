@@ -1,31 +1,17 @@
+local anchor_actionable = require("configs.hydra.atlantis.anchor.build.find_from_node.actionable")
+local find_result = require("configs.hydra.atlantis.anchor.build.find_from_node.find_result")
 local build_node_info = require("configs.hydra.atlantis.anchor.probe.treesitter.node_info").build_node_info
-local resolve_language_mapping = require("configs.hydra.atlantis.anchor.languages").resolve
+local probe = require("configs.hydra.atlantis.anchor.probe")
+local treesitter_config = require("configs.hydra.atlantis.anchor.probe.treesitter.config")
 
 local M = {}
 
--- Build semantic resolver options from active tree-sitter config
-local function build_resolve_options(config)
-  return {
-    safe_languages = config.safe_languages,
-    languages = config.languages,
-  }
-end
-
--- Check whether node is an "anchor" for current language
-local function is_actionable(node_info, resolve_options)
-  local semantic = resolve_language_mapping(node_info, resolve_options)
-  if semantic and semantic.actionable == true then
-    return true, semantic
-  end
-
-  return false, semantic
-end
-
 -- Collect potential "anchor" candidate nodes from cursor node to root
 function M.collect(node_info, config)
+  local cfg = type(config) == "table" and config or treesitter_config.get()
   local current = node_info and node_info.node or nil
   local candidate_chain = {}
-  local resolve_options = build_resolve_options(config or {})
+  local resolve_options = anchor_actionable.resolve_options_from_config(cfg)
 
   while current do
     local candidate = build_node_info({
@@ -33,16 +19,17 @@ function M.collect(node_info, config)
       node = current,
     })
 
-    local actionable, semantic = false, nil
+    local is_actionable, semantic = false, nil
     if candidate then
-      actionable, semantic = is_actionable(candidate, resolve_options)
+      is_actionable, semantic = anchor_actionable.check(candidate, resolve_options)
     end
 
-    if candidate and actionable then
-      candidate_chain[#candidate_chain + 1] = {
-        node_info = candidate,
-        semantic = semantic,
-      }
+    if candidate and is_actionable then
+      candidate_chain[#candidate_chain + 1] = find_result.candidate(
+        candidate,
+        semantic,
+        probe.parse(candidate, { semantic = semantic, config = cfg })
+      )
     end
 
     current = current:parent()

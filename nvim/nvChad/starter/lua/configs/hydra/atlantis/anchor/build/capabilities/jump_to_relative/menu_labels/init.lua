@@ -2,6 +2,7 @@
 local assignment = require("configs.hydra.atlantis.anchor.build.capabilities.jump_to_relative.menu_labels.strategies.assignment")
 local fallback = require("configs.hydra.atlantis.anchor.build.capabilities.jump_to_relative.menu_labels.strategies.fallback")
 local fn_strategy = require("configs.hydra.atlantis.anchor.build.capabilities.jump_to_relative.menu_labels.strategies.function")
+local probe = require("configs.hydra.atlantis.anchor.probe")
 
 local M = {}
 
@@ -40,6 +41,26 @@ function M.quoted_target(node_info, parsed)
   local name = truncate(format_name(node_info, parsed), MAX_CHARS)
   name = name:gsub('"', "'")
   return '"' .. name .. '"'
+end
+
+--- Optional `parsed` from find_from_node (probe.parse); otherwise parses here.
+function M.quoted_for_node(node_info, parsed)
+  if type(node_info) ~= "table" then
+    return nil
+  end
+  local p = type(parsed) == "table" and parsed or probe.parse(node_info)
+  return M.quoted_target(node_info, p)
+end
+
+--- Parallel to candidate chain indices: quoted Hydra fragments for context higher/lower rows.
+function M.jump_labels_for_candidates(candidates)
+  local labels = {}
+  for i, c in ipairs(candidates or {}) do
+    if type(c) == "table" and type(c.node_info) == "table" then
+      labels[i] = M.quoted_for_node(c.node_info, c.parsed)
+    end
+  end
+  return labels
 end
 
 return M

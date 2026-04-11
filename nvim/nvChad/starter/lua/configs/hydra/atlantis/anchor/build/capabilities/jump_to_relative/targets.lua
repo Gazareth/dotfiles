@@ -1,4 +1,5 @@
 local build_node_info = require("configs.hydra.atlantis.anchor.probe.treesitter.node_info").build_node_info
+local salvage_target = require("configs.hydra.atlantis.anchor.build.capabilities.jump_to_relative.salvage_target")
 
 local M = {}
 
@@ -27,6 +28,8 @@ function M.resolve(selected_node_info, relation)
     return nil
   end
 
+  target = salvage_target.focus_node(target, selected_node_info.bufnr, nil)
+
   return build_node_info({
     bufnr = selected_node_info.bufnr,
     node = target,
@@ -48,7 +51,7 @@ function M.jump_action(target_node_info)
     end
 
     local row = (target_node_info.start_row or 0) + 1
-    local col = target_node_info.start_col or 0
+    local col = (target_node_info.start_col or 0)
     pcall(vim.api.nvim_win_set_cursor, 0, { row, col })
   end
 end

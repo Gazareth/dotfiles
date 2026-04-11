@@ -25,7 +25,7 @@ function M.build(opts)
   local anchor_node_info = found.anchor_node_info
 
   -- Step 2: Fill anchor payload with parsed data and jump candidates
-  local filled = capabilities.fill(anchor_node_info, cursor_node_info, depth, found)
+  local filled = capabilities.fill(anchor_node_info, found)
   local parsed_anchor = filled.parsed_anchor
 
   -- Step 3: Surface semantic build status for unknown nodes or disabled languages
