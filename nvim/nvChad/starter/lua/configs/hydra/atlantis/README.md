@@ -59,7 +59,7 @@ Allowlists and Hydra row copy live under `schema/actions`; executable actions ar
 
 ### 4.1 Runtime flow (summary)
 
-Hydra entry (`configs/hydra/init.lua`) → `menu/layout.build_menu_spec` → `anchor/build` (cursor, depth, probe, jumps) → `menu/render_spec` builds rows using schema + `anchor/actions.build` for each closure → Hydra renders and dispatches.
+Hydra entry (`configs/hydra/init.lua`) → `anchor/build` → `menu/layout.from_context` → `menu/create_hint_menu.create_hint_menu` → `menu/render_spec` builds rows using schema + `anchor/actions.build` for each closure → `lib/make_hydra` + nvim-hydra.
 
 ### 4.2 Adding an action
 

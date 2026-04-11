@@ -1,29 +1,40 @@
-local anchor_build = require("configs.hydra.atlantis.anchor.build")
-local section_assembly = require("configs.hydra.atlantis.menu.layout.assembly")
 local modify_section = require("configs.hydra.atlantis.menu.sections.modify")
 
 local M = {}
 
--- Atlantis menu structure
-function M.build_menu_spec(opts)
-  local anchor_ctx = anchor_build.build(opts)
+--- Section ordering / variant from anchor context — not the Hydra hint spec (see menu.create_hint_menu).
+function M.from_context(anchor_ctx)
   local jump_spec = anchor_ctx and anchor_ctx.jump_spec or nil
-  if not anchor_ctx.cursor_node_info then
-    return section_assembly.build_without_cursor(jump_spec)
+  if not anchor_ctx or not anchor_ctx.cursor_node_info then
+    return { variant = "no_cursor", jump_spec = jump_spec }
   end
 
   local positioned_anchor_node_info = anchor_ctx.positioned_anchor_node_info
 
   local modify_spec = modify_section(anchor_ctx)
   if type(modify_spec) ~= "table" then
-    return section_assembly.build_with_invalid_modify(positioned_anchor_node_info, jump_spec)
+    return {
+      variant = "invalid_modify",
+      positioned_anchor_node_info = positioned_anchor_node_info,
+      jump_spec = jump_spec,
+    }
   end
 
   if modify_spec.__abort_open == true then
-    return section_assembly.build_with_abort_modify(modify_spec, positioned_anchor_node_info, jump_spec)
+    return {
+      variant = "abort_modify",
+      modify_spec = modify_spec,
+      positioned_anchor_node_info = positioned_anchor_node_info,
+      jump_spec = jump_spec,
+    }
   end
 
-  return section_assembly.build_with_modify(modify_spec, positioned_anchor_node_info, jump_spec)
+  return {
+    variant = "full",
+    modify_spec = modify_spec,
+    positioned_anchor_node_info = positioned_anchor_node_info,
+    jump_spec = jump_spec,
+  }
 end
 
 return M

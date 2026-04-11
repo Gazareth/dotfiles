@@ -1,5 +1,3 @@
--- Build function jump-to-body action that reopens Atlantis at body depth
-local atlantis = require("configs.hydra.hydras.atlantis")
 local common_actions = require("configs.hydra.atlantis.ops.lib.actions")
 
 local M = {}
@@ -21,21 +19,12 @@ local function resolve_body_target(ctx)
   return nil
 end
 
-local function jump_and_open_at_depth(target, depth)
-  return function()
-    common_actions.jump_to_target(target)()
-
-    atlantis.open({ depth = depth })
-  end
-end
-
 function M.build(ctx)
   local target = resolve_body_target(ctx)
   if not target then
     return common_actions.placeholder("Jump to", "body")
   end
-
-  return jump_and_open_at_depth(target, 1)
+  return common_actions.jump_to_target(target)
 end
 
 return M

@@ -50,11 +50,13 @@ M.action_menu_item = {
     key = "b",
     icon = ">",
     label = "Jump to body",
+    _reopen_atlantis = 1,
   },
   jump_to_parameter = {
     key = "p",
     icon = ">",
     label = "Jump to parameter",
+    _reopen_atlantis = 1,
   },
 }
 

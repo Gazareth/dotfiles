@@ -1,4 +1,4 @@
-local hydra_spec = require("configs.hydra.lib.hydra_spec")
+local make_hydra = require("configs.hydra.lib.make_hydra")
 local namu = require("configs.hydra.namu")
 
 local M = {}
@@ -9,7 +9,7 @@ function M.open(spec_opts, hydra_opts)
     title = "Namu",
     sections = { namu.symbols, namu.diagnostics, namu.call_hierarchy },
   }, spec_opts)
-  hydra_spec.open(spec, hydra_opts)
+  make_hydra(spec, hydra_opts):open()
 end
 
 return M

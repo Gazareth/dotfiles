@@ -32,13 +32,17 @@ local function build_row(anchor_type, action_name, opts)
     label = label .. " " .. label_suffix
   end
 
-  return {
+  local row = {
     key = key,
     icon = icon,
     label = label,
     action_id = action_name,
     action = action,
   }
+  if type(presentation._reopen_atlantis) == "number" then
+    row._reopen_atlantis = presentation._reopen_atlantis
+  end
+  return row
 end
 
 function M.build_rows(anchor_type, action_names, opts)

@@ -52,10 +52,10 @@ local function resolve_section_spec(spec_or_fn)
   return spec, false
 end
 
-local function resolve_sections(hydra_spec)
+local function resolve_sections(spec)
   local resolved = {}
 
-  for _, section_spec in ipairs(hydra_spec.sections or {}) do
+  for _, section_spec in ipairs(spec.sections or {}) do
     local section, should_abort = resolve_section_spec(section_spec)
     if should_abort then
       return nil
@@ -69,20 +69,25 @@ local function resolve_sections(hydra_spec)
   return resolved
 end
 
+local function append_action_head_for_item(heads, item)
+  if type(item._resolved_key) ~= "string" then
+    return
+  end
+  heads[#heads + 1] = {
+    item._resolved_key,
+    function()
+      action.execute(item)
+    end,
+    { exit = true, desc = false },
+  }
+end
+
 local function build_heads(rendered, on_toggle_hint)
   local heads = {}
 
   for _, section in ipairs(rendered.sections) do
     for _, item in ipairs(section.items or {}) do
-      if type(item._resolved_key) == "string" then
-        heads[#heads + 1] = {
-          item._resolved_key,
-          function()
-            action.execute(item)
-          end,
-          { exit = false, desc = false },
-        }
-      end
+      append_action_head_for_item(heads, item)
     end
   end
 
@@ -101,20 +106,23 @@ local function build_heads(rendered, on_toggle_hint)
   return heads
 end
 
-function M.open(hydra_spec, opts)
+function M.open(spec, opts)
   opts = type(opts) == "table" and opts or {}
+  if type(spec.merge_ui_opts) == "function" then
+    opts = spec.merge_ui_opts(spec, opts)
+  end
   local show_hint = opts.show_hint ~= false
-  local sections = resolve_sections(hydra_spec)
+  local sections = resolve_sections(spec)
   if sections == nil or #sections == 0 then
     return
   end
 
-  if hydra_spec.anchor_node_info then
-    position_at_anchor(hydra_spec.anchor_node_info)
+  if spec.anchor_node_info then
+    position_at_anchor(spec.anchor_node_info)
   end
 
   local rendered = hint.build(sections, {
-    title = hydra_spec.title,
+    title = spec.title,
     footer = {
       left = "[?] toggle hint",
       right = "[q]/[Esc] exit",
@@ -122,14 +130,14 @@ function M.open(hydra_spec, opts)
   })
   local heads = build_heads(rendered, function()
     vim.schedule(function()
-      M.open(hydra_spec, {
+      M.open(spec, {
         show_hint = not show_hint,
       })
     end)
   end)
 
   local hydra = Hydra({
-    name = hydra_spec.title or "Hydra",
+    name = spec.title or "Hydra",
     mode = "n",
     hint = show_hint and rendered.hint or false,
     heads = heads,
@@ -146,4 +154,20 @@ function M.open(hydra_spec, opts)
   hydra:activate()
 end
 
-return M
+local HydraHandle = {}
+
+function HydraHandle:open(opts_override)
+  local base = vim.tbl_extend("force", {}, self._default_hydra_opts)
+  local merged = vim.tbl_extend("force", base, type(opts_override) == "table" and opts_override or {})
+  M.open(self._spec, merged)
+end
+
+return setmetatable(M, {
+  __call = function(_, spec, default_hydra_opts)
+    default_hydra_opts = type(default_hydra_opts) == "table" and default_hydra_opts or {}
+    return setmetatable({
+      _spec = spec,
+      _default_hydra_opts = default_hydra_opts,
+    }, { __index = HydraHandle })
+  end,
+})
