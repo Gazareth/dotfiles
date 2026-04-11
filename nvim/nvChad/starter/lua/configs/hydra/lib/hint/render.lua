@@ -1,4 +1,4 @@
-local util = require("configs.hydra.common.hint.util")
+local util = require("configs.hydra.lib.hint.util")
 
 local M = {}
 

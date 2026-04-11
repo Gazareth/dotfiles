@@ -1,11 +1,10 @@
 local Hydra = require("hydra")
 
-local action = require("configs.hydra.common.action")
-local hint = require("configs.hydra.common.hint")
+local action = require("configs.hydra.lib.action")
+local hint = require("configs.hydra.lib.hint")
 
 local M = {}
 
--- Position cursor at anchor node before menu opens
 local function position_at_anchor(anchor_node_info)
   if not anchor_node_info or not anchor_node_info.node then
     return
@@ -33,30 +32,30 @@ local function resolve_section_spec(spec_or_fn)
   if type(spec_or_fn) == "function" then
     local ok, result = pcall(spec_or_fn)
     if not ok then
-      vim.notify("Failed to resolve dynamic menu section: " .. tostring(result), vim.log.levels.ERROR)
+      vim.notify("Failed to resolve dynamic Hydra section: " .. tostring(result), vim.log.levels.ERROR)
       return nil, true
     end
     spec = result
   end
 
   if type(spec) == "table" and spec.__abort_open == true then
-    local message = spec.__abort_message or "Menu could not be opened for the current context."
+    local message = spec.__abort_message or "Hydra could not be opened for the current context."
     vim.notify(message, vim.log.levels.WARN)
     return nil, true
   end
 
   if type(spec) ~= "table" then
-    vim.notify("Invalid menu section spec. Expected table.", vim.log.levels.ERROR)
+    vim.notify("Invalid Hydra section spec. Expected table.", vim.log.levels.ERROR)
     return nil, true
   end
 
   return spec, false
 end
 
-local function resolve_sections(menu_spec)
+local function resolve_sections(hydra_spec)
   local resolved = {}
 
-  for _, section_spec in ipairs(menu_spec.sections or {}) do
+  for _, section_spec in ipairs(hydra_spec.sections or {}) do
     local section, should_abort = resolve_section_spec(section_spec)
     if should_abort then
       return nil
@@ -81,7 +80,7 @@ local function build_heads(rendered, on_toggle_hint)
           function()
             action.execute(item)
           end,
-          { exit = true, desc = false },
+          { exit = false, desc = false },
         }
       end
     end
@@ -102,22 +101,20 @@ local function build_heads(rendered, on_toggle_hint)
   return heads
 end
 
-function M.open(menu_spec, opts)
+function M.open(hydra_spec, opts)
   opts = type(opts) == "table" and opts or {}
   local show_hint = opts.show_hint ~= false
-  local sections = resolve_sections(menu_spec)
+  local sections = resolve_sections(hydra_spec)
   if sections == nil or #sections == 0 then
     return
   end
 
-  -- Position cursor at anchor if provided
-  if menu_spec.anchor_node_info then
-    position_at_anchor(menu_spec.anchor_node_info)
+  if hydra_spec.anchor_node_info then
+    position_at_anchor(hydra_spec.anchor_node_info)
   end
 
-  -- Hint render options
   local rendered = hint.build(sections, {
-    title = menu_spec.title,
+    title = hydra_spec.title,
     footer = {
       left = "[?] toggle hint",
       right = "[q]/[Esc] exit",
@@ -125,14 +122,14 @@ function M.open(menu_spec, opts)
   })
   local heads = build_heads(rendered, function()
     vim.schedule(function()
-      M.open(menu_spec, {
+      M.open(hydra_spec, {
         show_hint = not show_hint,
       })
     end)
   end)
 
   local hydra = Hydra({
-    name = menu_spec.title or "Actions",
+    name = hydra_spec.title or "Hydra",
     mode = "n",
     hint = show_hint and rendered.hint or false,
     heads = heads,

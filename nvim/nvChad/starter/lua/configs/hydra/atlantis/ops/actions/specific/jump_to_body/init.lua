@@ -1,4 +1,5 @@
 -- Build function jump-to-body action that reopens Atlantis at body depth
+local atlantis = require("configs.hydra.hydras.atlantis")
 local common_actions = require("configs.hydra.atlantis.ops.lib.actions")
 
 local M = {}
@@ -24,9 +25,7 @@ local function jump_and_open_at_depth(target, depth)
   return function()
     common_actions.jump_to_target(target)()
 
-    local Menu = require("configs.hydra.common.menu")
-    local atlantis_layout = require("configs.hydra.atlantis.menu.layout")
-    Menu.open(atlantis_layout.build_menu_spec({ depth = depth }))
+    atlantis.open({ depth = depth })
   end
 end
 

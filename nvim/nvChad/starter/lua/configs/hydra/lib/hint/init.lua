@@ -1,7 +1,7 @@
-local util = require("configs.hydra.common.hint.util")
-local keys = require("configs.hydra.common.hint.keys")
-local render = require("configs.hydra.common.hint.render")
-local title = require("configs.hydra.common.hint.title")
+local util = require("configs.hydra.lib.hint.util")
+local keys = require("configs.hydra.lib.hint.keys")
+local render = require("configs.hydra.lib.hint.render")
+local title = require("configs.hydra.lib.hint.title")
 
 local M = {}
 
