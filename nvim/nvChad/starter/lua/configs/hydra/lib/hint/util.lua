@@ -1,11 +1,13 @@
 local M = {}
 
+-- Hydra hint syntax uses ASCII `_` around keys (_k_). Use fullwidth low line (U+FF3F) for literal underscores in labels.
+local HINT_UNDERSCORE = vim.fn.nr2char(0xff3f)
+
 function M.str_width(text)
   local s = text or ""
-  -- Hydra's hydra_hint syntax conceals unescaped _, ^, \ characters (conceallevel=3).
-  -- Escaped sequences like \_ are rendered as the bare char (backslash concealed).
-  -- Strip these the same way Hydra does so column widths stay accurate.
-  local visible = s:gsub("\\([_^\\])", "%1"):gsub("[_^\\]", "")
+  -- Hint text uses fullwidth ＿ (U+FF3F) instead of ASCII _ so Hydra’s _key_ markup is not triggered.
+  -- After unescaping \-pairs, drop ^ and stray \ for width.
+  local visible = s:gsub("\\([_^\\])", "%1"):gsub("[%^\\]", "")
   return vim.fn.strdisplaywidth(visible)
 end
 
@@ -18,11 +20,13 @@ function M.pad_right(text, width)
   return value .. string.rep(" ", padding)
 end
 
--- Sanitize Hydra hint control characters
+-- Sanitize Hydra hint control characters (dynamic labels from menus, etc.)
 function M.escape_hint_text(text)
   local value = text or ""
-  -- Keep hint parser safe by removing marker chars from dynamic labels
-  return value:gsub("_", "-"):gsub("%^", ""):gsub("\\", "/")
+  value = value:gsub("\\", "/")
+  value = value:gsub("%^", "")
+  value = value:gsub("_", HINT_UNDERSCORE)
+  return value
 end
 
 return M

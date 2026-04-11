@@ -9,8 +9,20 @@ M.group_labels = {
 }
 
 M.document_root_jump = {
-  label = "Go to top",
+  label_phrase = "Top",
   icon = "⇪",
+}
+
+M.relation_phrase = {
+  parent = "To parent",
+  child = "To child",
+  prev_sibling = "To prev sibling",
+  next_sibling = "To next sibling",
+}
+
+M.context_phrase = {
+  higher = "To higher in context",
+  lower = "To lower in context",
 }
 
 M.items = {
