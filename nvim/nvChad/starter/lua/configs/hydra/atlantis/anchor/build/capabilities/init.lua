@@ -1,5 +1,5 @@
 local probe = require("configs.hydra.atlantis.anchor.probe")
-local jump_section = require("configs.hydra.atlantis.anchor.build.capabilities.jump_section")
+local jump_to_relative = require("configs.hydra.atlantis.anchor.build.capabilities.jump_to_relative")
 
 local M = {}
 
@@ -9,7 +9,7 @@ function M.fill(anchor_node_info, cursor_node_info, depth, find_result)
   local candidates = type(find_result) == "table" and find_result.candidates or {}
   local selected_index = type(find_result) == "table" and find_result.selected_candidate_index or nil
 
-  local jump_spec = jump_section.build(anchor_node_info, {
+  local jump_spec = jump_to_relative.build(anchor_node_info, {
     candidates = candidates,
     selected_candidate_index = selected_index,
   })
