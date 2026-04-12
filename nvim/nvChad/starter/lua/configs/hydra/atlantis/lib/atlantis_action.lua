@@ -1,4 +1,5 @@
 -- Wrap menu item actions so Treewalker can reopen after navigation (hydra/lib stays generic).
+-- Pickers require this module too; lazy-require inside closures to avoid a load-time cycle.
 local action = require("configs.hydra.lib.action")
 
 local M = {}
@@ -11,15 +12,17 @@ local function reopen_delta(item)
   return 0
 end
 
-local function schedule_reopen(session, delta)
+local function schedule_reopen(session, delta, item)
   vim.schedule(function()
     local reopen_opts = vim.tbl_extend("force", {}, session.hydra_opts)
-    local menu_for_open = session.menu_opts
+    local menu_opts = session.menu_opts
     if delta ~= 0 then
-      menu_for_open = vim.tbl_extend("force", {}, session.menu_opts)
-      menu_for_open.depth = math.max(0, (session.menu_opts.depth or 0) + delta)
+      menu_opts.depth = math.max(0, (menu_opts.depth or 0) + delta)
+    elseif type(item) == "table" and item._atlantis_snap_reopen == true then
+      -- Opt-in: LSP rename etc. can leave the cursor on an inner node; snap restores outer anchor for rebuild.
+      menu_opts._atlantis_reopen_snap = true
     end
-    require("configs.hydra.atlantis").open(menu_for_open, reopen_opts)
+    require("configs.hydra.atlantis").open(menu_opts, reopen_opts)
   end)
 end
 
@@ -30,6 +33,24 @@ local function schedule_file_nav(session)
 end
 
 function M.wrap_item(item, session)
+  if item.action_id == "jump_to_child" then
+    item.action = function()
+      require("configs.hydra.atlantis.anchor.build.jump_child_picker").open(session)
+    end
+    return
+  end
+
+  if item._modify_common_overflow == true and type(item._overflow_action_names) == "table" then
+    local names = item._overflow_action_names
+    item._modify_common_overflow = nil
+    item._overflow_action_names = nil
+    item.action = function()
+      require("configs.hydra.atlantis.anchor.build.modify_overflow_picker").open(session, names)
+    end
+    -- Submenu opener: do not schedule parent reopen (would fight the child Hydra).
+    return
+  end
+
   if item.action == nil then
     return
   end
@@ -58,7 +79,7 @@ function M.wrap_item(item, session)
     it.action = inner
     action.execute(it)
     it.action = wrapper
-    schedule_reopen(session, delta)
+    schedule_reopen(session, delta, it)
   end
   item.action = wrapper
 end

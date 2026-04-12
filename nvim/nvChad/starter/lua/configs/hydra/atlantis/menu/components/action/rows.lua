@@ -42,6 +42,9 @@ local function build_row(anchor_type, action_name, opts)
   if type(presentation._reopen_atlantis) == "number" then
     row._reopen_atlantis = presentation._reopen_atlantis
   end
+  if presentation._atlantis_snap_reopen == true then
+    row._atlantis_snap_reopen = true
+  end
   return row
 end
 

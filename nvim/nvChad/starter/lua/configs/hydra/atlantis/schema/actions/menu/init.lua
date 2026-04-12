@@ -5,6 +5,8 @@ M.action_menu_item = {
     key = "r",
     icon = ">",
     label = "Rename",
+    --- After LSP rename, reopen with cursor snapped to outer anchor (see atlantis init reopen_seed).
+    _atlantis_snap_reopen = true,
   },
   change = {
     key = "c",
@@ -56,6 +58,55 @@ M.action_menu_item = {
     key = "p",
     icon = ">",
     label = "Jump to parameter",
+    _reopen_atlantis = 1,
+  },
+  jump_to_return = {
+    key = "u",
+    icon = ">",
+    label = "Jump to return",
+    _reopen_atlantis = 1,
+  },
+  jump_to_child = {
+    key = "k",
+    icon = ">",
+    label = "Jump to child…",
+    _reopen_atlantis = 0,
+  },
+  rescope = {
+    key = ",",
+    icon = ">",
+    label = "Re-scope",
+    -- Close menu and do not reopen; avoids Hydra key leakage into other UIs.
+    _reopen_atlantis = -1,
+  },
+  jump_function_header = {
+    key = "h",
+    icon = ">",
+    label = "Jump to function header",
+    _reopen_atlantis = 1,
+  },
+  jump_prev_parameter = {
+    key = "[",
+    icon = ">",
+    label = "Previous parameter",
+    _reopen_atlantis = 1,
+  },
+  jump_next_parameter = {
+    key = "]",
+    icon = ">",
+    label = "Next parameter",
+    _reopen_atlantis = 1,
+  },
+  jump_to_parent_signature = {
+    key = "h",
+    icon = ">",
+    label = "Jump to parent signature",
+    _reopen_atlantis = 1,
+  },
+  jump_to_enclosing_function = {
+    key = "h",
+    icon = ">",
+    label = "Jump to enclosing function",
     _reopen_atlantis = 1,
   },
 }

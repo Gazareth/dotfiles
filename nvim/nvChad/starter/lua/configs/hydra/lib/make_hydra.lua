@@ -5,27 +5,6 @@ local hint = require("configs.hydra.lib.hint")
 
 local M = {}
 
-local function position_at_anchor(anchor_node_info)
-  if not anchor_node_info or not anchor_node_info.node then
-    return
-  end
-
-  local ok, err = pcall(function()
-    if anchor_node_info.bufnr and vim.api.nvim_buf_is_valid(anchor_node_info.bufnr) then
-      vim.api.nvim_set_current_buf(anchor_node_info.bufnr)
-    end
-
-    local row = (anchor_node_info.start_row or 0) + 1
-    local col = anchor_node_info.start_col or 0
-    vim.api.nvim_win_set_cursor(0, { row, col })
-    vim.cmd("normal! zz")
-  end)
-
-  if not ok then
-    vim.notify("Failed to position cursor at anchor: " .. tostring(err), vim.log.levels.WARN)
-  end
-end
-
 local function resolve_section_spec(spec_or_fn)
   local spec = spec_or_fn
 
@@ -131,10 +110,6 @@ function M.open(spec, opts)
   local sections = resolve_sections(spec)
   if sections == nil or #sections == 0 then
     return
-  end
-
-  if spec.anchor_node_info then
-    position_at_anchor(spec.anchor_node_info)
   end
 
   local hint_opts = vim.tbl_extend("force", {

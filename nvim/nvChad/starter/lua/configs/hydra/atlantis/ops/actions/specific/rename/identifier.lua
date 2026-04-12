@@ -13,7 +13,7 @@ local function run_rename()
   vim.notify("Rename is unavailable: " .. tostring(err), vim.log.levels.WARN)
 end
 
--- Build identifier rename closure with resolved target jump
+-- Build identifier rename closure
 function M.build(ctx)
   local target = lib.resolve_target(ctx)
   if not target then
@@ -21,11 +21,6 @@ function M.build(ctx)
   end
 
   return function()
-    local jump = lib.jump_to_target(target)
-    if type(jump) == "function" then
-      jump()
-    end
-
     run_rename()
   end
 end
