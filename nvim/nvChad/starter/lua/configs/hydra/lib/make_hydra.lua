@@ -82,7 +82,26 @@ local function append_action_head_for_item(heads, item)
   }
 end
 
-local function build_heads(rendered, on_toggle_hint)
+--- Toggle floating hint on the *current* hydra only (no second Hydra / no M.open recursion).
+local function toggle_hint_window()
+  local h = _G.Hydra
+  if not h or type(h.hint) ~= "table" then
+    return
+  end
+  if h.__hint_window_hidden then
+    pcall(function()
+      h.hint:show()
+    end)
+    h.__hint_window_hidden = false
+  else
+    pcall(function()
+      h.hint:close()
+    end)
+    h.__hint_window_hidden = true
+  end
+end
+
+local function build_heads(rendered)
   local heads = {}
 
   for _, section in ipairs(rendered.sections) do
@@ -93,14 +112,11 @@ local function build_heads(rendered, on_toggle_hint)
 
   heads[#heads + 1] = { "q", nil, { exit = true, desc = false } }
   heads[#heads + 1] = { "<Esc>", nil, { exit = true, desc = false } }
+  -- exit = false: stay in hydra; only hide/show the hint window (avoids reopen race / double hint).
   heads[#heads + 1] = {
     "?",
-    function()
-      if type(on_toggle_hint) == "function" then
-        on_toggle_hint()
-      end
-    end,
-    { exit = true, desc = false },
+    toggle_hint_window,
+    { exit = false, desc = false },
   }
 
   return heads
@@ -128,19 +144,13 @@ function M.open(spec, opts)
       right = "[q]/[Esc] exit",
     },
   })
-  local heads = build_heads(rendered, function()
-    vim.schedule(function()
-      M.open(spec, {
-        show_hint = not show_hint,
-      })
-    end)
-  end)
 
+  -- Always use ManualWindow hint text so hint:close() / hint:show() can restore the same UI.
   local hydra = Hydra({
     name = spec.title or "Hydra",
     mode = "n",
-    hint = show_hint and rendered.hint or false,
-    heads = heads,
+    hint = rendered.hint,
+    heads = build_heads(rendered),
     config = {
       color = "red",
       invoke_on_body = false,
@@ -152,6 +162,15 @@ function M.open(spec, opts)
   })
 
   hydra:activate()
+
+  if not show_hint then
+    hydra.__hint_window_hidden = true
+    pcall(function()
+      hydra.hint:close()
+    end)
+  else
+    hydra.__hint_window_hidden = false
+  end
 end
 
 local HydraHandle = {}

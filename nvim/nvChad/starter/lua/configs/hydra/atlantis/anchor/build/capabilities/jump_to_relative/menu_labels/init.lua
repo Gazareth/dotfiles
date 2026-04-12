@@ -36,10 +36,20 @@ local function format_name(node_info, parsed)
   return "node"
 end
 
+--- Short display name (same pipeline as quoted_target, without wrapping quotes).
+function M.display_name_for_node(node_info, parsed)
+  if type(node_info) ~= "table" then
+    return "?"
+  end
+  local p = type(parsed) == "table" and parsed or probe.parse(node_info)
+  local name = truncate(format_name(node_info, p), MAX_CHARS)
+  name = name:gsub('"', "'")
+  return name
+end
+
 --- Quoted target name for jump hint lines (ASCII in source; hint layer maps _ for Hydra).
 function M.quoted_target(node_info, parsed)
-  local name = truncate(format_name(node_info, parsed), MAX_CHARS)
-  name = name:gsub('"', "'")
+  local name = M.display_name_for_node(node_info, parsed)
   return '"' .. name .. '"'
 end
 

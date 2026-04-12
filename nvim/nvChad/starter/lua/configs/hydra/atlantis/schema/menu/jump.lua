@@ -10,7 +10,7 @@ M.group_labels = {
 }
 
 M.file_nav_scope = {
-  label = "Top-level outline (by kind)...",
+  label = "Jump to top-level entity...",
 }
 
 M.document_root_jump = {

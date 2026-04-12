@@ -1,5 +1,6 @@
 local index_mod = require("configs.hydra.atlantis.anchor.build.file_nav.index")
 local menu_labels = require("configs.hydra.atlantis.anchor.build.capabilities.jump_to_relative.menu_labels")
+local picker_hydra = require("configs.hydra.atlantis.anchor.build.file_nav.picker_hydra")
 local schema = require("configs.hydra.atlantis.schema.menu.file_nav")
 local title_const = require("configs.hydra.atlantis.menu.components.title.constants")
 local targets = require("configs.hydra.atlantis.anchor.build.capabilities.jump_to_relative.targets")
@@ -18,27 +19,36 @@ local SECTION_KEY_PAIRS = {
   { "p", "k" },
 }
 
-local function row_jump_quoted(e)
+local function kind_bracket_label(e)
   if type(e) ~= "table" or type(e.node_info) ~= "table" then
-    return '"?"'
+    return "?"
   end
-  local q = menu_labels.quoted_for_node(e.node_info, e.parsed)
-  if type(q) == "string" and q ~= "" then
-    return q
+  local kind = type(e.semantic) == "table" and e.semantic.node_kind or nil
+  return title_const.resolve_label(kind, e.node_info.node_type)
+end
+
+--- To [Function] name:102
+local function row_label_single(e)
+  local bracket = kind_bracket_label(e)
+  local name = menu_labels.display_name_for_node(e.node_info, e.parsed)
+  local line = (type(e.row) == "number" and e.row or 0) + 1
+  return string.format("%s [%s] %s:%d", schema.text.to, bracket, name, line)
+end
+
+--- To next [Function] name:102
+local function row_label_next(e)
+  local bracket = kind_bracket_label(e)
+  local name = menu_labels.display_name_for_node(e.node_info, e.parsed)
+  local line = (type(e.row) == "number" and e.row or 0) + 1
+  return string.format("%s [%s] %s:%d", schema.text.to_next, bracket, name, line)
+end
+
+local function pick_row_label(kind_id)
+  local title = schema.kind_heading[kind_id]
+  if type(title) == "string" and title ~= "" then
+    return string.format("%s %s...", schema.text.pick, title)
   end
-  return '"?"'
-end
-
-local function fmt_entry(e)
-  return string.format("%s:%d", row_jump_quoted(e), e.row + 1)
-end
-
-local function label_to_quoted_target(quoted)
-  return string.format("%s %s", schema.text.to, quoted)
-end
-
-local function reopen_atlantis(menu_opts, hydra_opts)
-  require("configs.hydra.atlantis").open(menu_opts or {}, hydra_opts or {})
+  return string.format("%s ...", schema.text.pick)
 end
 
 local function append_section_heading(items, heading)
@@ -50,7 +60,6 @@ local function append_section_heading(items, heading)
   items[#items + 1] = { separator = true }
 end
 
---- Icon (same as Treewalker title badges) + "Name [n]" for the separator subtitle.
 local function kind_section_heading(kind_id, count)
   local icon = title_const.resolve_icon(kind_id, nil)
   if type(icon) ~= "string" then
@@ -67,15 +76,7 @@ local function kind_section_heading(kind_id, count)
   return " " .. core
 end
 
-local function kind_pick_heading(kind_id)
-  local title = schema.kind_heading[kind_id]
-  if type(title) == "string" and title ~= "" then
-    return string.format("To %s...", title)
-  end
-  return "To ..."
-end
-
---- @param opts { next_key: string, pick_key: string, section_heading: string, pick_heading: string }
+--- @param opts { next_key, pick_key, section_heading, kind_id }
 local function append_category(items, list, row0, col0, menu_opts, hydra_opts, opts)
   local n = #list
   if n == 0 then
@@ -84,17 +85,14 @@ local function append_category(items, list, row0, col0, menu_opts, hydra_opts, o
 
   append_section_heading(items, opts.section_heading)
 
-  local pick_heading = opts.pick_heading
-  if type(pick_heading) ~= "string" or pick_heading == "" then
-    pick_heading = "To ..."
-  end
+  local session = { menu_opts = menu_opts, hydra_opts = hydra_opts }
 
   if n == 1 then
     local e = list[1]
     items[#items + 1] = {
       key = opts.next_key,
       icon = "",
-      label = label_to_quoted_target(row_jump_quoted(e)),
+      label = row_label_single(e),
       action = function()
         targets.jump_action(e.node_info)()
       end,
@@ -108,7 +106,7 @@ local function append_category(items, list, row0, col0, menu_opts, hydra_opts, o
   items[#items + 1] = {
     key = opts.next_key,
     icon = "",
-    label = e and label_to_quoted_target(row_jump_quoted(e)) or (schema.text.to .. " ..."),
+    label = e and row_label_next(e) or (schema.text.to_next .. " ..."),
     action = function()
       if not e then
         return
@@ -120,26 +118,14 @@ local function append_category(items, list, row0, col0, menu_opts, hydra_opts, o
   items[#items + 1] = {
     key = opts.pick_key,
     icon = "",
-    label = pick_heading,
+    label = pick_row_label(opts.kind_id),
     action = function()
-      vim.ui.select(list, {
-        prompt = pick_heading,
-        format_item = fmt_entry,
-      }, function(choice)
-        if type(choice) ~= "table" then
-          return
-        end
-        vim.schedule(function()
-          targets.jump_action(choice.node_info)()
-          reopen_atlantis(menu_opts, hydra_opts)
-        end)
-      end)
+      picker_hydra.open(list, opts.kind_id, session)
     end,
     _reopen_atlantis = -1,
   }
 end
 
---- @param index table from index_mod.build
 function M.build(index, menu_opts, hydra_opts)
   menu_opts = type(menu_opts) == "table" and menu_opts or {}
   hydra_opts = type(hydra_opts) == "table" and hydra_opts or {}
@@ -161,7 +147,7 @@ function M.build(index, menu_opts, hydra_opts)
           next_key = keys[1],
           pick_key = keys[2],
           section_heading = kind_section_heading(kind_id, n),
-          pick_heading = kind_pick_heading(kind_id),
+          kind_id = kind_id,
         })
       end
     end

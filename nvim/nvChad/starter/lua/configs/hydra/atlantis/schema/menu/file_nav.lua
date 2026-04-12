@@ -3,12 +3,15 @@ local nk = schema_constants.node_kinds
 
 local M = {}
 
-M.title = " 󰷏 File nav"
+M.title = " 󰷏 Jump to top-level entity"
 
---- Hint column title; kind groups use separator rows with counts.
+--- Second-level list Hydra (one row per node); title reads "Go to <kind heading>".
+M.picker_title_prefix = "Go to"
+M.picker_section_title = ""
+
+--- Hint column title for the main outline.
 M.section_title = ""
 
---- Display order for kind sections (empty kinds omitted).
 M.kind_order = {
   nk.declaration,
   nk.assignment,
@@ -22,7 +25,6 @@ M.kind_order = {
   nk.unknown,
 }
 
---- Plain group names (no Atlantis tier vocabulary).
 M.kind_heading = {
   [nk.declaration] = "Declarations",
   [nk.assignment] = "Assignments",
@@ -38,6 +40,8 @@ M.kind_heading = {
 
 M.text = {
   to = "To",
+  to_next = "To next",
+  pick = M.picker_title_prefix,
 }
 
 return M
