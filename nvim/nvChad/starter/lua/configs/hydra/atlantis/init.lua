@@ -6,6 +6,8 @@ local make_hydra = require("configs.hydra.lib.make_hydra")
 
 local M = {}
 
+M.file_nav = require("configs.hydra.atlantis.file_nav")
+
 function M.open(menu_opts, hydra_opts)
   menu_opts = type(menu_opts) == "table" and menu_opts or {}
   hydra_opts = type(hydra_opts) == "table" and hydra_opts or {}

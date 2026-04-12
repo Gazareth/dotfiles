@@ -50,6 +50,7 @@ local type_labels = {
 
 -- Node-type icon overrides for clearer titles
 local type_icons = {
+  class_declaration = "◇",
   for_statement = "➰",
   for_in_statement = "➰",
   if_statement = "⁇",

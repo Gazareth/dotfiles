@@ -23,10 +23,30 @@ local function schedule_reopen(session, delta)
   end)
 end
 
+local function schedule_file_nav(session)
+  vim.schedule(function()
+    require("configs.hydra.atlantis.file_nav").open(session.menu_opts, session.hydra_opts)
+  end)
+end
+
 function M.wrap_item(item, session)
   if item.action == nil then
     return
   end
+
+  if item._reopen_file_nav == true then
+    local inner = item.action
+    local wrapper
+    wrapper = function(it)
+      it.action = inner
+      action.execute(it)
+      it.action = wrapper
+      schedule_file_nav(session)
+    end
+    item.action = wrapper
+    return
+  end
+
   local delta = reopen_delta(item)
   if delta == -1 then
     return

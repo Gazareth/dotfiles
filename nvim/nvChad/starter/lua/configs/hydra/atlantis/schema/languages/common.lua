@@ -6,6 +6,11 @@ local nk = constants.node_kinds
 
 return {
   mappings = {
+    class_declaration = {
+      node_tier = nt.settlement,
+      node_kind = nk.declaration,
+      actionable = true,
+    },
     function_declaration = {
       node_tier = nt.settlement,
       node_kind = nk.declaration,

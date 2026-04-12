@@ -3,9 +3,14 @@ local M = {}
 M.title = " 󰌑 Jump"
 
 M.group_labels = {
+  file_nav = " 󰷏 File",
   parent_child = " ↥ Parent / Child",
   sibling = " ↔ Sibling",
   context = " ⇧ Context",
+}
+
+M.file_nav_scope = {
+  label = "Top-level outline (by kind)...",
 }
 
 M.document_root_jump = {
@@ -26,6 +31,7 @@ M.context_phrase = {
 }
 
 M.items = {
+  { group = "file_nav", key = "n", icon = "󰅴", file_nav_scope = true },
   { group = "parent_child", key = "w", icon = "⬆", relation = "parent" },
   { group = "parent_child", key = "a", icon = "⬇", relation = "child" },
   { group = "sibling", key = "u", icon = "⬅", relation = "prev_sibling" },

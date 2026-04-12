@@ -140,11 +140,40 @@ local function append_context_items(items, candidates, selected_index, jump_labe
   end
 end
 
+local function append_file_nav_scope(items, candidates)
+  local last_group = nil
+  for _, row in ipairs(jump_cfg.items or {}) do
+    if row.file_nav_scope then
+      if row.group ~= last_group then
+        append_group_heading(items, row.group)
+        last_group = row.group
+      end
+      local outer = type(candidates[1]) == "table" and candidates[1].node_info or nil
+      local label = jump_cfg.file_nav_scope and jump_cfg.file_nav_scope.label or "File nav"
+      items[#items + 1] = {
+        key = row.key,
+        icon = row.icon,
+        label = label,
+        action = function()
+          if outer then
+            targets.jump_action(outer)()
+          end
+        end,
+        _reopen_file_nav = true,
+        _reopen_atlantis = -1,
+      }
+      break
+    end
+  end
+end
+
 function M.build_items(anchor_node_info, find_result)
   local items = {}
   local candidates = type(find_result) == "table" and find_result.candidates or {}
   local selected_index = type(find_result) == "table" and find_result.selected_candidate_index or nil
   local jump_labels = type(find_result) == "table" and find_result.jump_labels or nil
+
+  append_file_nav_scope(items, candidates)
 
   local labeled = relative_jumps.labeled(anchor_node_info, jump_cfg.items)
   append_relation_items(items, labeled)
