@@ -12,6 +12,10 @@ M.picker_section_title = ""
 --- Hint column title for the main outline.
 M.section_title = ""
 
+--- Extra spaces on each side of the floating hint body (main file nav menu only).
+M.hint_padding_left = 1
+M.hint_padding_right = 2
+
 M.kind_order = {
   nk.declaration,
   nk.assignment,

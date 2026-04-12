@@ -68,8 +68,28 @@ function M.build(sections, opts)
     total_width = total_width + 3 * (#active - 1)
   end
 
-  -- Header above section columns
-  local title_lines = title.build_title_lines(opts.title, total_width)
+  -- Horizontal inset for section rows only (not title or footer).
+  local pl = math.max(0, math.floor(tonumber(opts.padding_left) or 0))
+  local pr = math.max(0, math.floor(tonumber(opts.padding_right) or 0))
+  if pl > 0 or pr > 0 then
+    local lhs = string.rep(" ", pl)
+    local rhs = string.rep(" ", pr)
+    for i = 1, #output do
+      output[i] = lhs .. output[i] .. rhs
+    end
+  end
+
+  local inner_max_w = 0
+  for _, line in ipairs(output) do
+    inner_max_w = math.max(inner_max_w, util.str_width(line))
+  end
+  if inner_max_w == 0 then
+    inner_max_w = total_width
+  end
+  local width_for_title = math.max(total_width, inner_max_w)
+
+  -- Header above section columns (full width; not padded horizontally)
+  local title_lines = title.build_title_lines(opts.title, width_for_title)
   if #title_lines > 0 then
     local with_header = {}
     for _, line in ipairs(title_lines) do
@@ -85,7 +105,7 @@ function M.build(sections, opts)
   if footer then
     local left = util.escape_hint_text(type(footer.left) == "string" and footer.left or "")
     local right = util.escape_hint_text(type(footer.right) == "string" and footer.right or "")
-    local footer_width = total_width
+    local footer_width = width_for_title
     for _, line in ipairs(output) do
       footer_width = math.max(footer_width, util.str_width(line))
     end

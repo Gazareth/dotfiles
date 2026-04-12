@@ -137,13 +137,14 @@ function M.open(spec, opts)
     position_at_anchor(spec.anchor_node_info)
   end
 
-  local rendered = hint.build(sections, {
+  local hint_opts = vim.tbl_extend("force", {
     title = spec.title,
     footer = {
       left = "[?] toggle hint",
       right = "[q]/[Esc] exit",
     },
-  })
+  }, type(spec.hint_opts) == "table" and spec.hint_opts or {})
+  local rendered = hint.build(sections, hint_opts)
 
   -- Always use ManualWindow hint text so hint:close() / hint:show() can restore the same UI.
   local hydra = Hydra({

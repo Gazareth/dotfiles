@@ -21,6 +21,10 @@ function M.open(menu_opts, hydra_opts)
 
   local spec = {
     title = schema.title,
+    hint_opts = {
+      padding_left = schema.hint_padding_left,
+      padding_right = schema.hint_padding_right,
+    },
     sections = {
       { title = schema.section_title, items = items },
     },
