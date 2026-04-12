@@ -26,6 +26,14 @@ function M.open(menu_opts, hydra_opts)
   local anchor_ctx = anchor_build.build(menu_opts)
   local menu_layout = layout.from_context(anchor_ctx)
   local spec = create_hint_menu.create_hint_menu(menu_layout)
+  local hotkey_pool = type(menu_opts.hotkey_pool) == "string" and menu_opts.hotkey_pool
+    or type(hydra_opts.hotkey_pool) == "string" and hydra_opts.hotkey_pool
+    or nil
+  if hotkey_pool ~= nil then
+    spec.hint_opts = vim.tbl_extend("force", type(spec.hint_opts) == "table" and spec.hint_opts or {}, {
+      hotkey_pool = hotkey_pool,
+    })
+  end
   spec.merge_ui_opts = function(_, incoming)
     vim.tbl_extend("force", session.hydra_opts, incoming)
     return session.hydra_opts

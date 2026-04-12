@@ -22,7 +22,7 @@ end
 -- Build hint text layout
 function M.build(sections, opts)
   opts = opts or {}
-  local normalized = keys.normalize_sections(sections)
+  local normalized = keys.normalize_sections(sections, opts)
   local col_lines = {
     render.section_lines(normalized[1]),
     render.section_lines(normalized[2]),
