@@ -1,14 +1,12 @@
--- Second-level Hydra listing all nodes for one semantic kind (replaces vim.ui.select).
 local atlantis_action = require("configs.hydra.atlantis.lib.atlantis_action")
 local menu_labels = require("configs.hydra.atlantis.anchor.build.capabilities.jump_to_relative.menu_labels")
 local make_hydra = require("configs.hydra.lib.make_hydra")
-local schema = require("configs.hydra.atlantis.schema.menu.file_nav")
+local schema = require("configs.hydra.atlantis.schema.menu.outline")
 local targets = require("configs.hydra.atlantis.anchor.build.capabilities.jump_to_relative.targets")
 local title_const = require("configs.hydra.atlantis.menu.components.title.constants")
 
 local M = {}
 
--- q / ? reserved for Hydra exit + hint toggle; extend pool before falling back to multi-char heads.
 local KEY_POOL = "1234567890abcdefghijklmnopqrstuvwxyz,./;'-=[]`ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 local function alloc_keys(n)
@@ -40,9 +38,6 @@ local function picker_row_label(e)
   return string.format("[%s] %s:%d", bracket, name, line)
 end
 
---- @param list table[] index entries
---- @param kind_id string semantic kind key
---- @param session { menu_opts: table, hydra_opts: table }
 function M.open(list, kind_id, session)
   session = type(session) == "table" and session or {}
   local menu_opts = type(session.menu_opts) == "table" and session.menu_opts or {}
@@ -64,6 +59,7 @@ function M.open(list, kind_id, session)
         targets.jump_action(e.node_info)()
       end,
       _reopen_atlantis = 0,
+      _atlantis_reopen_anchor_mode = true,
     }
   end
 

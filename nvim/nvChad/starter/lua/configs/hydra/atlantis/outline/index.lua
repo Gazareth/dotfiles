@@ -1,4 +1,3 @@
--- Top-level actionable nodes only (direct children of the Treesitter root), grouped by semantic node kind.
 local anchor_actionable = require("configs.hydra.atlantis.anchor.build.find_from_node.actionable")
 local build_node_info = require("configs.hydra.atlantis.anchor.probe.treesitter.node_info").build_node_info
 local nk = require("configs.hydra.atlantis.schema.constants").node_kinds
@@ -20,8 +19,7 @@ local function safe_root(bufnr)
   return tree:root()
 end
 
---- File outline: skip standalone lexical nodes (still actionable elsewhere in Treewalker).
-local function include_in_file_nav(semantic)
+local function include_in_outline(semantic)
   if type(semantic) ~= "table" then
     return false
   end
@@ -39,7 +37,6 @@ local function sort_by_pos(a, b)
   return a.col < b.col
 end
 
---- Consider a single node for the outline (used for root-level children only).
 local function push_if_actionable(bufnr, node, cfg, resolve_options, by_kind)
   if not node then
     return
@@ -49,7 +46,7 @@ local function push_if_actionable(bufnr, node, cfg, resolve_options, by_kind)
     return
   end
   local ok, semantic = anchor_actionable.check(node_info, resolve_options)
-  if not ok or not semantic or not include_in_file_nav(semantic) then
+  if not ok or not semantic or not include_in_outline(semantic) then
     return
   end
   local kind = semantic.node_kind
@@ -71,10 +68,13 @@ local function push_if_actionable(bufnr, node, cfg, resolve_options, by_kind)
   }
 end
 
-local function scan_top_level(bufnr, root, cfg, resolve_options, by_kind)
-  local n = root:named_child_count()
+local function scan_direct_children(bufnr, parent, cfg, resolve_options, by_kind)
+  if not parent then
+    return
+  end
+  local n = parent:named_child_count()
   for i = 0, n - 1 do
-    push_if_actionable(bufnr, root:named_child(i), cfg, resolve_options, by_kind)
+    push_if_actionable(bufnr, parent:named_child(i), cfg, resolve_options, by_kind)
   end
 end
 
@@ -89,7 +89,28 @@ function M.build(bufnr, kind_order)
   if root then
     local cfg = treesitter_config.get()
     local resolve_options = anchor_actionable.resolve_options_from_config(cfg)
-    scan_top_level(bufnr, root, cfg, resolve_options, by_kind)
+    scan_direct_children(bufnr, root, cfg, resolve_options, by_kind)
+  end
+
+  for _, list in pairs(by_kind) do
+    if type(list) == "table" then
+      table.sort(list, sort_by_pos)
+    end
+  end
+
+  return { by_kind = by_kind, kind_order = kind_order }
+end
+
+--- Outline direct children of a specific container TS node (anchor container).
+function M.build_for_container(bufnr, container_node, kind_order)
+  bufnr = bufnr or vim.api.nvim_get_current_buf()
+  kind_order = type(kind_order) == "table" and kind_order or {}
+
+  local by_kind = {}
+  if container_node then
+    local cfg = treesitter_config.get()
+    local resolve_options = anchor_actionable.resolve_options_from_config(cfg)
+    scan_direct_children(bufnr, container_node, cfg, resolve_options, by_kind)
   end
 
   for _, list in pairs(by_kind) do

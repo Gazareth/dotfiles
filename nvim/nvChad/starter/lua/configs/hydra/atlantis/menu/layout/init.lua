@@ -1,4 +1,4 @@
-local modify_section = require("configs.hydra.atlantis.menu.sections.modify")
+local action_section = require("configs.hydra.atlantis.menu.sections.action")
 
 local M = {}
 
@@ -11,19 +11,19 @@ function M.from_context(anchor_ctx)
 
   local positioned_anchor_node_info = anchor_ctx.positioned_anchor_node_info
 
-  local modify_spec = modify_section(anchor_ctx)
-  if type(modify_spec) ~= "table" then
+  local action_menu_spec = action_section(anchor_ctx)
+  if type(action_menu_spec) ~= "table" then
     return {
-      variant = "invalid_modify",
+      variant = "invalid_action_menu",
       positioned_anchor_node_info = positioned_anchor_node_info,
       jump_spec = jump_spec,
     }
   end
 
-  if modify_spec.__abort_open == true then
+  if action_menu_spec.__abort_open == true then
     return {
-      variant = "abort_modify",
-      modify_spec = modify_spec,
+      variant = "abort_action_menu",
+      action_menu_spec = action_menu_spec,
       positioned_anchor_node_info = positioned_anchor_node_info,
       jump_spec = jump_spec,
     }
@@ -31,7 +31,7 @@ function M.from_context(anchor_ctx)
 
   return {
     variant = "full",
-    modify_spec = modify_spec,
+    action_menu_spec = action_menu_spec,
     positioned_anchor_node_info = positioned_anchor_node_info,
     jump_spec = jump_spec,
   }

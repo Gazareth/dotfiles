@@ -47,6 +47,10 @@ function M.normalize_sections(sections, opts)
 
         if key ~= nil then
           item._resolved_key = key
+          if type(item.key_alias) == "string" and item.key_alias ~= "" then
+            used[item.key_alias] = true
+            item._hint_key_display = key .. "/" .. item.key_alias
+          end
           rows[#rows + 1] = item
         end
       else

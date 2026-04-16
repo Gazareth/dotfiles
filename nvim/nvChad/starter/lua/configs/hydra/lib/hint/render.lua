@@ -17,7 +17,10 @@ function M.render_item(item)
   if type(item._resolved_key) == "string" and item._resolved_key ~= "" then
     local icon = item.icon or ""
     local label = item.label or ""
-    return string.format("[%s] %s %s", item._resolved_key, icon, label)
+    local key_show = (type(item._hint_key_display) == "string" and item._hint_key_display ~= "")
+        and item._hint_key_display
+      or item._resolved_key
+    return string.format("[%s] %s %s", key_show, icon, label)
   end
 
   return item.label or ""

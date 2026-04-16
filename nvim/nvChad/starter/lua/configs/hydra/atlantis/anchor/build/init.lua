@@ -17,6 +17,7 @@ function M.build(opts)
       anchor_node_info = nil,
       positioned_anchor_node_info = nil,
       parsed_anchor = nil,
+      has_anchor_point = false,
     }
   end
 
@@ -25,7 +26,7 @@ function M.build(opts)
   local anchor_node_info = found.anchor_node_info
 
   -- Step 2: Fill anchor payload with parsed data and jump candidates
-  local filled = capabilities.fill(anchor_node_info, found)
+  local filled = capabilities.fill(anchor_node_info, found, opts)
   local parsed_anchor = filled.parsed_anchor
 
   -- Step 3: Surface semantic build status for unknown nodes or disabled languages
@@ -43,6 +44,7 @@ function M.build(opts)
     jump_candidates = found.candidates,
     selected_jump_candidate_index = found.selected_candidate_index,
     jump_spec = filled.jump_spec,
+    has_anchor_point = #found.candidates > 0,
   }
 end
 

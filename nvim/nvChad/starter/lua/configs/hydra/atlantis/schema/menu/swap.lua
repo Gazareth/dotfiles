@@ -1,6 +1,8 @@
+local column_titles = require("configs.hydra.atlantis.menu.column_titles")
+
 local M = {}
 
-M.title = " ⇅ Swap"
+M.title = column_titles.swap()
 
 M.items = {
   { key = "U", icon = "↑", label = "Swap with previous statement", cmd = "SwapUp" },

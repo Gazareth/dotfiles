@@ -6,7 +6,7 @@ function M.build_from_context(runtime_ctx)
   if type(runtime_ctx) ~= "table" or not runtime_ctx.cursor_node_info then
     return {
       __abort_open = true,
-      __abort_message = "Treewalker menu unavailable: no Treesitter node at cursor.",
+      __abort_message = "Atlantis menu unavailable: no Treesitter node at cursor.",
     }
   end
 
@@ -14,12 +14,12 @@ function M.build_from_context(runtime_ctx)
   if type(render_spec) ~= "table" then
     return {
       __abort_open = true,
-      __abort_message = "Treewalker menu unavailable: render spec missing.",
+      __abort_message = "Atlantis menu unavailable: render spec missing.",
     }
   end
 
   local items = {
-    { heading = layout.modify_common_heading },
+    { heading = layout.action_common_heading },
     { separator = true },
   }
 
@@ -33,11 +33,11 @@ function M.build_from_context(runtime_ctx)
     or {}
   if #overflow_rows > 0 and #overflow_names > 0 then
     items[#items + 1] = {
-      key = layout.modify_overflow_menu_key or ".",
+      key = layout.action_overflow_menu_key or ".",
       icon = ">",
-      label = layout.modify_overflow_row_label,
+      label = layout.action_overflow_row_label,
       action = nil,
-      _modify_common_overflow = true,
+      _action_common_overflow = true,
       _overflow_action_names = overflow_names,
     }
   end

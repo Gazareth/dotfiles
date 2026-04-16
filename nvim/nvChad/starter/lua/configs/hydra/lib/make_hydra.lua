@@ -52,13 +52,21 @@ local function append_action_head_for_item(heads, item)
   if type(item._resolved_key) ~= "string" then
     return
   end
+  local run = function()
+    action.execute(item)
+  end
   heads[#heads + 1] = {
     item._resolved_key,
-    function()
-      action.execute(item)
-    end,
+    run,
     { exit = true, desc = false },
   }
+  if type(item.key_alias) == "string" and item.key_alias ~= "" then
+    heads[#heads + 1] = {
+      item.key_alias,
+      run,
+      { exit = true, desc = false },
+    }
+  end
 end
 
 --- Toggle floating hint on the *current* hydra only (no second Hydra / no M.open recursion).

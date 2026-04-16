@@ -40,22 +40,43 @@ local function format_title(title)
   return title
 end
 
--- Title header lines
-function M.build_title_lines(title, total_width)
+-- Title header lines (optional centered kicker above the main title)
+function M.build_title_lines(title, total_width, hint_opts)
+  hint_opts = type(hint_opts) == "table" and hint_opts or {}
+  local kicker_raw = hint_opts.title_kicker
+  local kicker = type(kicker_raw) == "string" and kicker_raw ~= "" and util.escape_hint_text(kicker_raw) or ""
+
   local formatted_title = format_title(title or "")
   local safe_title = util.escape_hint_text(formatted_title)
+
+  local lines = {}
+  if kicker ~= "" then
+    local kw = util.str_width(kicker)
+    local available_k = math.max(total_width, kw)
+    local k_left = math.max(0, math.floor((available_k - kw) / 2))
+    lines[#lines + 1] = string.rep(" ", k_left) .. kicker
+    if safe_title ~= "" then
+      lines[#lines + 1] = ""
+    end
+  end
+
   if safe_title == "" then
-    return {}
+    return lines
   end
 
   local available_width = math.max(total_width, util.str_width(safe_title))
+  if kicker ~= "" then
+    for i = 1, #lines - 1 do
+      local w = util.str_width(lines[i])
+      available_width = math.max(available_width, w)
+    end
+  end
   local left = math.max(0, math.floor((available_width - util.str_width(safe_title)) / 2))
   local padded_title = string.rep(" ", left) .. safe_title
 
-  return {
-    padded_title,
-    string.rep("=", available_width),
-  }
+  lines[#lines + 1] = padded_title
+  lines[#lines + 1] = string.rep("=", available_width)
+  return lines
 end
 
 return M

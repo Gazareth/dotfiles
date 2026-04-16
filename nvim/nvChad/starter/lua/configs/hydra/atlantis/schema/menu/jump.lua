@@ -1,17 +1,25 @@
+local column_titles = require("configs.hydra.atlantis.menu.column_titles")
+
 local M = {}
 
-M.title = " 󰌑 Jump"
+M.title = column_titles.jump()
 
 M.group_labels = {
-  file_nav = " 󰷏 File",
-  parent_child = " ↥ Parent / Child",
+  navigation = " 󰷏 Navigation",
+  child = " ↥ Child",
   sibling = " ↔ Sibling",
   context = " ⇧ Context",
 }
 
-M.file_nav_scope = {
-  label = "Jump to top-level entity...",
+M.outline_scope = {
+  label = "Top level...",
 }
+
+M.current_scope = {
+  label = "Current scope...",
+}
+
+M.navigation_at_top_level_message = "🔚 Already at top level"
 
 M.document_root_jump = {
   label_phrase = "Top",
@@ -31,12 +39,12 @@ M.context_phrase = {
 }
 
 M.items = {
-  { group = "file_nav", key = "n", icon = "󰅴", file_nav_scope = true },
-  { group = "parent_child", key = "w", icon = "⬆", relation = "parent" },
-  { group = "parent_child", key = "a", icon = "⬇", relation = "child" },
+  { group = "navigation", key = "H", icon = "󰅴", outline_scope = true },
+  { group = "navigation", key = "h", icon = "󰍎", current_scope = true },
+  { group = "child", key = "a", icon = "⬇", relation = "child" },
   { group = "sibling", key = "u", icon = "⬅", relation = "prev_sibling" },
   { group = "sibling", key = "i", icon = "➡", relation = "next_sibling" },
-  { group = "context", key = "h", icon = "⬆", context = "higher" },
+  { group = "context", key = "w", icon = "⬆", context = "higher" },
   { group = "context", key = "l", icon = "⬇", context = "lower" },
 }
 

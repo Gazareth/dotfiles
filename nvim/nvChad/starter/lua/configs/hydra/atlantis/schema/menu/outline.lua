@@ -1,18 +1,16 @@
+local column_titles = require("configs.hydra.atlantis.menu.column_titles")
 local schema_constants = require("configs.hydra.atlantis.schema.constants")
 local nk = schema_constants.node_kinds
 
 local M = {}
 
-M.title = " 󰷏 Jump to top-level entity"
+M.title = column_titles.outline_window()
 
---- Second-level list Hydra (one row per node); title reads "Go to <kind heading>".
 M.picker_title_prefix = "Go to"
 M.picker_section_title = ""
 
---- Hint column title for the main outline.
 M.section_title = ""
 
---- Extra spaces on each side of the floating hint body (main file nav menu only).
 M.hint_padding_left = 1
 M.hint_padding_right = 2
 

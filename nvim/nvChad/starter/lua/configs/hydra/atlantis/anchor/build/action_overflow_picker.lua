@@ -1,4 +1,4 @@
--- Second-level Hydra for Modify "More common" actions.
+-- Second-level Hydra for common action overflow ("More common" row).
 local anchor_build = require("configs.hydra.atlantis.anchor.build")
 local atlantis_action = require("configs.hydra.atlantis.lib.atlantis_action")
 local action_labels = require("configs.hydra.atlantis.menu.components.action.labels")
@@ -74,7 +74,7 @@ function M.open(session, action_names)
   end
 
   local spec = {
-    title = layout.modify_overflow_picker_title,
+    title = layout.action_overflow_picker_title,
     sections = {
       { title = "", items = items },
     },

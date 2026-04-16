@@ -30,7 +30,7 @@ function M.build(anchor_kind)
   return out
 end
 
---- Split enabled actions for Modify: common primary, common overflow, anchor-specific.
+--- Split enabled actions for Action column: common primary, common overflow, anchor-specific.
 function M.build_grouped(anchor_kind)
   local enabled = enabled_set(anchor_kind)
   if type(enabled) ~= "table" then

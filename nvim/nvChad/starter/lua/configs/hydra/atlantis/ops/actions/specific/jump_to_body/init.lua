@@ -1,30 +1,42 @@
+local body_lib = require("configs.hydra.atlantis.anchor.probe.node_kinds.function.lib.body")
+local build_node_info = require("configs.hydra.atlantis.anchor.probe.treesitter.node_info").build_node_info
 local common_actions = require("configs.hydra.atlantis.ops.lib.actions")
 
 local M = {}
 
-local function resolve_body_target(ctx)
-  local parsed = type(ctx) == "table" and ctx.parsed or nil
-  local targets = type(parsed) == "table" and parsed.targets or nil
-
-  local nested = type(targets) == "table" and targets.nested_functions or nil
-  if type(nested) == "table" and type(nested[1]) == "table" then
-    return nested[1]
-  end
-
-  local assignments = type(targets) == "table" and targets.assignments or nil
-  if type(assignments) == "table" and type(assignments[1]) == "table" then
-    return assignments[1]
-  end
-
-  return nil
-end
-
 function M.build(ctx)
-  local target = resolve_body_target(ctx)
-  if not target then
+  local node_info = type(ctx) == "table" and ctx.node_info or nil
+  local fn_node = node_info and node_info.node or nil
+  if not fn_node then
     return common_actions.placeholder("Jump to", "body")
   end
-  return common_actions.jump_to_target(target)
+
+  local n, body_node = body_lib.body_named_child_count(fn_node)
+  if n <= 0 or not body_node then
+    return common_actions.placeholder("Jump to", "body")
+  end
+
+  if n == 1 then
+    local only = body_node:named_child(0)
+    if not only then
+      return common_actions.placeholder("Jump to", "body")
+    end
+    local child_info = build_node_info({ bufnr = node_info.bufnr, node = only })
+    if not child_info then
+      return common_actions.placeholder("Jump to", "body")
+    end
+    return function()
+      common_actions.jump_to_target(common_actions.target_from_node_info(child_info))()
+      require("configs.hydra.atlantis").open({}, {})
+    end
+  end
+
+  local row, col = body_node:start()
+  return function()
+    pcall(vim.api.nvim_win_set_cursor, 0, { row + 1, col })
+    pcall(vim.cmd, "normal! zz")
+    require("configs.hydra.atlantis").open({ prefer_container = true }, {})
+  end
 end
 
 return M

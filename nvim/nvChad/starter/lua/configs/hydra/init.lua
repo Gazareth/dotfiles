@@ -14,11 +14,11 @@ function M.setup(opts)
 
   vim.keymap.set("n", "<leader>tt", function()
     atlantis.open({ depth = 0 })
-  end, { desc = "Treewalker Scope & Actions" })
+  end, { desc = "Atlantis" })
 
   vim.keymap.set("n", "<leader>tn", function()
     atlantis.open({ depth = 1 })
-  end, { desc = "Treewalker Max Depth Node" })
+  end, { desc = "Atlantis (Deep)" })
 end
 
 return M

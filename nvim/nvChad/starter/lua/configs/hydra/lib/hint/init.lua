@@ -89,7 +89,7 @@ function M.build(sections, opts)
   local width_for_title = math.max(total_width, inner_max_w)
 
   -- Header above section columns (full width; not padded horizontally)
-  local title_lines = title.build_title_lines(opts.title, width_for_title)
+  local title_lines = title.build_title_lines(opts.title, width_for_title, opts)
   if #title_lines > 0 then
     local with_header = {}
     for _, line in ipairs(title_lines) do

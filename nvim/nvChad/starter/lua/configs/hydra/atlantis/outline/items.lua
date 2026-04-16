@@ -1,7 +1,7 @@
-local index_mod = require("configs.hydra.atlantis.anchor.build.file_nav.index")
+local index_mod = require("configs.hydra.atlantis.outline.index")
 local menu_labels = require("configs.hydra.atlantis.anchor.build.capabilities.jump_to_relative.menu_labels")
-local picker_hydra = require("configs.hydra.atlantis.anchor.build.file_nav.picker_hydra")
-local schema = require("configs.hydra.atlantis.schema.menu.file_nav")
+local picker_hydra = require("configs.hydra.atlantis.outline.picker_hydra")
+local schema = require("configs.hydra.atlantis.schema.menu.outline")
 local title_const = require("configs.hydra.atlantis.menu.components.title.constants")
 local targets = require("configs.hydra.atlantis.anchor.build.capabilities.jump_to_relative.targets")
 
@@ -27,7 +27,6 @@ local function kind_bracket_label(e)
   return title_const.resolve_label(kind, e.node_info.node_type)
 end
 
---- To [Function] name:102
 local function row_label_single(e)
   local bracket = kind_bracket_label(e)
   local name = menu_labels.display_name_for_node(e.node_info, e.parsed)
@@ -35,7 +34,6 @@ local function row_label_single(e)
   return string.format("%s [%s] %s:%d", schema.text.to, bracket, name, line)
 end
 
---- To next [Function] name:102
 local function row_label_next(e)
   local bracket = kind_bracket_label(e)
   local name = menu_labels.display_name_for_node(e.node_info, e.parsed)
@@ -76,7 +74,6 @@ local function kind_section_heading(kind_id, count)
   return " " .. core
 end
 
---- @param opts { next_key, pick_key, section_heading, kind_id }
 local function append_category(items, list, row0, col0, menu_opts, hydra_opts, opts)
   local n = #list
   if n == 0 then
@@ -97,6 +94,7 @@ local function append_category(items, list, row0, col0, menu_opts, hydra_opts, o
         targets.jump_action(e.node_info)()
       end,
       _reopen_atlantis = 0,
+      _atlantis_reopen_anchor_mode = true,
     }
     return
   end
@@ -114,6 +112,7 @@ local function append_category(items, list, row0, col0, menu_opts, hydra_opts, o
       targets.jump_action(e.node_info)()
     end,
     _reopen_atlantis = 0,
+    _atlantis_reopen_anchor_mode = true,
   }
   items[#items + 1] = {
     key = opts.pick_key,

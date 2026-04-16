@@ -2,7 +2,7 @@ local supported_nodes = require("configs.hydra.atlantis.anchor.probe.treesitter.
 
 local M = {}
 
---- Which Modify bucket an action belongs in ("common" = any anchor; "specific" = under kind subheading).
+--- Which Action column bucket an action belongs in ("common" = any anchor; "specific" = under kind subheading).
 M.action_role = {
   rename = "common",
   change = "common",
@@ -26,7 +26,7 @@ M.action_role = {
   jump_to_enclosing_function = "specific",
 }
 
---- Shown on the main Modify column for common actions.
+--- Shown on the main Action column for common actions.
 M.common_primary_order = {
   "rename",
   "select",
@@ -57,12 +57,12 @@ M.specific_action_order = {
   "jump_to_enclosing_function",
 }
 
-M.modify_common_heading = "Common"
-M.modify_overflow_row_label = "More common actions"
-M.modify_overflow_picker_title = " More common"
-M.modify_overflow_menu_key = "."
+M.action_common_heading = "Common"
+M.action_overflow_row_label = "More common actions"
+M.action_overflow_picker_title = " More common"
+M.action_overflow_menu_key = "."
 
---- Human title for the node-specific subheading (under Modify).
+--- Human title for the node-specific subheading (under Action).
 M.specific_section_title_by_anchor_kind = {
   [supported_nodes.generic] = "Node",
   [supported_nodes.identifier] = "Identifier",
