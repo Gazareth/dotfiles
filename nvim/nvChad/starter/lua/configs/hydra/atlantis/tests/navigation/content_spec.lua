@@ -1,8 +1,22 @@
 local helpers = require("configs.hydra.atlantis.tests.helpers")
 local column_titles = require("configs.hydra.atlantis.menu.column_titles")
 
-describe("[Nav menu] content", function()
-  it("includes navigate column for nested function body", function()
+describe("[Nav menu] (Navigation)", function()
+  it("prefer_container on function body uses container spec", function()
+    local lines = {
+      "local function foo()",
+      "  return 1",
+      "end",
+    }
+    helpers.with_lua(lines, 2, 2, function()
+      local atlantis = require("configs.hydra.atlantis")
+      local v = atlantis.build_view_spec({ prefer_container = true }, {})
+      assert.is_true(v.container_mode)
+      assert.is_true(#(v.spec.sections or {}) >= 1)
+    end)
+  end)
+
+  it("Shows for nested function body", function()
     local lines = {
       "local function outer()",
       "  local function inner()",
@@ -24,7 +38,7 @@ describe("[Nav menu] content", function()
     end)
   end)
 
-  it("nav spec has at least one section with menu items", function()
+  it("Has at least one section with menu items", function()
     local lines = {
       "local a = 1",
       "local b = 2",

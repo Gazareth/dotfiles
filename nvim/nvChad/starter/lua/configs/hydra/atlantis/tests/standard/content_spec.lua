@@ -26,8 +26,8 @@ local function assert_enabled_actions_present(node_kind, ids)
   end
 end
 
-describe("[Atlantis] content", function()
-  it("function anchor exposes all enabled actions", function()
+describe("[Atlantis]", function()
+  it("Exposes all enabled actions for function anchor", function()
     local lines = {
       "local function foo()",
       "  return 1",
@@ -40,7 +40,7 @@ describe("[Atlantis] content", function()
     end)
   end)
 
-  it("assignment anchor exposes all enabled actions", function()
+  it("Exposes all enabled actions for assignment anchor", function()
     local lines = { "local x = 1" }
     helpers.with_lua(lines, 1, helpers.col0(lines[1], "x"), function()
       local anchor_ctx = anchor_build.build({ depth = 0 })
@@ -49,7 +49,7 @@ describe("[Atlantis] content", function()
     end)
   end)
 
-  it("identifier anchor exposes all enabled actions when fixture resolves to identifier", function()
+  it("Exposes all enabled actions for identifier identifier", function()
     local lines = { "return x" }
     helpers.with_lua(lines, 1, helpers.col0(lines[1], "x"), function()
       local anchor_ctx = anchor_build.build({ depth = 0 })

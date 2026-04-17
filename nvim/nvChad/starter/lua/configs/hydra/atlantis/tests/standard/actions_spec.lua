@@ -3,8 +3,8 @@ local supported = require("configs.hydra.atlantis.anchor.probe.treesitter.consta
 local anchor_build = require("configs.hydra.atlantis.anchor.build")
 local anchor_actions = require("configs.hydra.atlantis.anchor.actions")
 
-describe("[Atlantis] actions", function()
-  it("inspect runs without scheduling Hydra reopen", function()
+describe("[Atlantis]", function()
+  it("'Inspect' - runs without scheduling Hydra reopen", function()
     local lines = {
       "local function f()",
       "  return 1",
