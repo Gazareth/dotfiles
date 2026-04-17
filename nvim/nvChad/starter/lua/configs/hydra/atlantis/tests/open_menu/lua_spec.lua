@@ -6,7 +6,7 @@ local supported = require("configs.hydra.atlantis.anchor.probe.treesitter.consta
 
 describe("[Atlantis standard menu] Lua", function()
   describe("Function", function()
-    -- TDD: `end` token may get its own anchor; today the surrounding function wins.
+    -- `end` shares the surrounding function anchor (no dedicated End anchor yet).
     local fn_three = {
       "local function foo()",
       "  return 1",
@@ -31,11 +31,11 @@ describe("[Atlantis standard menu] Lua", function()
   end)
 
   describe("Module return statement", function()
-    -- TDD: `return` at chunk top should be Return; build does not attach an anchor yet.
+    -- Chunk-level return: no anchor is attached yet.
     local chunk_return = { "return 42" }
 
     menu_case.run_cases({
-      { "top-level return (unresolved today)", chunk_return, 1, "return", nil, nil, { has_anchor_point = false } },
+      { "top-level return", chunk_return, 1, "return", nil, nil, { has_anchor_point = false } },
     })
   end)
 end)

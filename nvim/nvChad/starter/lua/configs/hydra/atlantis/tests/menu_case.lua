@@ -4,6 +4,8 @@
 --   No title (c[6]) → expect no kind-specific action block.
 --   c[6] is a table → treat as extras only (title skipped).
 --   extras.has_anchor_point == false → only “no anchor at cursor” (node_kind optional).
+--   extras.positioned_at → { lines, row1, needle } passed to assert_resolution (natural cursor after offset).
+--   extras.depth → anchor depth (e.g. 1 for nested menu).
 
 local ar = require("configs.hydra.atlantis.tests.assert_resolution")
 local helpers = require("configs.hydra.atlantis.tests.helpers")

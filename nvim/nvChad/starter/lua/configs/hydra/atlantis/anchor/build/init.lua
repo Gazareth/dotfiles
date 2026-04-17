@@ -33,7 +33,8 @@ function M.build(opts)
   get_build_status.notify(parsed_anchor)
 
   -- Step 4: Offset cursor start to the preferred semantic target inside anchor
-  local positioned_anchor_node_info = cursor_offset.build_positioned_anchor(anchor_node_info, parsed_anchor)
+  local positioned_anchor_node_info =
+    cursor_offset.build_positioned_anchor(anchor_node_info, parsed_anchor, cursor_node_info, opts)
 
   return {
     depth = depth,

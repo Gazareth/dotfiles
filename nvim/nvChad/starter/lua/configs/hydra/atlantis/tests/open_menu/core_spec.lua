@@ -25,11 +25,19 @@ describe("[Atlantis] (Core)", function()
     menu_case.run_cases({
       { "name", fn_default, 1, "foo", supported.fn, "Function", { sections_include_action_column = true } },
       { "scope", fn_default, 1, "function", supported.fn, "Function" },
-      -- TDD: cursor on parameter name should prefer Parameter; depth-0 currently anchors the declaration.
+      -- Cursor on the parameter name; resolved anchor kind is still Function (not Parameter).
       { "parameters", fn_no_body, 1, "p", supported.fn, "Function" },
       { "body", fn_no_return, 2, "y", supported.assignment, "Assignment" },
-      -- TDD: keyword `return` should classify as Return; selection may still expose the enclosing function.
-      { "Return", fn_default, 2, "return", supported.fn, "Function" },
+      -- Cursor on the return keyword; resolved anchor kind is still Function.
+      {
+        "Return",
+        fn_default,
+        2,
+        "return",
+        supported.fn,
+        "Function",
+        { positioned_at = { lines = fn_default, row1 = 1, needle = "foo" } },
+      },
     })
   end)
 
@@ -41,8 +49,16 @@ describe("[Atlantis] (Core)", function()
     menu_case.run_cases({
       { "Name (target)", line_single, 1, "x", supported.assignment, "Assignment" },
       { "Scope", line_single, 1, "local", supported.assignment, "Assignment" },
-      -- TDD: rhs literal may surface as Identifier; assignment span is handled as one anchor today.
-      { "Value", line_single, 1, "1", supported.assignment, "Assignment" },
+      -- Cursor on assignment value; anchor kind stays Assignment.
+      {
+        "Value",
+        line_single,
+        1,
+        "1",
+        supported.assignment,
+        "Assignment",
+        { positioned_at = { lines = line_single, row1 = 1, needle = "x" } },
+      },
       { "Operator", line_single, 1, "=", supported.assignment, "Assignment" },
       { "Inner function call", rhs_call, 1, "foo", supported.assignment, "Assignment" },
       { "Inner condition", rhs_cond, 1, "and", supported.assignment, "Assignment" },
@@ -66,13 +82,22 @@ describe("[Atlantis] (Core)", function()
     menu_case.run_cases({
       { "On the expression", if_and, 1, "and", supported.generic },
       { "Lhs", if_and, 1, "aa", supported.generic },
-      { "Rhs", if_and, 1, "bb", supported.generic },
+      {
+        "Rhs",
+        if_and,
+        1,
+        "bb",
+        supported.generic,
+        {
+          positioned_at = { lines = if_and, row1 = 1, needle = "aa" },
+        },
+      },
       { "Else branch keyword", if_else, 3, "else", supported.generic },
     })
   end)
 
   describe("Comment — associated construct", function()
-    -- TDD: resolve comment to enclosing function anchor for actions.
+    -- Comment lines map to generic for now; tying them to the enclosing construct is later.
     local comment_fn = {
       "-- setup",
       "local function f() end",
