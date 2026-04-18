@@ -3,9 +3,9 @@ local column_titles = require("configs.hydra.atlantis.menu.column_titles")
 local menu_schema = require("configs.hydra.atlantis.schema.menu")
 local rows = require("configs.hydra.atlantis.anchor.build.capabilities.jump_to_relative.rows")
 
-local M = {}
+local jump_section = {}
 
-function M.build(anchor_node_info, find_result, menu_opts)
+function jump_section.build(anchor_node_info, find_result, menu_opts)
   find_result = type(find_result) == "table" and find_result or {}
   local jump_ctx = {
     candidates = find_result.candidates or {},
@@ -18,4 +18,4 @@ function M.build(anchor_node_info, find_result, menu_opts)
   }
 end
 
-return M
+return jump_section

@@ -1,9 +1,9 @@
 local action_section = require("configs.hydra.atlantis.menu.sections.action")
 
-local M = {}
+local menu_layout = {}
 
 --- Section ordering / variant from anchor context — not the Hydra hint spec (see menu.create_hint_menu).
-function M.from_context(anchor_ctx)
+function menu_layout.from_context(anchor_ctx)
   local jump_spec = anchor_ctx and anchor_ctx.jump_spec or nil
   if not anchor_ctx or not anchor_ctx.cursor_node_info then
     return { variant = "no_cursor", jump_spec = jump_spec }
@@ -37,4 +37,4 @@ function M.from_context(anchor_ctx)
   }
 end
 
-return M
+return menu_layout

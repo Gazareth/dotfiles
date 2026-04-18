@@ -1,51 +1,41 @@
-local util = require("configs.hydra.lib.hint.util")
+local hint_util = require("configs.hydra.lib.hint.util")
+local hint_row_kinds = require("configs.hydra.lib.hint.row_kinds")
 
-local M = {}
+local hint_render = {}
 
-function M.render_item(item)
-  if item.separator then
-    if type(item.label) == "string" and item.label ~= "" then
-      return "--- " .. item.label .. " ---"
-    end
-    return ""
-  end
-
-  if type(item.heading) == "string" and item.heading ~= "" then
-    return "== " .. item.heading .. " =="
-  end
-
-  if type(item._resolved_key) == "string" and item._resolved_key ~= "" then
-    local icon = item.icon or ""
-    local label = item.label or ""
-    local key_show = (type(item._hint_key_display) == "string" and item._hint_key_display ~= "")
-        and item._hint_key_display
-      or item._resolved_key
-    return string.format("[%s] %s %s", key_show, icon, label)
-  end
-
-  return item.label or ""
+function hint_render.render_item(item)
+  return hint_row_kinds.render(item)
 end
 
-function M.section_lines(section)
-  local title = util.escape_hint_text(section.title or "")
-  local lines = {}
-
+local function append_column_title_block(lines, section)
+  local title = hint_util.escape_hint_text(section.title or "")
   if title ~= "" then
     lines[#lines + 1] = title
-    lines[#lines + 1] = string.rep("-", math.max(20, util.str_width(title)))
+    lines[#lines + 1] = string.rep("-", math.max(20, hint_util.str_width(title)))
     lines[#lines + 1] = ""
   else
     lines[#lines + 1] = ""
   end
+end
+
+local function needs_spacer_before_item(item, first_item)
+  if first_item then
+    return false
+  end
+  return (type(item.heading) == "string" and item.heading ~= "")
+    or (item.separator and type(item.label) == "string" and item.label ~= "")
+end
+
+function hint_render.section_lines(section)
+  local lines = {}
+  append_column_title_block(lines, section)
 
   local first_item = true
   for _, item in ipairs(section.items or {}) do
-    local rendered = util.escape_hint_text(M.render_item(item))
-    -- Add padding before subheadings and labeled separators, but not for first item
-    if not first_item and ((type(item.heading) == "string" and item.heading ~= "") or
-       (item.separator and type(item.label) == "string" and item.label ~= "")) then
+    if needs_spacer_before_item(item, first_item) then
       lines[#lines + 1] = ""
     end
+    local rendered = hint_util.escape_hint_text(hint_render.render_item(item))
     if rendered ~= "" then
       lines[#lines + 1] = rendered
       first_item = false
@@ -55,4 +45,4 @@ function M.section_lines(section)
   return lines
 end
 
-return M
+return hint_render

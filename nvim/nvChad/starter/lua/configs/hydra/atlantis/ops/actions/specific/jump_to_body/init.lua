@@ -27,7 +27,6 @@ function M.build(ctx)
     end
     return function()
       common_actions.jump_to_target(common_actions.target_from_node_info(child_info))()
-      require("configs.hydra.atlantis").open({}, {})
     end
   end
 
@@ -35,7 +34,6 @@ function M.build(ctx)
   return function()
     pcall(vim.api.nvim_win_set_cursor, 0, { row + 1, col })
     pcall(vim.cmd, "normal! zz")
-    require("configs.hydra.atlantis").open({ prefer_container = true }, {})
   end
 end
 

@@ -6,7 +6,7 @@ local probe = require("configs.hydra.atlantis.anchor.probe")
 
 local M = {}
 
-local MAX_CHARS = 24
+local MAX_CHARS = 16
 
 -- Order matches probe specialization (structured fields before raw text).
 local strategies = {

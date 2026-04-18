@@ -3,7 +3,7 @@ local menu_labels = require("configs.hydra.atlantis.anchor.build.capabilities.ju
 local probe = require("configs.hydra.atlantis.anchor.probe")
 local targets = require("configs.hydra.atlantis.anchor.build.capabilities.jump_to_relative.targets")
 
-local M = {}
+local relative_jumps = {}
 
 local function relation_set_from_schema(items)
   local rels = {}
@@ -16,7 +16,7 @@ local function relation_set_from_schema(items)
 end
 
 --- @return table<string, { target: table|nil, quoted: string|nil }>
-function M.labeled(anchor_node_info, jump_items)
+function relative_jumps.labeled(anchor_node_info, jump_items)
   local out = {}
   for rel in pairs(relation_set_from_schema(jump_items)) do
     local target = targets.resolve(anchor_node_info, rel)
@@ -33,4 +33,4 @@ function M.labeled(anchor_node_info, jump_items)
   return out
 end
 
-return M
+return relative_jumps

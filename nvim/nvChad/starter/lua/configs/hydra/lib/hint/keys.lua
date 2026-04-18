@@ -1,8 +1,8 @@
-local M = {}
+local hint_keys = {}
 
 -- Default order for auto-assigned keys when a declared key is already taken. Override via
 -- `hint.build(..., { hotkey_pool = "..." })` or Atlantis `open({ hotkey_pool = "..." })`.
-M.DEFAULT_HOTKEY_POOL = "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+hint_keys.DEFAULT_HOTKEY_POOL = "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 -- Digits, then lower, then upper — each character is its own Hydra head (u ≠ U in Normal).
 -- For modifier spelling you can use lhs strings like "<S-u>" in schema; in nmode that is the
@@ -12,10 +12,10 @@ local function clone_item(item)
   return vim.tbl_extend("force", {}, item)
 end
 
-function M.normalize_sections(sections, opts)
+function hint_keys.normalize_sections(sections, opts)
   opts = opts or {}
   local pool = (type(opts.hotkey_pool) == "string" and opts.hotkey_pool ~= "") and opts.hotkey_pool
-    or M.DEFAULT_HOTKEY_POOL
+    or hint_keys.DEFAULT_HOTKEY_POOL
 
   local function next_hotkey(used)
     for char in pool:gmatch(".") do
@@ -67,4 +67,4 @@ function M.normalize_sections(sections, opts)
   return normalized
 end
 
-return M
+return hint_keys

@@ -1,9 +1,9 @@
 local build_node_info = require("configs.hydra.atlantis.anchor.probe.treesitter.node_info").build_node_info
 local salvage_target = require("configs.hydra.atlantis.anchor.build.capabilities.jump_to_relative.salvage_target")
 
-local M = {}
+local jump_targets = {}
 
-function M.resolve(selected_node_info, relation)
+function jump_targets.resolve(selected_node_info, relation)
   if not selected_node_info or not selected_node_info.node then
     return nil
   end
@@ -36,7 +36,7 @@ function M.resolve(selected_node_info, relation)
   })
 end
 
-function M.is_document_root(node_info)
+function jump_targets.is_document_root(node_info)
   local node = node_info and node_info.node
   if not node then
     return false
@@ -44,7 +44,7 @@ function M.is_document_root(node_info)
   return node:parent() == nil
 end
 
-function M.jump_action(target_node_info)
+function jump_targets.jump_action(target_node_info)
   return function()
     if not target_node_info then
       return
@@ -56,4 +56,4 @@ function M.jump_action(target_node_info)
   end
 end
 
-return M
+return jump_targets

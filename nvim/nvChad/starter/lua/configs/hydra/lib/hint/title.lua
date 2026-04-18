@@ -1,6 +1,6 @@
-local util = require("configs.hydra.lib.hint.util")
+local hint_util = require("configs.hydra.lib.hint.util")
 
-local M = {}
+local hint_title = {}
 
 -- Title role-name formatter
 local function format_title(title)
@@ -41,17 +41,17 @@ local function format_title(title)
 end
 
 -- Title header lines (optional centered kicker above the main title)
-function M.build_title_lines(title, total_width, hint_opts)
+function hint_title.build_title_lines(title, total_width, hint_opts)
   hint_opts = type(hint_opts) == "table" and hint_opts or {}
   local kicker_raw = hint_opts.title_kicker
-  local kicker = type(kicker_raw) == "string" and kicker_raw ~= "" and util.escape_hint_text(kicker_raw) or ""
+  local kicker = type(kicker_raw) == "string" and kicker_raw ~= "" and hint_util.escape_hint_text(kicker_raw) or ""
 
   local formatted_title = format_title(title or "")
-  local safe_title = util.escape_hint_text(formatted_title)
+  local safe_title = hint_util.escape_hint_text(formatted_title)
 
   local lines = {}
   if kicker ~= "" then
-    local kw = util.str_width(kicker)
+    local kw = hint_util.str_width(kicker)
     local available_k = math.max(total_width, kw)
     local k_left = math.max(0, math.floor((available_k - kw) / 2))
     lines[#lines + 1] = string.rep(" ", k_left) .. kicker
@@ -64,14 +64,14 @@ function M.build_title_lines(title, total_width, hint_opts)
     return lines
   end
 
-  local available_width = math.max(total_width, util.str_width(safe_title))
+  local available_width = math.max(total_width, hint_util.str_width(safe_title))
   if kicker ~= "" then
     for i = 1, #lines - 1 do
-      local w = util.str_width(lines[i])
+      local w = hint_util.str_width(lines[i])
       available_width = math.max(available_width, w)
     end
   end
-  local left = math.max(0, math.floor((available_width - util.str_width(safe_title)) / 2))
+  local left = math.max(0, math.floor((available_width - hint_util.str_width(safe_title)) / 2))
   local padded_title = string.rep(" ", left) .. safe_title
 
   lines[#lines + 1] = padded_title
@@ -79,4 +79,4 @@ function M.build_title_lines(title, total_width, hint_opts)
   return lines
 end
 
-return M
+return hint_title
