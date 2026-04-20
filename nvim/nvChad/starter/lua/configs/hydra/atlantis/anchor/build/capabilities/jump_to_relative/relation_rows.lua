@@ -35,13 +35,17 @@ local function item_for_relation(row, labeled)
   end
 
   if target and quoted then
-    return {
+    local item = {
       key = row.key,
       icon = row.icon,
       label = jump_row_labels.with_quoted(jump_row_labels.relation(row.relation), quoted),
       action = targets.jump_action(target),
       _atlantis_reopen_anchor_mode = true,
     }
+    if row.relation == "child" then
+      item._preserve_container_on_reopen = true
+    end
+    return item
   end
 
   return nil

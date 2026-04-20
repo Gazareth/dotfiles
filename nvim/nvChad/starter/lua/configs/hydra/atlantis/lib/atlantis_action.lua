@@ -17,8 +17,10 @@ local function schedule_reopen(session, delta, item)
     local reopen_opts = vim.tbl_extend("force", {}, session.hydra_opts)
     local menu_opts = session.menu_opts
     if type(item) == "table" and item._atlantis_reopen_anchor_mode == true then
-      menu_opts._atlantis_container_session = nil
-      menu_opts.prefer_container = nil
+      if item._preserve_container_on_reopen ~= true then
+        menu_opts._atlantis_container_session = nil
+        menu_opts.prefer_container = nil
+      end
     end
     if delta ~= 0 then
       menu_opts.depth = math.max(0, (menu_opts.depth or 0) + delta)

@@ -1,5 +1,5 @@
 -- Standard mode: `build_view_spec({}, {})`, non-container hint menu. See assert_resolution.anchor_opts (depth 0).
--- Each case: { it_name, lines, row, needle, node_kind, title?, extras? } — title/extras optional; see menu_case.lua.
+-- Each case: { test_name, mock_content, test_row, test_needle, node_kind, title?, extras? } — title/extras optional; see menu_case.lua.
 
 local menu_case = require("configs.hydra.atlantis.tests.menu_case")
 local supported = require("configs.hydra.atlantis.anchor.probe.treesitter.constants").supported_nodes

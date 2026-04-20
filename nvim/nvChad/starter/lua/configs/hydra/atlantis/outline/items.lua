@@ -95,6 +95,7 @@ local function append_category(items, list, row0, col0, menu_opts, hydra_opts, o
       end,
       _reopen_atlantis = 0,
       _atlantis_reopen_anchor_mode = true,
+      _preserve_container_on_reopen = true,
     }
     return
   end
@@ -113,6 +114,7 @@ local function append_category(items, list, row0, col0, menu_opts, hydra_opts, o
     end,
     _reopen_atlantis = 0,
     _atlantis_reopen_anchor_mode = true,
+    _preserve_container_on_reopen = true,
   }
   items[#items + 1] = {
     key = opts.pick_key,

@@ -1,5 +1,0 @@
-describe("[Nav menu] actions", function()
-  it("placeholder for outline row actions (extend with stable picks)", function()
-    assert.truthy(true)
-  end)
-end)
