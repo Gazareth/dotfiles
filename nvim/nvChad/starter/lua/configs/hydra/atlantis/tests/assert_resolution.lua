@@ -1,7 +1,7 @@
 -- Assertions for standard (non-container) main menu: anchor selection + hint spec.
 -- Uses explicit |depth = 0| to match default “standard” selection ([[treesitter]] config).
 
-local anchor_build = require("configs.hydra.atlantis.anchor.build")
+local anchor_build = require("configs.hydra.atlantis.prepare.anchor_point.build")
 local atlantis = require("configs.hydra.atlantis")
 local render_spec = require("configs.hydra.atlantis.menu.render_spec")
 local column_titles = require("configs.hydra.atlantis.menu.column_titles")

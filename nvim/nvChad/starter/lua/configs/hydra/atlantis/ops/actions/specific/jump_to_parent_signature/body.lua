@@ -1,7 +1,7 @@
 local common_actions = require("configs.hydra.atlantis.ops.lib.actions")
-local node_common = require("configs.hydra.atlantis.anchor.probe.common.node")
-local function_constants = require("configs.hydra.atlantis.anchor.probe.node_kinds.function.lib.constants")
-local fn_targets = require("configs.hydra.atlantis.anchor.probe.node_kinds.function.lib.targets")
+local node_common = require("configs.hydra.atlantis.prepare.anchor_point.probe.common.node")
+local function_constants = require("configs.hydra.atlantis.prepare.anchor_point.probe.node_kinds.function.lib.constants")
+local fn_targets = require("configs.hydra.atlantis.prepare.anchor_point.probe.node_kinds.function.lib.targets")
 
 local M = {}
 

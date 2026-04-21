@@ -2,7 +2,7 @@
 -- Each case: { test_name, mock_content, test_row, test_needle, node_kind, title?, extras? } — title/extras optional; see menu_case.lua.
 
 local menu_case = require("configs.hydra.atlantis.tests.menu_case")
-local supported = require("configs.hydra.atlantis.anchor.probe.treesitter.constants").supported_nodes
+local supported = require("configs.hydra.atlantis.prepare.anchor_point.probe.treesitter.constants").supported_nodes
 
 describe("[Atlantis] (Core)", function()
   describe("Function -", function()

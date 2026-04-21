@@ -1,7 +1,7 @@
 local helpers = require("configs.hydra.atlantis.tests.helpers")
-local supported = require("configs.hydra.atlantis.anchor.probe.treesitter.constants").supported_nodes
-local anchor_build = require("configs.hydra.atlantis.anchor.build")
-local anchor_actions = require("configs.hydra.atlantis.anchor.actions")
+local supported = require("configs.hydra.atlantis.prepare.anchor_point.probe.treesitter.constants").supported_nodes
+local anchor_build = require("configs.hydra.atlantis.prepare.anchor_point.build")
+local anchor_actions = require("configs.hydra.atlantis.prepare.anchor_point.actions")
 
 describe("[Atlantis]", function()
   it("'Inspect' - runs without scheduling Hydra reopen", function()

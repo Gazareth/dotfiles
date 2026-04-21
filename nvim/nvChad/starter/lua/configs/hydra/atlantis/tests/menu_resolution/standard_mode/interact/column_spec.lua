@@ -1,11 +1,11 @@
 -- Interact column: enabled action ids + labels vs schema (render_spec pipeline).
 
-local anchor_build = require("configs.hydra.atlantis.anchor.build")
+local anchor_build = require("configs.hydra.atlantis.prepare.anchor_point.build")
 local anchor_schema = require("configs.hydra.atlantis.schema.actions.anchor")
 local render_spec = require("configs.hydra.atlantis.menu.render_spec")
 local helpers = require("configs.hydra.atlantis.tests.helpers")
 local m = require("configs.hydra.atlantis.tests.menu_resolution.helpers")
-local supported = require("configs.hydra.atlantis.anchor.probe.treesitter.constants").supported_nodes
+local supported = require("configs.hydra.atlantis.prepare.anchor_point.probe.treesitter.constants").supported_nodes
 
 describe("[Atlantis menu] Interact column", function()
   local function assert_inventory_and_labels(node_kind, anchor_ctx)

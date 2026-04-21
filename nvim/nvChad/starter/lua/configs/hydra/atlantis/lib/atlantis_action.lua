@@ -8,7 +8,7 @@ function M.wrap_item(item, session)
   if item.action_id == "jump_to_child" then
     local reopen_args = type(item.reopen) == "table" and item.reopen or {}
     item.action = function()
-      require("configs.hydra.atlantis.anchor.build.jump_child_picker").open(reopen_args, session.hydra_opts)
+      require("configs.hydra.atlantis.prepare.anchor_point.build.jump_child_picker").open(reopen_args, session.hydra_opts)
     end
     return
   end
@@ -19,7 +19,7 @@ function M.wrap_item(item, session)
     item._overflow_action_names = nil
     local reopen_args = type(item.reopen) == "table" and item.reopen or {}
     item.action = function()
-      require("configs.hydra.atlantis.anchor.build.action_overflow_picker").open(
+      require("configs.hydra.atlantis.prepare.anchor_point.build.action_overflow_picker").open(
         reopen_args,
         session.hydra_opts,
         names

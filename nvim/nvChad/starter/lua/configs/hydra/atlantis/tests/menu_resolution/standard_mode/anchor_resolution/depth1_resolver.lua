@@ -2,7 +2,7 @@
 -- Same tuple shape as core_spec; extras include depth = 1 and optional positioned_at.
 
 local menu_case = require("configs.hydra.atlantis.tests.menu_case")
-local supported = require("configs.hydra.atlantis.anchor.probe.treesitter.constants").supported_nodes
+local supported = require("configs.hydra.atlantis.prepare.anchor_point.probe.treesitter.constants").supported_nodes
 
 --- Merge extras with `depth = 1` for assertions + menu_opts.
 local function extras1(t)

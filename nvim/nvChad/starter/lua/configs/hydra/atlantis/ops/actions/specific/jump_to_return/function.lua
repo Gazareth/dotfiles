@@ -1,7 +1,7 @@
 -- First return_statement under this function's body (skips nested function-like subtrees).
 local common_actions = require("configs.hydra.atlantis.ops.lib.actions")
-local function_constants = require("configs.hydra.atlantis.anchor.probe.node_kinds.function.lib.constants")
-local node_common = require("configs.hydra.atlantis.anchor.probe.common.node")
+local function_constants = require("configs.hydra.atlantis.prepare.anchor_point.probe.node_kinds.function.lib.constants")
+local node_common = require("configs.hydra.atlantis.prepare.anchor_point.probe.common.node")
 
 local M = {}
 

@@ -1,5 +1,5 @@
 local common_actions = require("configs.hydra.atlantis.ops.lib.actions")
-local node_common = require("configs.hydra.atlantis.anchor.probe.common.node")
+local node_common = require("configs.hydra.atlantis.prepare.anchor_point.probe.common.node")
 
 local M = {}
 

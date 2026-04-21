@@ -1,6 +1,6 @@
 -- Interact column items carry explicit reopen.depth baked in at build time.
 
-local anchor_build = require("configs.hydra.atlantis.anchor.build")
+local anchor_build = require("configs.hydra.atlantis.prepare.anchor_point.build")
 local render_spec = require("configs.hydra.atlantis.menu.render_spec")
 local helpers = require("configs.hydra.atlantis.tests.helpers")
 

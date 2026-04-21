@@ -2,7 +2,7 @@
 -- Case shape: configs.hydra.atlantis.tests.menu_case
 
 local menu_case = require("configs.hydra.atlantis.tests.menu_case")
-local supported = require("configs.hydra.atlantis.anchor.probe.treesitter.constants").supported_nodes
+local supported = require("configs.hydra.atlantis.prepare.anchor_point.probe.treesitter.constants").supported_nodes
 
 describe("[Atlantis standard menu] JS/TS", function()
   describe("typescript", function()

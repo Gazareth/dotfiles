@@ -1,12 +1,12 @@
-﻿-- Navigate column: labels, truncation, top-level vs nested visibility, key allowlist, jump_action smoke.
+-- Navigate column: labels, truncation, top-level vs nested visibility, key allowlist, jump_action smoke.
 
-local anchor_build = require("configs.hydra.atlantis.anchor.build")
+local anchor_build = require("configs.hydra.atlantis.prepare.anchor_point.build")
 local atlantis = require("configs.hydra.atlantis")
 local hint_mod = require("configs.hydra.lib.hint")
 local helpers = require("configs.hydra.atlantis.tests.helpers")
 local m = require("configs.hydra.atlantis.tests.menu_resolution.helpers")
 local navigate_cfg = require("configs.hydra.atlantis.schema.menu.navigate")
-local walker = require("configs.hydra.atlantis.container.scope_resolver")
+local walker = require("configs.hydra.atlantis.prepare.anchor_container.scope_resolver")
 
 describe("[Atlantis menu] Navigate column", function()
   describe("truncation (16 chars + ellipsis)", function()

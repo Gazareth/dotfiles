@@ -1,6 +1,6 @@
 local helpers = require("configs.hydra.atlantis.tests.helpers")
-local supported = require("configs.hydra.atlantis.anchor.probe.treesitter.constants").supported_nodes
-local anchor_build = require("configs.hydra.atlantis.anchor.build")
+local supported = require("configs.hydra.atlantis.prepare.anchor_point.probe.treesitter.constants").supported_nodes
+local anchor_build = require("configs.hydra.atlantis.prepare.anchor_point.build")
 local anchor_schema = require("configs.hydra.atlantis.schema.actions.anchor")
 local render_spec = require("configs.hydra.atlantis.menu.render_spec")
 

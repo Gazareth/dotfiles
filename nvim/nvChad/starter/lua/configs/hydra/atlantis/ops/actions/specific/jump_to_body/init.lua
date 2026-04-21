@@ -1,5 +1,5 @@
-local body_lib = require("configs.hydra.atlantis.anchor.probe.node_kinds.function.lib.body")
-local build_node_info = require("configs.hydra.atlantis.anchor.probe.treesitter.node_info").build_node_info
+local body_lib = require("configs.hydra.atlantis.prepare.anchor_point.probe.node_kinds.function.lib.body")
+local build_node_info = require("configs.hydra.atlantis.prepare.anchor_point.probe.treesitter.node_info").build_node_info
 local common_actions = require("configs.hydra.atlantis.ops.lib.actions")
 
 local M = {}

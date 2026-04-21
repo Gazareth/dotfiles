@@ -1,4 +1,4 @@
-local node_actions = require("configs.hydra.atlantis.anchor.actions")
+local node_actions = require("configs.hydra.atlantis.prepare.anchor_point.actions")
 local action_schema = require("configs.hydra.atlantis.schema.actions")
 local schema_constants = require("configs.hydra.atlantis.schema.constants")
 local reopen_const = schema_constants.reopen

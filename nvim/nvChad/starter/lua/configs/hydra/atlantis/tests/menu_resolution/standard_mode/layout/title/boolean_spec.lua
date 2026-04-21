@@ -1,6 +1,6 @@
 local atlantis = require("configs.hydra.atlantis")
 local helpers = require("configs.hydra.atlantis.tests.helpers")
-local supported = require("configs.hydra.atlantis.anchor.probe.treesitter.constants").supported_nodes
+local supported = require("configs.hydra.atlantis.prepare.anchor_point.probe.treesitter.constants").supported_nodes
 
 describe("[Atlantis layout] title — boolean expression", function()
   it("builds a bracketed title that echoes the expression for binary_expression at `and`", function()
