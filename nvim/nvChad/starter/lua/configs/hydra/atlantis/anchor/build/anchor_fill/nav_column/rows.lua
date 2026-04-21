@@ -1,7 +1,7 @@
 local menu_schema = require("configs.hydra.atlantis.schema.menu")
-local relative_jumps = require("configs.hydra.atlantis.anchor.build.capabilities.jump_to_relative.relative_jumps")
-local navigation_rows = require("configs.hydra.atlantis.anchor.build.capabilities.jump_to_relative.navigation_rows")
-local relation_rows = require("configs.hydra.atlantis.anchor.build.capabilities.jump_to_relative.relation_rows")
+local relative_jumps = require("configs.hydra.atlantis.anchor.build.anchor_fill.nav_column.sibling_jumps")
+local navigation_rows = require("configs.hydra.atlantis.anchor.build.anchor_fill.nav_column.navigation_rows")
+local relation_rows = require("configs.hydra.atlantis.anchor.build.anchor_fill.nav_column.relation_rows")
 
 local jump_rows = {}
 
@@ -19,7 +19,7 @@ function jump_rows.build_items(anchor_node_info, find_result, menu_opts)
   end
 
   local labeled = relative_jumps.labeled(anchor_node_info, navigate_cfg.items)
-  relation_rows.append(items, labeled, anchor_node_info)
+  relation_rows.append(items, labeled, anchor_node_info, menu_opts)
 
   return items
 end

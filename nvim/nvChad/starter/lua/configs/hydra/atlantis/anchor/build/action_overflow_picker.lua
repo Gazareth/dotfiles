@@ -28,16 +28,14 @@ local function alloc_keys(n)
   return keys
 end
 
---- @param session { menu_opts: table, hydra_opts: table }
+--- @param menu_opts table  reopen args from the parent item (carries depth, etc.)
 --- @param action_names string[]
-function M.open(session, action_names)
-  session = type(session) == "table" and session or {}
+function M.open(menu_opts, hydra_opts, action_names)
+  menu_opts = type(menu_opts) == "table" and menu_opts or {}
+  hydra_opts = vim.tbl_extend("force", {}, type(hydra_opts) == "table" and hydra_opts or {})
   if type(action_names) ~= "table" or #action_names == 0 then
     return
   end
-
-  local menu_opts = type(session.menu_opts) == "table" and session.menu_opts or {}
-  local hydra_opts = vim.tbl_extend("force", {}, type(session.hydra_opts) == "table" and session.hydra_opts or {})
 
   local anchor_ctx = anchor_build.build(menu_opts)
   local parsed = anchor_ctx.parsed_anchor
@@ -84,7 +82,7 @@ function M.open(session, action_names)
     end,
   }
 
-  atlantis_action.wrap_spec_items(spec, session)
+  atlantis_action.wrap_spec_items(spec, { hydra_opts = hydra_opts })
   make_hydra(spec, hydra_opts):open()
 end
 

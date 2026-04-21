@@ -1,8 +1,8 @@
--- Parsed assignment payload: LHS only (never the RHS). Relative jump targets pass `focus_node`
+﻿-- Parsed assignment payload: LHS only (never the RHS). Relative jump targets pass `focus_node`
 -- (actionable + single-child unwrap), so the common case is `has_targets` + assignment probe; the
 -- branch below covers stray generic parses.
-local condense = require("configs.hydra.atlantis.anchor.build.capabilities.jump_to_relative.menu_labels.condense")
-local text = require("configs.hydra.atlantis.anchor.build.capabilities.jump_to_relative.menu_labels.text")
+local condense = require("configs.hydra.atlantis.anchor.build.anchor_fill.nav_column.labels.condense")
+local text = require("configs.hydra.atlantis.anchor.build.anchor_fill.nav_column.labels.text")
 local supported_nodes = require("configs.hydra.atlantis.anchor.probe.treesitter.constants").supported_nodes
 local nk = require("configs.hydra.atlantis.schema.constants").node_kinds
 

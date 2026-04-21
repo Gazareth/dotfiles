@@ -1,4 +1,4 @@
--- Shape of `find_from_node.find` return value (and `capabilities.fill` / `jump_to_relative.build` input).
+-- Shape of `find_from_node.find` return value (and `anchor_fill.fill` / `nav_column.build` input).
 --
 --   anchor_node_info   — chosen anchor (node_info) for this menu open
 --   candidates         — array of candidate entries (parent chain, actionable only), root = index 1

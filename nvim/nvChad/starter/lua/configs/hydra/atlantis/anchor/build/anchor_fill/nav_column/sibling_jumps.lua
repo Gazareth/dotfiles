@@ -1,7 +1,7 @@
--- Resolve parent/child/sibling targets once and compute hint labels (same pipeline as menu_labels).
-local menu_labels = require("configs.hydra.atlantis.anchor.build.capabilities.jump_to_relative.menu_labels")
+﻿-- Resolve parent/child/sibling targets once and compute hint labels (same pipeline as menu_labels).
+local menu_labels = require("configs.hydra.atlantis.anchor.build.anchor_fill.nav_column.labels")
 local probe = require("configs.hydra.atlantis.anchor.probe")
-local targets = require("configs.hydra.atlantis.anchor.build.capabilities.jump_to_relative.targets")
+local targets = require("configs.hydra.atlantis.anchor.build.anchor_fill.nav_column.targets")
 
 local relative_jumps = {}
 

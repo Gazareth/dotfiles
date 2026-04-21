@@ -1,9 +1,9 @@
-local index_mod = require("configs.hydra.atlantis.outline.index")
-local menu_labels = require("configs.hydra.atlantis.anchor.build.capabilities.jump_to_relative.menu_labels")
-local picker_hydra = require("configs.hydra.atlantis.outline.picker_hydra")
+local index_mod = require("configs.hydra.atlantis.container.index")
+local menu_labels = require("configs.hydra.atlantis.anchor.build.anchor_fill.nav_column.labels")
+local picker_hydra = require("configs.hydra.atlantis.container.picker")
 local schema = require("configs.hydra.atlantis.schema.menu.outline")
 local title_const = require("configs.hydra.atlantis.menu.components.title.constants")
-local targets = require("configs.hydra.atlantis.anchor.build.capabilities.jump_to_relative.targets")
+local targets = require("configs.hydra.atlantis.anchor.build.anchor_fill.nav_column.targets")
 
 local M = {}
 
@@ -74,15 +74,13 @@ local function kind_section_heading(kind_id, count)
   return " " .. core
 end
 
-local function append_category(items, list, row0, col0, menu_opts, hydra_opts, opts)
+local function append_category(items, list, row0, col0, reopen_args, hydra_opts, opts)
   local n = #list
   if n == 0 then
     return
   end
 
   append_section_heading(items, opts.section_heading)
-
-  local session = { menu_opts = menu_opts, hydra_opts = hydra_opts }
 
   if n == 1 then
     local e = list[1]
@@ -93,9 +91,7 @@ local function append_category(items, list, row0, col0, menu_opts, hydra_opts, o
       action = function()
         targets.jump_action(e.node_info)()
       end,
-      _reopen_atlantis = 0,
-      _atlantis_reopen_anchor_mode = true,
-      _preserve_container_on_reopen = true,
+      reopen = reopen_args,
     }
     return
   end
@@ -112,18 +108,15 @@ local function append_category(items, list, row0, col0, menu_opts, hydra_opts, o
       end
       targets.jump_action(e.node_info)()
     end,
-    _reopen_atlantis = 0,
-    _atlantis_reopen_anchor_mode = true,
-    _preserve_container_on_reopen = true,
+    reopen = reopen_args,
   }
   items[#items + 1] = {
     key = opts.pick_key,
     icon = "",
     label = pick_row_label(opts.kind_id),
     action = function()
-      picker_hydra.open(list, opts.kind_id, session)
+      picker_hydra.open(list, opts.kind_id, reopen_args, hydra_opts)
     end,
-    _reopen_atlantis = -1,
   }
 end
 
@@ -132,6 +125,11 @@ function M.build(index, menu_opts, hydra_opts)
   hydra_opts = type(hydra_opts) == "table" and hydra_opts or {}
   local items = {}
   local row0, col0 = index_mod.cursor_pos0()
+
+  local reopen_args = {
+    depth = menu_opts.depth or 0,
+    container_scope = menu_opts.container_scope,
+  }
 
   local by_kind = type(index) == "table" and index.by_kind or {}
   local kind_order = type(index) == "table" and index.kind_order or schema.kind_order
@@ -144,7 +142,7 @@ function M.build(index, menu_opts, hydra_opts)
         pair_i = pair_i + 1
         local keys = SECTION_KEY_PAIRS[pair_i] or { "1", "2" }
         local n = #list
-        append_category(items, list, row0, col0, menu_opts, hydra_opts, {
+        append_category(items, list, row0, col0, reopen_args, hydra_opts, {
           next_key = keys[1],
           pick_key = keys[2],
           section_heading = kind_section_heading(kind_id, n),

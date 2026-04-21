@@ -1,5 +1,7 @@
 local node_actions = require("configs.hydra.atlantis.anchor.actions")
 local action_schema = require("configs.hydra.atlantis.schema.actions")
+local schema_constants = require("configs.hydra.atlantis.schema.constants")
+local reopen_const = schema_constants.reopen
 
 local M = {}
 
@@ -39,12 +41,28 @@ local function build_row(anchor_type, action_name, opts)
     action_id = action_name,
     action = action,
   }
-  if type(presentation._reopen_atlantis) == "number" then
-    row._reopen_atlantis = presentation._reopen_atlantis
+
+  local current_depth = type(ctx) == "table" and (ctx.depth or 0) or 0
+
+  if presentation.snap_to_anchor == true then
+    row.reopen = { depth = current_depth }
+    local node_info = type(ctx) == "table" and ctx.node_info or nil
+    if type(node_info) == "table" and node_info.node then
+      row.reopen.anchor_pos = {
+        bufnr = node_info.bufnr or 0,
+        row = (node_info.start_row or 0) + 1,
+        col = node_info.start_col or 0,
+      }
+    end
+  elseif type(presentation.reopen_depth_delta) == "number" then
+    local delta = presentation.reopen_depth_delta
+    if delta ~= reopen_const.close then
+      row.reopen = { depth = current_depth + delta }
+    end
+  else
+    row.reopen = { depth = current_depth }
   end
-  if presentation._atlantis_snap_reopen == true then
-    row._atlantis_snap_reopen = true
-  end
+
   return row
 end
 

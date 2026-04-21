@@ -39,11 +39,10 @@ local function child_label(child, bufnr)
   return string.format("%s  %s", t, text)
 end
 
---- @param session { menu_opts: table, hydra_opts: table }
-function M.open(session)
-  session = type(session) == "table" and session or {}
-  local menu_opts = type(session.menu_opts) == "table" and session.menu_opts or {}
-  local hydra_opts = vim.tbl_extend("force", {}, type(session.hydra_opts) == "table" and session.hydra_opts or {})
+--- @param menu_opts table  reopen args from the parent item (carries depth, etc.)
+function M.open(menu_opts, hydra_opts)
+  menu_opts = type(menu_opts) == "table" and menu_opts or {}
+  hydra_opts = vim.tbl_extend("force", {}, type(hydra_opts) == "table" and hydra_opts or {})
 
   local anchor_ctx = anchor_build.build(menu_opts)
   local node_info = anchor_ctx.anchor_node_info
@@ -59,6 +58,7 @@ function M.open(session)
     return
   end
 
+  local reopen_args = { depth = menu_opts.depth or 0 }
   local keys = alloc_keys(#children)
   local items = {}
   for i, child in ipairs(children) do
@@ -69,7 +69,7 @@ function M.open(session)
       icon = ">",
       label = child_label(child, bufnr),
       action = common_actions.jump_to_target(target),
-      _reopen_atlantis = 0,
+      reopen = reopen_args,
     }
   end
 
@@ -84,7 +84,7 @@ function M.open(session)
     end,
   }
 
-  atlantis_action.wrap_spec_items(spec, session)
+  atlantis_action.wrap_spec_items(spec, { hydra_opts = hydra_opts })
   make_hydra(spec, hydra_opts):open()
 end
 

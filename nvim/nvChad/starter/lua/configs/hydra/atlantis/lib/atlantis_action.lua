@@ -4,64 +4,11 @@ local action = require("configs.hydra.lib.action")
 
 local M = {}
 
-local function reopen_delta(item)
-  local d = item._reopen_atlantis
-  if type(d) == "number" then
-    return d
-  end
-  return 0
-end
-
-local function schedule_reopen(session, delta, item)
-  vim.schedule(function()
-    local reopen_opts = vim.tbl_extend("force", {}, session.hydra_opts)
-    local menu_opts = session.menu_opts
-    if type(item) == "table" and item._atlantis_reopen_anchor_mode == true then
-      if item._preserve_container_on_reopen ~= true then
-        menu_opts._atlantis_container_session = nil
-        menu_opts.prefer_container = nil
-      end
-    end
-    if delta ~= 0 then
-      menu_opts.depth = math.max(0, (menu_opts.depth or 0) + delta)
-    elseif type(item) == "table" and item._atlantis_snap_reopen == true then
-      -- Opt-in: LSP rename etc. can leave the cursor on an inner node; snap restores outer anchor for rebuild.
-      menu_opts._atlantis_reopen_snap = true
-    end
-    require("configs.hydra.atlantis").open(menu_opts, reopen_opts)
-  end)
-end
-
-local function schedule_container_reopen(session, extra)
-  extra = type(extra) == "table" and extra or {}
-  vim.schedule(function()
-    local menu_opts = session.menu_opts
-    if type(menu_opts) == "table" then
-      menu_opts._atlantis_container_session = true
-      if extra.outline_current_scope == true then
-        menu_opts._atlantis_outline_file_root = nil
-        menu_opts._atlantis_outline_title_override = nil
-      else
-        if extra.outline_file_root == true then
-          menu_opts._atlantis_outline_file_root = true
-        else
-          menu_opts._atlantis_outline_file_root = nil
-        end
-        if type(extra.title_override) == "string" and extra.title_override ~= "" then
-          menu_opts._atlantis_outline_title_override = extra.title_override
-        else
-          menu_opts._atlantis_outline_title_override = nil
-        end
-      end
-    end
-    require("configs.hydra.atlantis").open(menu_opts, vim.tbl_extend("force", {}, session.hydra_opts))
-  end)
-end
-
 function M.wrap_item(item, session)
   if item.action_id == "jump_to_child" then
+    local reopen_args = type(item.reopen) == "table" and item.reopen or {}
     item.action = function()
-      require("configs.hydra.atlantis.anchor.build.jump_child_picker").open(session)
+      require("configs.hydra.atlantis.anchor.build.jump_child_picker").open(reopen_args, session.hydra_opts)
     end
     return
   end
@@ -70,59 +17,40 @@ function M.wrap_item(item, session)
     local names = item._overflow_action_names
     item._action_common_overflow = nil
     item._overflow_action_names = nil
+    local reopen_args = type(item.reopen) == "table" and item.reopen or {}
     item.action = function()
-      require("configs.hydra.atlantis.anchor.build.action_overflow_picker").open(session, names)
+      require("configs.hydra.atlantis.anchor.build.action_overflow_picker").open(
+        reopen_args,
+        session.hydra_opts,
+        names
+      )
     end
     -- Submenu opener: do not schedule parent reopen (would fight the child Hydra).
     return
   end
 
-  if item.action == nil then
+  if item.action == nil or type(item.reopen) ~= "table" then
     return
   end
 
-  if item._reopen_container_mode == true then
-    local inner = item.action
-    local nav_mode = item._atlantis_nav_mode
-    local wrapper
-    wrapper = function(it)
-      if nav_mode == "current_scope" then
-        it.action = inner
-        action.execute(it)
-        it.action = wrapper
-        schedule_container_reopen(session, { outline_current_scope = true })
-        return
-      end
-      local ab = require("configs.hydra.atlantis.anchor.build")
-      local title_builder = require("configs.hydra.atlantis.menu.components.title.builder")
-      local snap = ab.build(vim.tbl_extend("force", {}, session.menu_opts))
-      -- "Top level..." always indexes from the parse tree root (file-level outline), not from
-      -- whatever node `container_for_nav_mode` would pick when the anchor happens to match root.
-      local title_override = title_builder.build_from_parsed(snap.positioned_anchor_node_info, snap.parsed_anchor)
-      it.action = inner
-      action.execute(it)
-      it.action = wrapper
-      schedule_container_reopen(session, {
-        outline_file_root = true,
-        title_override = title_override,
-      })
-    end
-    item.action = wrapper
-    return
-  end
-
-  local delta = reopen_delta(item)
-  if delta == -1 then
-    return
-  end
-
+  local reopen_args = item.reopen
   local inner = item.action
   local wrapper
   wrapper = function(it)
     it.action = inner
     action.execute(it)
     it.action = wrapper
-    schedule_reopen(session, delta, it)
+    vim.schedule(function()
+      local hydra_opts = vim.tbl_extend("force", {}, session.hydra_opts)
+      if type(reopen_args.anchor_pos) == "table" then
+        local pos = reopen_args.anchor_pos
+        if type(pos.bufnr) == "number" and vim.api.nvim_buf_is_valid(pos.bufnr) then
+          pcall(vim.api.nvim_set_current_buf, pos.bufnr)
+          pcall(vim.api.nvim_win_set_cursor, 0, { pos.row or 1, pos.col or 0 })
+        end
+      end
+      require("configs.hydra.atlantis").open(reopen_args, hydra_opts)
+    end)
   end
   item.action = wrapper
 end

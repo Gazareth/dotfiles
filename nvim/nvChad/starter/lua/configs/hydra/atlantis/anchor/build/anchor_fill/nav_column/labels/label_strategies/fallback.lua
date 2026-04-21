@@ -1,6 +1,6 @@
--- Generic node text: probe short_label, then scrub + condense (always returns a non-empty string).
-local condense = require("configs.hydra.atlantis.anchor.build.capabilities.jump_to_relative.menu_labels.condense")
-local text = require("configs.hydra.atlantis.anchor.build.capabilities.jump_to_relative.menu_labels.text")
+﻿-- Generic node text: probe short_label, then scrub + condense (always returns a non-empty string).
+local condense = require("configs.hydra.atlantis.anchor.build.anchor_fill.nav_column.labels.condense")
+local text = require("configs.hydra.atlantis.anchor.build.anchor_fill.nav_column.labels.text")
 local short_label = require("configs.hydra.atlantis.anchor.probe.short_label")
 
 local M = {}

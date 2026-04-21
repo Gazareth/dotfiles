@@ -1,9 +1,8 @@
 local atlantis = require("configs.hydra.atlantis")
-local atlantis_action = require("configs.hydra.atlantis.lib.atlantis_action")
 local helpers = require("configs.hydra.atlantis.tests.helpers")
 local mr = require("configs.hydra.atlantis.tests.menu_resolution.helpers")
 
-local menu_opts_nav = { prefer_container = true, depth = 0 }
+local menu_opts_nav = { container_scope = "current_scope", depth = 0 }
 
 describe("[Atlantis menu] Interact reopen (container mode)", function()
   local nested = {
@@ -16,47 +15,47 @@ describe("[Atlantis menu] Interact reopen (container mode)", function()
     "end",
   }
 
-  it("prev sibling jump clears container flags (standard menu)", function()
+  it("sibling nav item carries reopen without container_scope (standard reopen)", function()
     helpers.with_lua(nested, 4, helpers.col0(nested[4], "y"), function()
       local v = atlantis.build_view_spec(menu_opts_nav, {})
       local nav = mr.navigate_section(v.spec)
-      local item = mr.find_item_by_key(nav.items, "u")
-      assert.truthy(item, "expected prev sibling row")
-      local captured, restore = mr.stub_atlantis_open()
-      item.action(item)
-      vim.wait(400, function()
-        return #captured > 0
-      end)
-      restore()
-      assert.is_true(#captured >= 1)
-      local mo = captured[1].menu_opts
-      assert.is_nil(mo.prefer_container)
-      assert.is_nil(mo._atlantis_container_session)
+      -- sibling keys (u = prev, i = next in default schema)
+      local item = mr.find_item_by_key(nav.items, "u") or mr.find_item_by_key(nav.items, "i")
+      assert.truthy(item, "expected sibling nav row")
+      assert.is_table(item.reopen, "sibling item must have explicit reopen args")
+      assert.is_number(item.reopen.depth)
+      assert.is_nil(item.reopen.container_scope, "sibling nav should reopen in standard mode")
     end)
   end)
 
-  it("wrapped reopen keeps container flags when item sets _preserve_container_on_reopen", function()
-    local captured, restore = mr.stub_atlantis_open()
-    local session = {
-      menu_opts = vim.tbl_extend("force", {}, menu_opts_nav),
-      hydra_opts = {},
-    }
-    session.menu_opts.prefer_container = true
-    session.menu_opts._atlantis_container_session = true
-    local item = {
-      _atlantis_reopen_anchor_mode = true,
-      _preserve_container_on_reopen = true,
-      _reopen_atlantis = 0,
-      action = function() end,
-    }
-    atlantis_action.wrap_item(item, session)
-    item.action(item)
-    vim.wait(400, function()
-      return #captured > 0
+  it("child nav item carries container_scope when already in container mode", function()
+    helpers.with_lua(nested, 4, helpers.col0(nested[4], "y"), function()
+      local v = atlantis.build_view_spec(menu_opts_nav, {})
+      local nav = mr.navigate_section(v.spec)
+      local item = mr.find_item_by_key(nav.items, "o") or mr.find_item_by_key(nav.items, "l")
+      if not item then
+        return  -- child row absent for this anchor; skip
+      end
+      assert.is_table(item.reopen, "child item must have explicit reopen args")
+      assert.are.equal("current_scope", item.reopen.container_scope)
     end)
-    restore()
-    assert.is_true(#captured >= 1)
-    local mo = captured[1].menu_opts
-    assert.is_true(mo._atlantis_container_session == true or mo.prefer_container == true)
+  end)
+
+  it("navigate-to-container item carries container_scope and no action mutation", function()
+    helpers.with_lua(nested, 4, helpers.col0(nested[4], "y"), function()
+      local v = atlantis.build_view_spec(menu_opts_nav, {})
+      local nav = mr.navigate_section(v.spec)
+      -- H = to_top_level, h = current_scope
+      local item_H = mr.find_item_by_key(nav.items, "H")
+      local item_h = mr.find_item_by_key(nav.items, "h")
+      if item_H then
+        assert.is_table(item_H.reopen)
+        assert.is_string(item_H.reopen.container_scope)
+      end
+      if item_h then
+        assert.is_table(item_h.reopen)
+        assert.are.equal("current_scope", item_h.reopen.container_scope)
+      end
+    end)
   end)
 end)

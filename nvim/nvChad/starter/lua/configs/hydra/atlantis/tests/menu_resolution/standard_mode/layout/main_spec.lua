@@ -33,7 +33,7 @@ describe("[Atlantis layout] main grid", function()
 
   it("container mode shows the same three column titles in the body", function()
     helpers.with_lua(lines, 2, helpers.col0(lines[2], "return"), function()
-      local v = atlantis.build_view_spec({ prefer_container = true, depth = 0 }, {})
+      local v = atlantis.build_view_spec({ container_scope = "current_scope", depth = 0 }, {})
       assert.is_true(v.container_mode)
       assert_three_columns_between_title_and_footer(mr.build_atlantis_hint_string(v.spec))
     end)

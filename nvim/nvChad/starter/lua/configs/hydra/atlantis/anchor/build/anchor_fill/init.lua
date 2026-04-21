@@ -1,10 +1,10 @@
-local jump_to_relative = require("configs.hydra.atlantis.anchor.build.capabilities.jump_to_relative")
+﻿local nav_column = require("configs.hydra.atlantis.anchor.build.anchor_fill.nav_column")
 local probe = require("configs.hydra.atlantis.anchor.probe")
 
 local M = {}
 
 -- Fill anchor payload with parsed anchor data and navigate menu metadata
---- @param menu_opts table|nil optional; pass through to jump row builder (`_atlantis_container_session` distinguishes nav vs anchor menu)
+--- @param menu_opts table|nil optional; passed through to nav column builder (container_scope field signals container mode)
 function M.fill(anchor_node_info, find_result, menu_opts)
   find_result = type(find_result) == "table" and find_result or {}
   local candidates = find_result.candidates or {}
@@ -16,9 +16,9 @@ function M.fill(anchor_node_info, find_result, menu_opts)
   end
   return {
     parsed_anchor = parsed_anchor,
-    jump_candidates = candidates,
+    candidate_chain = candidates,
     selected_jump_candidate_index = idx,
-    navigate_spec = jump_to_relative.build(anchor_node_info, find_result, menu_opts),
+    nav_column_spec = nav_column.build(anchor_node_info, find_result, menu_opts),
   }
 end
 

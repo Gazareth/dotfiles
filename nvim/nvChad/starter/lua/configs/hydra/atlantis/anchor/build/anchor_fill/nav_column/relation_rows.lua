@@ -1,9 +1,8 @@
 local menu_schema = require("configs.hydra.atlantis.schema.menu")
 local probe = require("configs.hydra.atlantis.anchor.probe")
 local schema_constants = require("configs.hydra.atlantis.schema.constants")
-local targets = require("configs.hydra.atlantis.anchor.build.capabilities.jump_to_relative.targets")
-local group_heading = require("configs.hydra.atlantis.anchor.build.capabilities.jump_to_relative.jump_row_group_heading")
-local jump_row_labels = require("configs.hydra.atlantis.anchor.build.capabilities.jump_to_relative.jump_row_labels")
+local targets = require("configs.hydra.atlantis.anchor.build.anchor_fill.nav_column.targets")
+local row_labels = require("configs.hydra.atlantis.anchor.build.anchor_fill.nav_column.row_labels")
 local action_layout = require("configs.hydra.atlantis.schema.actions.layout")
 
 local navigate_cfg = menu_schema.navigate
@@ -18,7 +17,7 @@ local function hide_child_jump_for_assignment(anchor_node_info)
   return type(parsed) == "table" and parsed.semantic_kind == schema_constants.node_kinds.assignment
 end
 
-local function item_for_relation(row, labeled)
+local function item_for_relation(row, labeled, depth, container_scope_val)
   local L = labeled[row.relation]
   local target = L and L.target
   local quoted = L and L.quoted
@@ -29,30 +28,32 @@ local function item_for_relation(row, labeled)
     return {
       key = row.key,
       icon = type(dr) == "table" and dr.icon or "⇪",
-      label = jump_row_labels.with_quoted(phrase, quoted),
+      label = row_labels.with_quoted(phrase, quoted),
       action = targets.jump_action(target),
-      _atlantis_reopen_anchor_mode = true,
+      reopen = { depth = depth },
     }
   end
 
   if target and quoted then
-    local item = {
+    local reopen_args = { depth = depth }
+    if row.relation == "child" and type(container_scope_val) == "string" then
+      reopen_args.container_scope = container_scope_val
+    end
+    return {
       key = row.key,
       icon = row.icon,
-      label = jump_row_labels.with_quoted(jump_row_labels.relation(row.relation), quoted),
+      label = row_labels.with_quoted(row_labels.relation(row.relation), quoted),
       action = targets.jump_action(target),
-      _atlantis_reopen_anchor_mode = true,
+      reopen = reopen_args,
     }
-    if row.relation == "child" then
-      item._preserve_container_on_reopen = true
-    end
-    return item
   end
 
   return nil
 end
 
-function relation_rows.append(items, labeled, anchor_node_info)
+function relation_rows.append(items, labeled, anchor_node_info, menu_opts)
+  local depth = type(menu_opts) == "table" and (menu_opts.depth or 0) or 0
+  local container_scope_val = type(menu_opts) == "table" and menu_opts.container_scope or nil
   local last_group = nil
   local skip_child = hide_child_jump_for_assignment(anchor_node_info)
   for _, row in ipairs(navigate_cfg.items or {}) do
@@ -64,13 +65,13 @@ function relation_rows.append(items, labeled, anchor_node_info)
           local parsed = probe.parse(anchor_node_info)
           local kind = type(parsed) == "table" and parsed.node_kind or nil
           local title = action_layout.specific_title_for_anchor_kind(kind)
-          group_heading.append_label(items, " ↥ " .. title)
+          row_labels.append_label(items, " ↥ " .. title)
         elseif row.group == "sibling" then
-          group_heading.append(items, "sibling")
+          row_labels.append(items, "sibling")
         end
         last_group = row.group
       end
-      local item = item_for_relation(row, labeled)
+      local item = item_for_relation(row, labeled, depth, container_scope_val)
       if item then
         items[#items + 1] = item
       end

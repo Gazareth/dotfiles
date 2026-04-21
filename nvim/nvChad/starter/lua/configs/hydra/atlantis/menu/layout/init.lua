@@ -1,12 +1,12 @@
-local action_section = require("configs.hydra.atlantis.menu.sections.action")
+﻿local action_section = require("configs.hydra.atlantis.menu.sections.action")
 
 local menu_layout = {}
 
 --- Section ordering / variant from anchor context — not the Hydra hint spec (see menu.create_hint_menu).
 function menu_layout.from_context(anchor_ctx)
-  local navigate_spec = anchor_ctx and anchor_ctx.navigate_spec or nil
+  local nav_column_spec = anchor_ctx and anchor_ctx.nav_column_spec or nil
   if not anchor_ctx or not anchor_ctx.cursor_node_info then
-    return { variant = "no_cursor", navigate_spec = navigate_spec }
+    return { variant = "no_cursor", nav_column_spec = nav_column_spec }
   end
 
   local positioned_anchor_node_info = anchor_ctx.positioned_anchor_node_info
@@ -16,7 +16,7 @@ function menu_layout.from_context(anchor_ctx)
     return {
       variant = "invalid_action_menu",
       positioned_anchor_node_info = positioned_anchor_node_info,
-      navigate_spec = navigate_spec,
+      nav_column_spec = nav_column_spec,
     }
   end
 
@@ -25,7 +25,7 @@ function menu_layout.from_context(anchor_ctx)
       variant = "abort_action_menu",
       action_menu_spec = action_menu_spec,
       positioned_anchor_node_info = positioned_anchor_node_info,
-      navigate_spec = navigate_spec,
+      nav_column_spec = nav_column_spec,
     }
   end
 
@@ -33,7 +33,7 @@ function menu_layout.from_context(anchor_ctx)
     variant = "full",
     action_menu_spec = action_menu_spec,
     positioned_anchor_node_info = positioned_anchor_node_info,
-    navigate_spec = navigate_spec,
+    nav_column_spec = nav_column_spec,
   }
 end
 

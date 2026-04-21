@@ -1,6 +1,6 @@
-local build_node_info = require("configs.hydra.atlantis.anchor.probe.treesitter.node_info").build_node_info
+﻿local build_node_info = require("configs.hydra.atlantis.anchor.probe.treesitter.node_info").build_node_info
 local find_from_node = require("configs.hydra.atlantis.anchor.build.find_from_node")
-local capabilities = require("configs.hydra.atlantis.anchor.build.capabilities")
+local anchor_fill = require("configs.hydra.atlantis.anchor.build.anchor_fill")
 local cursor_offset = require("configs.hydra.atlantis.anchor.build.cursor_offset")
 local get_build_status = require("configs.hydra.atlantis.anchor.build.get_build_status")
 
@@ -26,7 +26,7 @@ function M.build(opts)
   local anchor_node_info = found.anchor_node_info
 
   -- Step 2: Fill anchor payload with parsed data and jump candidates
-  local filled = capabilities.fill(anchor_node_info, found, opts)
+  local filled = anchor_fill.fill(anchor_node_info, found, opts)
   local parsed_anchor = filled.parsed_anchor
 
   -- Step 3: Surface semantic build status for unknown nodes or disabled languages
@@ -42,9 +42,9 @@ function M.build(opts)
     anchor_node_info = anchor_node_info,
     positioned_anchor_node_info = positioned_anchor_node_info,
     parsed_anchor = parsed_anchor,
-    jump_candidates = found.candidates,
+    candidate_chain = found.candidates,
     selected_jump_candidate_index = found.selected_candidate_index,
-    navigate_spec = filled.navigate_spec,
+    nav_column_spec = filled.nav_column_spec,
     has_anchor_point = #found.candidates > 0,
   }
 end

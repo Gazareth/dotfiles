@@ -3,7 +3,7 @@ local column_titles = require("configs.hydra.atlantis.menu.column_titles")
 local helpers = require("configs.hydra.atlantis.tests.helpers")
 local mr = require("configs.hydra.atlantis.tests.menu_resolution.helpers")
 
-local menu_opts_nav = { prefer_container = true, depth = 0 }
+local menu_opts_nav = { container_scope = "current_scope", depth = 0 }
 
 describe("[Atlantis layout] main grid (container mode)", function()
   it("uses Navigate, Interact, and Create columns with items in each", function()

@@ -1,13 +1,14 @@
 local anchor_build = require("configs.hydra.atlantis.anchor.build")
-local capabilities = require("configs.hydra.atlantis.anchor.build.capabilities")
-local reopen_seed = require("configs.hydra.atlantis.anchor.build.reopen_seed")
+local anchor_fill = require("configs.hydra.atlantis.anchor.build.anchor_fill")
 local atlantis_action = require("configs.hydra.atlantis.lib.atlantis_action")
 local position_cursor = require("configs.hydra.atlantis.lib.position_cursor")
 local create_hint_menu = require("configs.hydra.atlantis.menu.create_hint_menu")
 local hint_kicker = require("configs.hydra.atlantis.menu.hint_kicker")
 local layout = require("configs.hydra.atlantis.menu.layout")
-local outline_build_spec = require("configs.hydra.atlantis.outline.build_spec")
-local outline_walker = require("configs.hydra.atlantis.outline.walker")
+local container_build_spec = require("configs.hydra.atlantis.container.build_spec")
+local container_scope_resolver = require("configs.hydra.atlantis.container.scope_resolver")
+local schema_constants = require("configs.hydra.atlantis.schema.constants")
+local container_scope = schema_constants.container_scope
 local make_hydra = require("configs.hydra.lib.make_hydra")
 
 local M = {}
@@ -16,7 +17,7 @@ local function use_container_mode(menu_opts, anchor_ctx, layout_variant)
   if layout_variant == "abort_action_menu" or not anchor_ctx.cursor_node_info then
     return false
   end
-  if menu_opts.prefer_container == true or menu_opts._atlantis_container_session == true then
+  if type(menu_opts.container_scope) == "string" then
     return true
   end
   return not anchor_ctx.has_anchor_point
@@ -27,10 +28,18 @@ end
 function M.build_view_spec(menu_opts, hydra_opts)
   menu_opts = type(menu_opts) == "table" and menu_opts or {}
   hydra_opts = type(hydra_opts) == "table" and hydra_opts or {}
-  local session = {
-    menu_opts = menu_opts,
-    hydra_opts = vim.tbl_extend("force", {}, hydra_opts),
-  }
+  local session = { hydra_opts = vim.tbl_extend("force", {}, hydra_opts) }
+
+  -- Snap cursor to anchor position stored at build time (e.g. after LSP rename).
+  if type(menu_opts.anchor_pos) == "table" then
+    local pos = menu_opts.anchor_pos
+    if type(pos.bufnr) == "number" and vim.api.nvim_buf_is_valid(pos.bufnr) then
+      pcall(vim.api.nvim_set_current_buf, pos.bufnr)
+      pcall(vim.api.nvim_win_set_cursor, 0, { pos.row or 1, pos.col or 0 })
+    end
+    menu_opts = vim.tbl_extend("force", {}, menu_opts)
+    menu_opts.anchor_pos = nil
+  end
 
   local anchor_ctx = anchor_build.build(menu_opts)
   local menu_layout = layout.from_context(anchor_ctx)
@@ -38,25 +47,22 @@ function M.build_view_spec(menu_opts, hydra_opts)
   local container_mode = use_container_mode(menu_opts, anchor_ctx, menu_layout.variant)
   local spec
   if container_mode then
-    menu_opts._atlantis_container_session = true
-    local filled_nav = capabilities.fill(anchor_ctx.anchor_node_info, {
-      candidates = anchor_ctx.jump_candidates,
+    local filled_nav = anchor_fill.fill(anchor_ctx.anchor_node_info, {
+      candidates = anchor_ctx.candidate_chain,
       selected_candidate_index = anchor_ctx.selected_jump_candidate_index,
     }, menu_opts)
-    anchor_ctx.navigate_spec = filled_nav.navigate_spec
+    anchor_ctx.nav_column_spec = filled_nav.nav_column_spec
     local cursor_node = anchor_ctx.cursor_node_info and anchor_ctx.cursor_node_info.node or nil
     local bufnr = anchor_ctx.cursor_node_info and anchor_ctx.cursor_node_info.bufnr or vim.api.nvim_get_current_buf()
     local container_node, is_parse_root
-    if menu_opts._atlantis_outline_file_root == true then
-      menu_opts._atlantis_outline_file_root = nil
-      container_node = outline_walker.parse_tree_root(bufnr)
+    if menu_opts.container_scope == container_scope.file then
+      container_node = container_scope_resolver.parse_tree_root(bufnr)
       is_parse_root = container_node ~= nil
     else
-      container_node, is_parse_root = outline_walker.container_for_nav_mode(anchor_ctx, bufnr, cursor_node)
+      container_node, is_parse_root = container_scope_resolver.container_for_nav_mode(anchor_ctx, bufnr, cursor_node)
     end
-    spec = outline_build_spec.build(anchor_ctx, session, container_node, is_parse_root)
+    spec = container_build_spec.build(anchor_ctx, menu_opts, hydra_opts, container_node, is_parse_root)
   else
-    menu_opts._atlantis_container_session = nil
     spec = create_hint_menu.create_hint_menu(menu_layout)
   end
 
@@ -76,11 +82,6 @@ function M.build_view_spec(menu_opts, hydra_opts)
     return session.hydra_opts
   end
   atlantis_action.wrap_spec_items(spec, session)
-  if anchor_ctx.anchor_node_info and anchor_ctx.anchor_node_info.node then
-    menu_opts._atlantis_anchor_seed = reopen_seed.pack(anchor_ctx.anchor_node_info)
-  else
-    menu_opts._atlantis_anchor_seed = nil
-  end
 
   return {
     spec = spec,
@@ -93,11 +94,6 @@ end
 function M.open(menu_opts, hydra_opts)
   menu_opts = type(menu_opts) == "table" and menu_opts or {}
   hydra_opts = type(hydra_opts) == "table" and hydra_opts or {}
-
-  if menu_opts._atlantis_reopen_snap then
-    menu_opts._atlantis_reopen_snap = nil
-    reopen_seed.apply(menu_opts._atlantis_anchor_seed)
-  end
 
   local view = M.build_view_spec(menu_opts, hydra_opts)
   local spec = view.spec
@@ -118,7 +114,8 @@ end
 --- Open Atlantis in container (outline) mode.
 function M.open_container(menu_opts, hydra_opts)
   menu_opts = type(menu_opts) == "table" and menu_opts or {}
-  menu_opts.prefer_container = true
+  menu_opts = vim.tbl_extend("force", {}, menu_opts)
+  menu_opts.container_scope = container_scope.current_scope
   M.open(menu_opts, hydra_opts)
 end
 

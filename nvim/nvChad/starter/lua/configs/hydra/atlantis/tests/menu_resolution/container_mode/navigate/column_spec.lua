@@ -2,7 +2,7 @@ local atlantis = require("configs.hydra.atlantis")
 local helpers = require("configs.hydra.atlantis.tests.helpers")
 local mr = require("configs.hydra.atlantis.tests.menu_resolution.helpers")
 
-local menu_opts_nav = { prefer_container = true, depth = 0 }
+local menu_opts_nav = { container_scope = "current_scope", depth = 0 }
 
 describe("[Atlantis menu] Navigate column (container mode)", function()
   it("exposes only keys from navigate schema (nested scope)", function()

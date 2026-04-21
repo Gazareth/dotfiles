@@ -1,6 +1,6 @@
-local anchor_actionable = require("configs.hydra.atlantis.anchor.build.find_from_node.actionable")
+﻿local anchor_actionable = require("configs.hydra.atlantis.anchor.build.find_from_node.actionable")
 local build_node_info = require("configs.hydra.atlantis.anchor.probe.treesitter.node_info").build_node_info
-local salvage_target = require("configs.hydra.atlantis.anchor.build.capabilities.jump_to_relative.salvage_target")
+local salvage_target = require("configs.hydra.atlantis.anchor.build.anchor_fill.nav_column.salvage_target")
 local treesitter_config = require("configs.hydra.atlantis.anchor.probe.treesitter.config")
 
 local jump_targets = {}

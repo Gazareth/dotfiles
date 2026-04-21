@@ -1,4 +1,4 @@
-local text = require("configs.hydra.atlantis.anchor.build.capabilities.jump_to_relative.menu_labels.text")
+﻿local text = require("configs.hydra.atlantis.anchor.build.anchor_fill.nav_column.labels.text")
 
 local M = {}
 

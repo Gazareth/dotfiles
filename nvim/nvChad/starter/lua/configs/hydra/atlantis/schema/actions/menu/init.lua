@@ -1,3 +1,6 @@
+local schema_constants = require("configs.hydra.atlantis.schema.constants")
+local reopen = schema_constants.reopen
+
 local M = {}
 
 M.action_menu_item = {
@@ -5,8 +8,7 @@ M.action_menu_item = {
     key = "r",
     icon = ">",
     label = "Rename",
-    --- After LSP rename, reopen with cursor snapped to outer anchor (see atlantis init reopen_seed).
-    _atlantis_snap_reopen = true,
+    snap_to_anchor = true,
   },
   change = {
     key = "c",
@@ -52,62 +54,62 @@ M.action_menu_item = {
     key = "b",
     icon = ">",
     label = "Jump to body",
-    _reopen_atlantis = 1,
+    reopen_depth_delta = reopen.deeper,
   },
   jump_to_parameter = {
     key = "p",
     icon = ">",
     label = "Jump to parameter",
-    _reopen_atlantis = 1,
+    reopen_depth_delta = reopen.deeper,
   },
   jump_to_return = {
     key = "u",
     icon = ">",
     label = "Jump to return",
-    _reopen_atlantis = 1,
+    reopen_depth_delta = reopen.deeper,
   },
   jump_to_child = {
     key = "k",
     icon = ">",
-    label = "Jump to childâ€¦",
-    _reopen_atlantis = 0,
+    label = "Jump to child…",
+    reopen_depth_delta = reopen.same,
   },
   rescope = {
     key = ",",
     icon = ">",
     label = "Re-scope",
     -- Close menu and do not reopen; avoids Hydra key leakage into other UIs.
-    _reopen_atlantis = -1,
+    reopen_depth_delta = reopen.close,
   },
   jump_function_header = {
     key = "h",
     icon = ">",
     label = "Jump to function header",
-    _reopen_atlantis = 1,
+    reopen_depth_delta = reopen.deeper,
   },
   jump_prev_parameter = {
     key = "[",
     icon = ">",
     label = "Previous parameter",
-    _reopen_atlantis = 1,
+    reopen_depth_delta = reopen.deeper,
   },
   jump_next_parameter = {
     key = "]",
     icon = ">",
     label = "Next parameter",
-    _reopen_atlantis = 1,
+    reopen_depth_delta = reopen.deeper,
   },
   jump_to_parent_signature = {
     key = "h",
     icon = ">",
     label = "Jump to parent signature",
-    _reopen_atlantis = 1,
+    reopen_depth_delta = reopen.deeper,
   },
   jump_to_enclosing_function = {
     key = "h",
     icon = ">",
     label = "Jump to enclosing function",
-    _reopen_atlantis = 1,
+    reopen_depth_delta = reopen.deeper,
   },
 }
 

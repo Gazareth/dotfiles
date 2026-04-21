@@ -1,8 +1,8 @@
 local atlantis_action = require("configs.hydra.atlantis.lib.atlantis_action")
-local menu_labels = require("configs.hydra.atlantis.anchor.build.capabilities.jump_to_relative.menu_labels")
+local menu_labels = require("configs.hydra.atlantis.anchor.build.anchor_fill.nav_column.labels")
 local make_hydra = require("configs.hydra.lib.make_hydra")
 local schema = require("configs.hydra.atlantis.schema.menu.outline")
-local targets = require("configs.hydra.atlantis.anchor.build.capabilities.jump_to_relative.targets")
+local targets = require("configs.hydra.atlantis.anchor.build.anchor_fill.nav_column.targets")
 local title_const = require("configs.hydra.atlantis.menu.components.title.constants")
 
 local M = {}
@@ -38,10 +38,10 @@ local function picker_row_label(e)
   return string.format("[%s] %s:%d", bracket, name, line)
 end
 
-function M.open(list, kind_id, session)
-  session = type(session) == "table" and session or {}
-  local menu_opts = type(session.menu_opts) == "table" and session.menu_opts or {}
-  local hydra_opts = vim.tbl_extend("force", {}, type(session.hydra_opts) == "table" and session.hydra_opts or {})
+--- @param reopen_args table  explicit reopen args carried by each picker item
+function M.open(list, kind_id, reopen_args, hydra_opts)
+  reopen_args = type(reopen_args) == "table" and reopen_args or {}
+  hydra_opts = vim.tbl_extend("force", {}, type(hydra_opts) == "table" and hydra_opts or {})
 
   local heading = schema.kind_heading[kind_id]
   if type(heading) ~= "string" or heading == "" then
@@ -58,8 +58,7 @@ function M.open(list, kind_id, session)
       action = function()
         targets.jump_action(e.node_info)()
       end,
-      _reopen_atlantis = 0,
-      _atlantis_reopen_anchor_mode = true,
+      reopen = reopen_args,
     }
   end
 
@@ -74,7 +73,7 @@ function M.open(list, kind_id, session)
     end,
   }
 
-  atlantis_action.wrap_spec_items(spec, session)
+  atlantis_action.wrap_spec_items(spec, { hydra_opts = hydra_opts })
   make_hydra(spec, hydra_opts):open()
 end
 

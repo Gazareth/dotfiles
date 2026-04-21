@@ -1,6 +1,25 @@
 -- Core Atlantis constants used by probe, title, and schema tables
 local M = {}
 
+-- Depth delta for item reopen behaviour
+M.reopen = {
+  close  = -1,  -- do not reopen after action
+  same   = 0,   -- reopen at same depth
+  deeper = 1,   -- reopen at depth + 1 (navigate into second-class anchor)
+}
+
+-- Scope selector values for container mode
+M.container_scope = {
+  file          = "top_level",
+  current_scope = "current_scope",
+}
+
+-- Anchor depth tiers
+M.anchor_depth = {
+  first_class  = 0,  -- depth <= 0: resolve first-class anchor (standard heuristic)
+  second_class = 1,  -- depth >= 1: resolve second-class anchor (params, body nodes)
+}
+
 -- Semantic tier constants used for anchor depth scoring
 M.node_tiers = {
   colony = "colony",

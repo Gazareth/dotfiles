@@ -4,7 +4,7 @@ local helpers = require("configs.hydra.atlantis.tests.helpers")
 local mr = require("configs.hydra.atlantis.tests.menu_resolution.helpers")
 local outline_schema = require("configs.hydra.atlantis.schema.menu.outline")
 
-local menu_opts_nav = { prefer_container = true, depth = 0 }
+local menu_opts_nav = { container_scope = "current_scope", depth = 0 }
 
 describe("[Atlantis menu] Interact column (container mode)", function()
   local fn_nested = {

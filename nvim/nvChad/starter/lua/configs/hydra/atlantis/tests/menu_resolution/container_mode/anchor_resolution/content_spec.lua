@@ -1,8 +1,8 @@
 local helpers = require("configs.hydra.atlantis.tests.helpers")
 local column_titles = require("configs.hydra.atlantis.menu.column_titles")
 
-describe("[Nav menu] (Navigation) anchor resolution — container", function()
-  it("prefer_container on function body uses container spec", function()
+describe("[Nav menu] (Navigation) anchor resolution â€” container", function()
+  it("container_scope on function body uses container spec", function()
     local lines = {
       "local function foo()",
       "  return 1",
@@ -10,7 +10,7 @@ describe("[Nav menu] (Navigation) anchor resolution — container", function()
     }
     helpers.with_lua(lines, 2, 2, function()
       local atlantis = require("configs.hydra.atlantis")
-      local v = atlantis.build_view_spec({ prefer_container = true }, {})
+      local v = atlantis.build_view_spec({ container_scope = "current_scope" }, {})
       assert.is_true(v.container_mode)
       assert.is_true(#(v.spec.sections or {}) >= 3)
     end)
@@ -26,7 +26,7 @@ describe("[Nav menu] (Navigation) anchor resolution — container", function()
     }
     helpers.with_lua(lines, 3, helpers.col0(lines[3], "y"), function()
       local atlantis = require("configs.hydra.atlantis")
-      local v = atlantis.build_view_spec({ prefer_container = true }, {})
+      local v = atlantis.build_view_spec({ container_scope = "current_scope" }, {})
       assert.is_true(v.container_mode)
       local titles = {}
       for _, sec in ipairs(v.spec.sections or {}) do
@@ -50,7 +50,7 @@ describe("[Nav menu] (Navigation) anchor resolution — container", function()
     }
     helpers.with_lua(lines, 4, 2, function()
       local atlantis = require("configs.hydra.atlantis")
-      local v = atlantis.build_view_spec({ prefer_container = true }, {})
+      local v = atlantis.build_view_spec({ container_scope = "current_scope" }, {})
       assert.is_true(v.container_mode)
       local max_items = 0
       for _, sec in ipairs(v.spec.sections or {}) do

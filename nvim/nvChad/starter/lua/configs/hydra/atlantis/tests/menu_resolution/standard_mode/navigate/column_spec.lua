@@ -1,4 +1,4 @@
--- Navigate column: labels, truncation, top-level vs nested visibility, key allowlist, jump_action smoke.
+﻿-- Navigate column: labels, truncation, top-level vs nested visibility, key allowlist, jump_action smoke.
 
 local anchor_build = require("configs.hydra.atlantis.anchor.build")
 local atlantis = require("configs.hydra.atlantis")
@@ -6,7 +6,7 @@ local hint_mod = require("configs.hydra.lib.hint")
 local helpers = require("configs.hydra.atlantis.tests.helpers")
 local m = require("configs.hydra.atlantis.tests.menu_resolution.helpers")
 local navigate_cfg = require("configs.hydra.atlantis.schema.menu.navigate")
-local walker = require("configs.hydra.atlantis.outline.walker")
+local walker = require("configs.hydra.atlantis.container.scope_resolver")
 
 describe("[Atlantis menu] Navigate column", function()
   describe("truncation (16 chars + ellipsis)", function()
@@ -24,7 +24,7 @@ describe("[Atlantis menu] Navigate column", function()
       helpers.with_lua(lines, 4, helpers.col0(lines[4], "secondstmt"), function()
         local ctx = anchor_build.build({ depth = 0 })
         local inner = nil
-        for _, it in ipairs(ctx.navigate_spec.items or {}) do
+        for _, it in ipairs(ctx.nav_column_spec.items or {}) do
           if type(it.label) == "string" and it.label:match("To prev sibling") then
             inner = m.quoted_fragment(it.label)
             break
@@ -50,7 +50,7 @@ describe("[Atlantis menu] Navigate column", function()
       helpers.with_lua(lines, 4, helpers.col0(lines[4], "b"), function()
         local ctx = anchor_build.build({ depth = 0 })
         local prev_row
-        for _, it in ipairs(ctx.navigate_spec.items or {}) do
+        for _, it in ipairs(ctx.nav_column_spec.items or {}) do
           if it.key == "u" then
             prev_row = it
             break
@@ -86,7 +86,7 @@ describe("[Atlantis menu] Navigate column", function()
         walker.is_file_scope_anchor(ctx.anchor_node_info and ctx.anchor_node_info.node or nil, bufnr),
         "fixture must produce a file-scope anchor"
       )
-      local items = m.jump_items_with_key(ctx.navigate_spec.items)
+      local items = m.jump_items_with_key(ctx.nav_column_spec.items)
       local labels = {}
       for _, it in ipairs(items) do
         labels[it.label or ""] = true
@@ -97,7 +97,7 @@ describe("[Atlantis menu] Navigate column", function()
         assert.are_not.same("i", it.key)
         assert.are_not.same("a", it.key)
       end
-      for _, it in ipairs(ctx.navigate_spec.items or {}) do
+      for _, it in ipairs(ctx.nav_column_spec.items or {}) do
         if type(it.label) == "string" then
           assert.is_false(it.label:match("To higher in context") ~= nil)
         end
@@ -125,7 +125,7 @@ describe("[Atlantis menu] Navigate column", function()
       helpers.with_lua(lines, 4, helpers.col0(lines[4], "z"), function()
         local ctx = anchor_build.build({ depth = 0 })
         local have_top, have_curr
-        for _, it in ipairs(ctx.navigate_spec.items or {}) do
+        for _, it in ipairs(ctx.nav_column_spec.items or {}) do
           local lab = it.label
           if type(lab) == "string" then
             if lab:match("^To top level") then
@@ -154,7 +154,7 @@ describe("[Atlantis menu] Navigate column", function()
       helpers.with_lua(lines, 4, helpers.col0(lines[4], "b"), function()
         local ctx = anchor_build.build({ depth = 0 })
         local has_u, has_i
-        for _, it in ipairs(ctx.navigate_spec.items or {}) do
+        for _, it in ipairs(ctx.nav_column_spec.items or {}) do
           if it.key == "u" then
             has_u = true
           end
@@ -179,7 +179,7 @@ describe("[Atlantis menu] Navigate column", function()
       helpers.with_lua(lines, 4, helpers.col0(lines[4], "b"), function()
         local ctx = anchor_build.build({ depth = 0 })
         local allow = m.jump_schema_key_set()
-        for _, it in ipairs(m.jump_items_with_key(ctx.navigate_spec.items)) do
+        for _, it in ipairs(m.jump_items_with_key(ctx.nav_column_spec.items)) do
           assert.truthy(allow[it.key], "unexpected navigate key: " .. tostring(it.key))
         end
       end)
@@ -195,7 +195,7 @@ describe("[Atlantis menu] Navigate column", function()
       }
       helpers.with_lua(lines, 3, helpers.col0(lines[3], "b"), function()
         local ctx = anchor_build.build({ depth = 0 })
-        for _, it in ipairs(m.jump_items_with_key(ctx.navigate_spec.items)) do
+        for _, it in ipairs(m.jump_items_with_key(ctx.nav_column_spec.items)) do
           assert.are_not.same("a", it.key)
         end
       end)
@@ -215,7 +215,7 @@ describe("[Atlantis menu] Navigate column", function()
       helpers.with_lua(lines, 4, helpers.col0(lines[4], "b"), function()
         local ctx = anchor_build.build({ depth = 0 })
         local prev
-        for _, it in ipairs(ctx.navigate_spec.items or {}) do
+        for _, it in ipairs(ctx.nav_column_spec.items or {}) do
           if it.key == "u" and type(it.action) == "function" then
             prev = it
             break

@@ -29,7 +29,7 @@ describe("[Atlantis layout] footer", function()
 
   it("container mode uses the same default footer strings", function()
     helpers.with_lua(lines, 2, helpers.col0(lines[2], "return"), function()
-      local v = atlantis.build_view_spec({ prefer_container = true, depth = 0 }, {})
+      local v = atlantis.build_view_spec({ container_scope = "current_scope", depth = 0 }, {})
       assert.is_true(v.container_mode)
       assert_default_footer(mr.build_atlantis_hint_string(v.spec))
     end)

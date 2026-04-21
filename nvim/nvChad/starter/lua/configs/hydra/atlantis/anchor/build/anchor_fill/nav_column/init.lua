@@ -1,7 +1,7 @@
-local menu_labels = require("configs.hydra.atlantis.anchor.build.capabilities.jump_to_relative.menu_labels")
+﻿local menu_labels = require("configs.hydra.atlantis.anchor.build.anchor_fill.nav_column.labels")
 local column_titles = require("configs.hydra.atlantis.menu.column_titles")
 local menu_schema = require("configs.hydra.atlantis.schema.menu")
-local rows = require("configs.hydra.atlantis.anchor.build.capabilities.jump_to_relative.rows")
+local rows = require("configs.hydra.atlantis.anchor.build.anchor_fill.nav_column.rows")
 
 local jump_section = {}
 

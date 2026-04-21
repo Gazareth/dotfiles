@@ -1,7 +1,7 @@
--- Jump hint target names: ordered strategies (assignment → function → text fallback).
-local assignment = require("configs.hydra.atlantis.anchor.build.capabilities.jump_to_relative.menu_labels.strategies.assignment")
-local fallback = require("configs.hydra.atlantis.anchor.build.capabilities.jump_to_relative.menu_labels.strategies.fallback")
-local fn_strategy = require("configs.hydra.atlantis.anchor.build.capabilities.jump_to_relative.menu_labels.strategies.function")
+﻿-- Jump hint target names: ordered strategies (assignment → function → text fallback).
+local assignment = require("configs.hydra.atlantis.anchor.build.anchor_fill.nav_column.labels.label_strategies.assignment")
+local fallback = require("configs.hydra.atlantis.anchor.build.anchor_fill.nav_column.labels.label_strategies.fallback")
+local fn_strategy = require("configs.hydra.atlantis.anchor.build.anchor_fill.nav_column.labels.label_strategies.function")
 local probe = require("configs.hydra.atlantis.anchor.probe")
 
 local M = {}
