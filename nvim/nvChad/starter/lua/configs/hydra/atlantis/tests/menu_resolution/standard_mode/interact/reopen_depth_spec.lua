@@ -5,7 +5,7 @@ local atlantis_action = require("configs.hydra.atlantis.lib.atlantis_action")
 local render_spec = require("configs.hydra.atlantis.menu.render_spec")
 local helpers = require("configs.hydra.atlantis.tests.helpers")
 
-describe("[Atlantis menu] Action column - reopen depth", function()
+describe("[Atlantis menu] Interact column - reopen depth", function()
   local function stub_open_capture()
     local atlantis = require("configs.hydra.atlantis")
     local orig = atlantis.open

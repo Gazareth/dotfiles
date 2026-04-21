@@ -1,11 +1,11 @@
--- Action column: view call hierarchy dispatches to namu when present.
+-- Interact column: view call hierarchy dispatches to namu when present.
 
 local anchor_actions = require("configs.hydra.atlantis.anchor.actions")
 local anchor_build = require("configs.hydra.atlantis.anchor.build")
 local supported = require("configs.hydra.atlantis.anchor.probe.treesitter.constants").supported_nodes
 local helpers = require("configs.hydra.atlantis.tests.helpers")
 
-describe("[Atlantis menu] Action column - view call hierarchy", function()
+describe("[Atlantis menu] Interact column - view call hierarchy", function()
   it("delegates to namu.namu_callhierarchy.show_both_calls when available", function()
     local lines = {
       "local function foo()",

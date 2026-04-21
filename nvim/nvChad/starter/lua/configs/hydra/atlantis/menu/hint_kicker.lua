@@ -6,8 +6,8 @@ function M.default()
   return ATLANTIS_ICON .. " Atlantis " .. ATLANTIS_ICON
 end
 
-function M.navigation()
-  return ATLANTIS_ICON .. " Atlantis (Navigation) " .. ATLANTIS_ICON
+function M.container()
+  return ATLANTIS_ICON .. " Atlantis (Container) " .. ATLANTIS_ICON
 end
 
 return M

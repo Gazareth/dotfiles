@@ -44,7 +44,7 @@ function M.build(opts)
     parsed_anchor = parsed_anchor,
     jump_candidates = found.candidates,
     selected_jump_candidate_index = found.selected_candidate_index,
-    jump_spec = filled.jump_spec,
+    navigate_spec = filled.navigate_spec,
     has_anchor_point = #found.candidates > 0,
   }
 end

@@ -39,11 +39,11 @@ function M.build_view_spec(menu_opts, hydra_opts)
   local spec
   if container_mode then
     menu_opts._atlantis_container_session = true
-    local filled_jump = capabilities.fill(anchor_ctx.anchor_node_info, {
+    local filled_nav = capabilities.fill(anchor_ctx.anchor_node_info, {
       candidates = anchor_ctx.jump_candidates,
       selected_candidate_index = anchor_ctx.selected_jump_candidate_index,
     }, menu_opts)
-    anchor_ctx.jump_spec = filled_jump.jump_spec
+    anchor_ctx.navigate_spec = filled_nav.navigate_spec
     local cursor_node = anchor_ctx.cursor_node_info and anchor_ctx.cursor_node_info.node or nil
     local bufnr = anchor_ctx.cursor_node_info and anchor_ctx.cursor_node_info.bufnr or vim.api.nvim_get_current_buf()
     local container_node, is_parse_root
@@ -64,7 +64,7 @@ function M.build_view_spec(menu_opts, hydra_opts)
     or type(hydra_opts.hotkey_pool) == "string" and hydra_opts.hotkey_pool
     or nil
   spec.hint_opts = vim.tbl_extend("force", type(spec.hint_opts) == "table" and spec.hint_opts or {}, {
-    title_kicker = container_mode and hint_kicker.navigation() or hint_kicker.default(),
+    title_kicker = container_mode and hint_kicker.container() or hint_kicker.default(),
   })
   if hotkey_pool ~= nil then
     spec.hint_opts = vim.tbl_extend("force", spec.hint_opts, {

@@ -62,7 +62,7 @@ function M.quoted_for_node(node_info, parsed)
   return M.quoted_target(node_info, p)
 end
 
---- Parallel to candidate chain indices: quoted Hydra fragments for context higher/lower rows.
+--- Parallel to candidate chain indices: quoted Hydra fragments for the context “higher” row.
 function M.jump_labels_for_candidates(candidates)
   local labels = {}
   for i, c in ipairs(candidates or {}) do

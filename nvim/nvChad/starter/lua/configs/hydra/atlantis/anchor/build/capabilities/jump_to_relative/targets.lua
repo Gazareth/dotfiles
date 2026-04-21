@@ -1,5 +1,7 @@
+local anchor_actionable = require("configs.hydra.atlantis.anchor.build.find_from_node.actionable")
 local build_node_info = require("configs.hydra.atlantis.anchor.probe.treesitter.node_info").build_node_info
 local salvage_target = require("configs.hydra.atlantis.anchor.build.capabilities.jump_to_relative.salvage_target")
+local treesitter_config = require("configs.hydra.atlantis.anchor.probe.treesitter.config")
 
 local jump_targets = {}
 
@@ -34,6 +36,34 @@ function jump_targets.resolve(selected_node_info, relation)
     bufnr = selected_node_info.bufnr,
     node = target,
   })
+end
+
+--- Walk parents from the current anchor node to the first language-mapped actionable node (next anchor point up).
+function jump_targets.resolve_next_highest_anchor(selected_node_info)
+  if not selected_node_info or not selected_node_info.node then
+    return nil
+  end
+  local cfg = treesitter_config.get()
+  local resolve_options = anchor_actionable.resolve_options_from_config(cfg)
+  local cur = selected_node_info.node:parent()
+  while cur do
+    local ni = build_node_info({
+      bufnr = selected_node_info.bufnr,
+      node = cur,
+    })
+    if ni then
+      local ok, _ = anchor_actionable.check(ni, resolve_options)
+      if ok then
+        local focused = salvage_target.focus_node(cur, selected_node_info.bufnr, nil)
+        return build_node_info({
+          bufnr = selected_node_info.bufnr,
+          node = focused,
+        })
+      end
+    end
+    cur = cur:parent()
+  end
+  return nil
 end
 
 function jump_targets.is_document_root(node_info)

@@ -19,9 +19,9 @@ M.anchor_opts = { depth = 0 }
 --- @field node_kind string|nil expected parsed_anchor.node_kind
 --- @field cursor_node_type string|nil expected parsed_anchor.cursor_node_type
 --- @field semantic_kind string|nil expected parsed_anchor.semantic_kind (when present)
---- @field specific_section_title string|nil expected Action-column kind subheading (anchor-specific rows)
+--- @field specific_section_title string|nil expected Interact-column kind subheading (anchor-specific rows)
 --- @field has_bespoke_actions boolean|nil if false, expect no anchor-specific actions (no kind subheading)
---- @field sections_include_action_column boolean|nil if true, hint spec must list the action column section
+--- @field sections_include_action_column boolean|nil if true, hint spec must list the interact column section
 --- @field depth integer|nil anchor depth (`M.anchor_opts.depth` default 0)
 --- @field positioned_at table|nil `{ lines = string[], row1 = integer, needle = string }` — expected natural cursor after `cursor_offset` (0-based row/col vs Tree-sitter `node:start()`).
 function M.expect_standard_menu(assertions)
@@ -53,7 +53,7 @@ function M.expect_standard_menu(assertions)
   end
   if assertions.has_bespoke_actions == false then
     local rs = render_spec.build(ctx)
-    assert.is_nil(rs.specific_section_title, "expected no anchor-specific Action subheading")
+    assert.is_nil(rs.specific_section_title, "expected no anchor-specific Interact subheading")
   elseif assertions.specific_section_title ~= nil then
     local rs = render_spec.build(ctx)
     assert.same(assertions.specific_section_title, rs.specific_section_title, "specific_section_title")
@@ -66,8 +66,8 @@ function M.expect_standard_menu(assertions)
       end
     end
     assert.is_true(
-      vim.tbl_contains(titles, column_titles.action()),
-      "hint sections should include action column title"
+      vim.tbl_contains(titles, column_titles.interact()),
+      "hint sections should include interact column title"
     )
   end
 

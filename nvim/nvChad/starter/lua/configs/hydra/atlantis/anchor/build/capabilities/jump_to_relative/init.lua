@@ -13,7 +13,7 @@ function jump_section.build(anchor_node_info, find_result, menu_opts)
     jump_labels = menu_labels.jump_labels_for_candidates(find_result.candidates),
   }
   return {
-    title = column_titles.jump(),
+    title = column_titles.navigate(),
     items = rows.build_items(anchor_node_info, jump_ctx, menu_opts),
   }
 end

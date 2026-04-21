@@ -1,9 +1,23 @@
 -- Assembles final title strings from badge, name, and metric parts
+local treesitter_constants = require("configs.hydra.atlantis.anchor.probe.treesitter.constants")
 local node_kinds_const = require("configs.hydra.atlantis.schema.constants").node_kinds
 local constants = require("configs.hydra.atlantis.menu.components.title.constants")
 local extract = require("configs.hydra.atlantis.menu.components.title.extract")
 
+local supported_fn = treesitter_constants.supported_nodes.fn
+local roles = treesitter_constants.roles
+
 local M = {}
+
+local function function_scope_label(parsed, raw_text)
+  if parsed and parsed.role == roles.method then
+    return "method"
+  end
+  if type(raw_text) == "string" and vim.trim(raw_text):match("^local%s") then
+    return "local"
+  end
+  return "global"
+end
 
 -- Format metric strings for title suffix display
 local function format_metrics(list)
@@ -105,6 +119,22 @@ function M.build_from_parsed(node_info, parsed)
     if raw_text:match("^%s*local%s") then
       metrics = { "local" }
     end
+
+  elseif parsed and parsed.node_kind == supported_fn and type(parsed.function_name) == "string" then
+    name = parsed.function_name
+    local m = type(parsed.metrics) == "table" and parsed.metrics or {}
+    local pc = m.parameter_count
+    if type(pc) ~= "number" then
+      pc = 0
+    end
+    local lines_n = type(m.line_span) == "number" and m.line_span or count_lines(node_info, raw_text)
+    local param_phrase = pc == 1 and "1 parameter" or (tostring(pc) .. " parameters")
+    local line_phrase = lines_n == 1 and "1 line" or (tostring(lines_n) .. " lines")
+    metrics = {
+      function_scope_label(parsed, raw_text),
+      param_phrase,
+      line_phrase,
+    }
 
   else
     local first_line = raw_text:match("^([^\n]+)") or raw_text

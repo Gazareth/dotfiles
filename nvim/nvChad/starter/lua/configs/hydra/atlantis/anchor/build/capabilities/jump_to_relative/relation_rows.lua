@@ -4,8 +4,9 @@ local schema_constants = require("configs.hydra.atlantis.schema.constants")
 local targets = require("configs.hydra.atlantis.anchor.build.capabilities.jump_to_relative.targets")
 local group_heading = require("configs.hydra.atlantis.anchor.build.capabilities.jump_to_relative.jump_row_group_heading")
 local jump_row_labels = require("configs.hydra.atlantis.anchor.build.capabilities.jump_to_relative.jump_row_labels")
+local action_layout = require("configs.hydra.atlantis.schema.actions.layout")
 
-local jump_cfg = menu_schema.jump
+local navigate_cfg = menu_schema.navigate
 
 local relation_rows = {}
 
@@ -23,7 +24,7 @@ local function item_for_relation(row, labeled)
   local quoted = L and L.quoted
 
   if row.relation == "parent" and target and targets.is_document_root(target) then
-    local dr = jump_cfg.document_root_jump
+    local dr = navigate_cfg.document_root_jump
     local phrase = type(dr) == "table" and dr.label_phrase or "To top"
     return {
       key = row.key,
@@ -54,12 +55,19 @@ end
 function relation_rows.append(items, labeled, anchor_node_info)
   local last_group = nil
   local skip_child = hide_child_jump_for_assignment(anchor_node_info)
-  for _, row in ipairs(jump_cfg.items or {}) do
+  for _, row in ipairs(navigate_cfg.items or {}) do
     if type(row.relation) ~= "string" then
     elseif row.relation == "child" and skip_child then
     else
       if row.group ~= last_group then
-        group_heading.append(items, row.group)
+        if row.group == "child" then
+          local parsed = probe.parse(anchor_node_info)
+          local kind = type(parsed) == "table" and parsed.node_kind or nil
+          local title = action_layout.specific_title_for_anchor_kind(kind)
+          group_heading.append_label(items, " ↥ " .. title)
+        elseif row.group == "sibling" then
+          group_heading.append(items, "sibling")
+        end
         last_group = row.group
       end
       local item = item_for_relation(row, labeled)

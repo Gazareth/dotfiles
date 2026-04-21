@@ -1,12 +1,12 @@
 local menu_labels = require("configs.hydra.atlantis.anchor.build.capabilities.jump_to_relative.menu_labels")
 local menu_schema = require("configs.hydra.atlantis.schema.menu")
 
-local jump_cfg = menu_schema.jump
+local navigate_cfg = menu_schema.navigate
 
 local jump_row_labels = {}
 
 function jump_row_labels.relation(relation)
-  local t = jump_cfg.relation_phrase and jump_cfg.relation_phrase[relation]
+  local t = navigate_cfg.relation_phrase and navigate_cfg.relation_phrase[relation]
   if type(t) == "string" then
     return t
   end
@@ -21,7 +21,7 @@ function jump_row_labels.with_quoted(phrase, quoted)
 end
 
 function jump_row_labels.spec(which)
-  for _, row in ipairs(jump_cfg.items or {}) do
+  for _, row in ipairs(navigate_cfg.items or {}) do
     if row.context == which then
       return row
     end
@@ -29,12 +29,8 @@ function jump_row_labels.spec(which)
   return nil
 end
 
-function jump_row_labels.context(which)
-  local t = jump_cfg.context_phrase and jump_cfg.context_phrase[which]
-  if type(t) == "string" then
-    return t
-  end
-  return which == "higher" and "To higher in context" or "To lower in context"
+function jump_row_labels.nav_context_higher_in_chain()
+  return navigate_cfg.nav_context.higher_in_chain
 end
 
 function jump_row_labels.neighbor(candidate_index, candidate, jump_labels)

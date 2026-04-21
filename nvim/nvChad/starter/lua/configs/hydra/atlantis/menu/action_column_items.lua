@@ -1,4 +1,4 @@
--- Build Action column `items` list from `render_spec` (hints + Hydra heads are layered elsewhere).
+-- Build Interact column `items` list from `render_spec` (hints + Hydra heads are layered elsewhere).
 
 local layout = require("configs.hydra.atlantis.schema.actions.layout")
 

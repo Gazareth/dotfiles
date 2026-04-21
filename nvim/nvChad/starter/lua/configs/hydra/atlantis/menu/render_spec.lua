@@ -31,7 +31,6 @@ function M.build(runtime_ctx)
     specific_section_title = layout.specific_title_for_anchor_kind(node_kind)
   end
 
-  -- Flat list for any legacy consumer
   local flat = {}
   for _, r in ipairs(common_primary_rows) do
     flat[#flat + 1] = r

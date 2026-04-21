@@ -1,7 +1,7 @@
 local helpers = require("configs.hydra.atlantis.tests.helpers")
 local column_titles = require("configs.hydra.atlantis.menu.column_titles")
 
-describe("[Nav menu] (Navigation)", function()
+describe("[Nav menu] (Navigation) anchor resolution — container", function()
   it("prefer_container on function body uses container spec", function()
     local lines = {
       "local function foo()",
@@ -12,7 +12,7 @@ describe("[Nav menu] (Navigation)", function()
       local atlantis = require("configs.hydra.atlantis")
       local v = atlantis.build_view_spec({ prefer_container = true }, {})
       assert.is_true(v.container_mode)
-      assert.is_true(#(v.spec.sections or {}) >= 1)
+      assert.is_true(#(v.spec.sections or {}) >= 3)
     end)
   end)
 
@@ -35,6 +35,8 @@ describe("[Nav menu] (Navigation)", function()
         end
       end
       assert.is_true(vim.tbl_contains(titles, column_titles.navigate()))
+      assert.is_true(vim.tbl_contains(titles, column_titles.interact()))
+      assert.is_true(vim.tbl_contains(titles, column_titles.create()))
     end)
   end)
 

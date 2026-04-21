@@ -1,4 +1,4 @@
 return {
-  jump = require("configs.hydra.atlantis.schema.menu.jump"),
-  swap = require("configs.hydra.atlantis.schema.menu.swap"),
+  navigate = require("configs.hydra.atlantis.schema.menu.navigate"),
+  create = require("configs.hydra.atlantis.schema.menu.create"),
 }

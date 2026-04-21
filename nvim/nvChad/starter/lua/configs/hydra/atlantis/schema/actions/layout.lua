@@ -26,7 +26,7 @@ M.action_role = {
   jump_to_enclosing_function = "specific",
 }
 
---- Shown on the main Action column for common actions.
+--- Shown on the main Interact column for common actions.
 M.common_primary_order = {
   "rename",
   "select",
@@ -62,7 +62,7 @@ M.action_overflow_row_label = "More common actions"
 M.action_overflow_picker_title = " More common"
 M.action_overflow_menu_key = "."
 
---- Human title for the node-specific subheading (under Action).
+--- Human title for the node-specific subheading (under Interact).
 M.specific_section_title_by_anchor_kind = {
   [supported_nodes.generic] = "Node",
   [supported_nodes.identifier] = "Identifier",

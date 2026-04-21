@@ -1,17 +1,15 @@
-local fallback_jump = require("configs.hydra.atlantis.menu.sections.jump")
+local fallback_navigate = require("configs.hydra.atlantis.menu.sections.navigate")
 local action_section = require("configs.hydra.atlantis.menu.sections.action")
-local swap_section = require("configs.hydra.atlantis.menu.sections.swap")
+local create_section = require("configs.hydra.atlantis.menu.sections.create")
 
 local layout_sections = {}
 
--- Return base section list used when no node-specific spec is available
-function layout_sections.build_default(jump_spec)
-  return { jump_spec or fallback_jump, action_section, swap_section }
+function layout_sections.build_default(navigate_spec)
+  return { navigate_spec or fallback_navigate, action_section, create_section }
 end
 
--- Return section list with a provided action menu section override
-function layout_sections.with_action_menu(action_menu_spec, jump_spec)
-  return { jump_spec or fallback_jump, action_menu_spec, swap_section }
+function layout_sections.with_action_menu(action_menu_spec, navigate_spec)
+  return { navigate_spec or fallback_navigate, action_menu_spec, create_section }
 end
 
 return layout_sections
