@@ -150,4 +150,43 @@ function M.build_atlantis_hint_string(spec)
   return hint_mod.build(spec.sections or {}, hint_opts).hint
 end
 
+--- Set up a Lua scratch buffer from lines, position cursor at needle on row1, build nav ctx, pass ctx to fn.
+function M.with_navigate_ctx(lines, row1, needle, fn)
+  local h = require("configs.hydra.atlantis.tests.helpers")
+  local anchor_build = require("configs.hydra.atlantis.prepare.anchor_point.build")
+  h.with_lua(lines, row1, h.col0(lines[row1], needle), function()
+    fn(anchor_build.build({ depth = 0 }))
+  end)
+end
+
+--- if_statement anchor inside a doubly-nested function — cluster tier beats both settlement
+--- functions, not an assignment so skip_child=false. Double nesting is required: is_file_scope_anchor
+--- returns true for any anchor whose nearest function ancestor is a top-level (root-child) function,
+--- so a second function layer is needed to make the inner function non-top-level.
+function M.with_all_sections_fixture(fn)
+  local lines = {
+    "local function outer()",
+    "  local function inner()",
+    "    if true then",
+    "    end",
+    "  end",
+    "end",
+  }
+  M.with_navigate_ctx(lines, 3, "if", fn)
+end
+
+--- Nested assignment 'b' between 'a' and 'c' — prev and next siblings available.
+function M.with_nested_sibling_fixture(fn)
+  local lines = {
+    "local function outer()",
+    "  local function inner()",
+    "    local a = 1",
+    "    local b = 2",
+    "    local c = 3",
+    "  end",
+    "end",
+  }
+  M.with_navigate_ctx(lines, 4, "b", fn)
+end
+
 return M

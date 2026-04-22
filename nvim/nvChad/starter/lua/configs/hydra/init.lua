@@ -1,4 +1,4 @@
-local treesitter_config = require("configs.hydra.atlantis.anchor.probe.treesitter.config")
+local treesitter_config = require("configs.hydra.atlantis.prepare.anchor_point.probe.treesitter.config")
 local atlantis = require("configs.hydra.atlantis")
 local namu = require("configs.hydra.hydras.namu")
 
