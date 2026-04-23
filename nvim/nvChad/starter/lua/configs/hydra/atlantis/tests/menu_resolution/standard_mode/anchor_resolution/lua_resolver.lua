@@ -4,7 +4,7 @@
 local menu_case = require("configs.hydra.atlantis.tests.menu_case")
 local supported = require("configs.hydra.atlantis.prepare.anchor_point.probe.treesitter.constants").supported_nodes
 
-describe("[Atlantis standard menu] Lua", function()
+describe("[Standard mode] Resolver - Lua", function()
   describe("Function", function()
     -- `end` shares the surrounding function anchor (no dedicated End anchor yet).
     local fn_three = {

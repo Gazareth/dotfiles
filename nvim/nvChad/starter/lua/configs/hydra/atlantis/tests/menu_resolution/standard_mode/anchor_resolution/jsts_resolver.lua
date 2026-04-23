@@ -4,7 +4,7 @@
 local menu_case = require("configs.hydra.atlantis.tests.menu_case")
 local supported = require("configs.hydra.atlantis.prepare.anchor_point.probe.treesitter.constants").supported_nodes
 
-describe("[Atlantis standard menu] JS/TS", function()
+describe("[Anchor mode] Resolver - JS/TS ", function()
   describe("typescript", function()
     local import_line = { [[import { x } from "m"]] }
     local export_line = { "export const a = 1" }

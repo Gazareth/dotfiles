@@ -26,7 +26,15 @@ function M.with_treesitter(lines, filetype, lang, row1, col0, fn)
     p:parse()
   end
   vim.api.nvim_win_set_cursor(0, { row1, col0 })
-  fn(buf)
+  local orig_notify = vim.notify
+  vim.notify = function(msg, level, opts)
+    if not level or level >= vim.log.levels.WARN then
+      orig_notify(msg, level, opts)
+    end
+  end
+  local ok, err = pcall(fn, buf)
+  vim.notify = orig_notify
+  if not ok then error(err, 2) end
 end
 
 --- Lua buffer + parser (wrapper around |with_treesitter|).

@@ -9,7 +9,7 @@ local function extras1(t)
   return vim.tbl_extend("force", { depth = 1 }, t or {})
 end
 
-describe("[Atlantis] depth 1", function()
+describe("[Standard mode] depth: 1", function()
   describe("Function parameters", function()
     local fn_two_params = {
       "local function foo(a, b)",

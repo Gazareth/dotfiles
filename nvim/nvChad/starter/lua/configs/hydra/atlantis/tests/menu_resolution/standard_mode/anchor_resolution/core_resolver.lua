@@ -4,7 +4,7 @@
 local menu_case = require("configs.hydra.atlantis.tests.menu_case")
 local supported = require("configs.hydra.atlantis.prepare.anchor_point.probe.treesitter.constants").supported_nodes
 
-describe("[Atlantis] (Core)", function()
+describe("[Standard mode] Core resolver", function()
   describe("Function -", function()
     local fn_default = {
       "local function foo()",
