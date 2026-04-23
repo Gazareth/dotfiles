@@ -1,68 +1,124 @@
--- Navigate column: which context nav items appear (file-scope vs nested), and hint text.
+-- Navigate column: which context nav items appear and how they are configured.
 
 local atlantis = require("configs.hydra.atlantis")
 local hint_mod = require("configs.hydra.lib.hint")
 local helpers = require("configs.hydra.atlantis.tests.helpers")
 local m = require("configs.hydra.atlantis.tests.menu_resolution.helpers")
 local navigate_cfg = require("configs.hydra.atlantis.schema.menu.navigate")
-local walker = require("configs.hydra.atlantis.prepare.anchor_container.scope_resolver")
+local schema_constants = require("configs.hydra.atlantis.schema.constants")
+
+local container_scope = schema_constants.container_scope
+
+local function find_item_with_label(items, label)
+  for _, it in ipairs(items or {}) do
+    if it.label == label then return it end
+  end
+end
+
+local function find_go_up_item(items)
+  for _, it in ipairs(items or {}) do
+    if type(it.reopen) == "table"
+      and it.reopen.depth == 0
+      and it.reopen.container_scope == nil
+      and type(it.action) == "function"
+    then
+      return it
+    end
+  end
+end
 
 describe("[Atlantis menu] Navigate column", function()
-  describe("top-level statement scope (walker file-scope)", function()
-    local function assert_file_scope_navigate_menu(ctx)
-      local bufnr = vim.api.nvim_get_current_buf()
-      assert.is_true(
-        walker.is_file_scope_anchor(ctx.anchor_node_info and ctx.anchor_node_info.node or nil, bufnr),
-        "fixture must produce a file-scope anchor"
-      )
-      local items = m.jump_items_with_key(ctx.nav_column_spec.items)
-      local labels = {}
-      for _, it in ipairs(items) do
-        labels[it.label or ""] = true
-      end
-      assert.truthy(labels[navigate_cfg.nav_context.to_top_level])
-      for _, it in ipairs(items) do
-        assert.are_not.same("u", it.key)
-        assert.are_not.same("i", it.key)
-        assert.are_not.same("a", it.key)
-      end
-      for _, it in ipairs(ctx.nav_column_spec.items or {}) do
-        if type(it.label) == "string" then
-          assert.is_false(it.label:match("To higher in context") ~= nil)
-        end
-      end
-    end
+  describe("to top level action", function()
+    it("is present for top-level anchors", function()
+      m.with_navigate_ctx({ "local x = 1" }, 1, "x", function(ctx)
+        local item = find_item_with_label(ctx.nav_column_spec.items, navigate_cfg.nav_context.to_top_level)
+        assert.is_not_nil(item, "expected to_top_level item for a file-scope anchor")
+      end)
+    end)
 
-    it("assignment at file scope yields file-scope-only navigate strip", function()
-      m.with_navigate_ctx({ "local x = 1" }, 1, "x", assert_file_scope_navigate_menu)
+    it("is present for anchors inside a function", function()
+      local lines = {
+        "local function outer()",
+        "  local x = 1",
+        "end",
+      }
+      m.with_navigate_ctx(lines, 2, "x", function(ctx)
+        local item = find_item_with_label(ctx.nav_column_spec.items, navigate_cfg.nav_context.to_top_level)
+        assert.is_not_nil(item, "expected to_top_level item even inside a function")
+      end)
+    end)
+
+    it("reopens in file root container mode", function()
+      m.with_navigate_ctx({ "local x = 1" }, 1, "x", function(ctx)
+        local item = find_item_with_label(ctx.nav_column_spec.items, navigate_cfg.nav_context.to_top_level)
+        assert.is_not_nil(item)
+        assert.are.same(container_scope.file, item.reopen.container_scope)
+        assert.are.same(-1, item.reopen.depth)
+      end)
+    end)
+
+    it("jumps cursor to start of the highest surrounding anchor", function()
+      local lines = {
+        "local function outer()",
+        "  local x = 1",
+        "end",
+      }
+      m.with_navigate_ctx(lines, 2, "x", function(ctx)
+        local item = find_item_with_label(ctx.nav_column_spec.items, navigate_cfg.nav_context.to_top_level)
+        assert.is_not_nil(item)
+        item.action()
+        local row, _ = unpack(vim.api.nvim_win_get_cursor(0))
+        assert.are.same(1, row)
+      end)
     end)
   end)
 
-  describe("nested scope", function()
-    it("includes To top level and Current scope nav context rows", function()
+  describe("go up one level action", function()
+    it("is absent for top-level anchors", function()
+      m.with_navigate_ctx({ "local x = 1" }, 1, "x", function(ctx)
+        assert.is_nil(find_go_up_item(ctx.nav_column_spec.items),
+          "go up one level should not appear for a top-level anchor")
+      end)
+    end)
+
+    it("is present when anchor is inside a function", function()
       local lines = {
         "local function outer()",
-        "  local function inner()",
-        "    local y = 1",
-        "    local z = 2",
-        "  end",
+        "  local x = 1",
         "end",
       }
-      m.with_navigate_ctx(lines, 4, "z", function(ctx)
-        local have_top, have_curr
-        for _, it in ipairs(ctx.nav_column_spec.items or {}) do
-          local lab = it.label
-          if type(lab) == "string" then
-            if lab:match("^To top level") then
-              have_top = true
-            end
-            if lab:match("^Current scope") then
-              have_curr = true
-            end
-          end
-        end
-        assert.is_true(have_top)
-        assert.is_true(have_curr)
+      m.with_navigate_ctx(lines, 2, "x", function(ctx)
+        assert.is_not_nil(find_go_up_item(ctx.nav_column_spec.items),
+          "expected go up one level item for anchor inside a function")
+      end)
+    end)
+
+    it("reopens in standard mode at depth 0", function()
+      local lines = {
+        "local function outer()",
+        "  local x = 1",
+        "end",
+      }
+      m.with_navigate_ctx(lines, 2, "x", function(ctx)
+        local item = find_go_up_item(ctx.nav_column_spec.items)
+        assert.is_not_nil(item)
+        assert.are.same(0, item.reopen.depth)
+        assert.is_nil(item.reopen.container_scope)
+      end)
+    end)
+
+    it("jumps cursor to the next highest anchor point", function()
+      local lines = {
+        "local function outer()",
+        "  local x = 1",
+        "end",
+      }
+      m.with_navigate_ctx(lines, 2, "x", function(ctx)
+        local item = find_go_up_item(ctx.nav_column_spec.items)
+        assert.is_not_nil(item)
+        item.action()
+        local row, _ = unpack(vim.api.nvim_win_get_cursor(0))
+        assert.are.same(1, row)
       end)
     end)
   end)

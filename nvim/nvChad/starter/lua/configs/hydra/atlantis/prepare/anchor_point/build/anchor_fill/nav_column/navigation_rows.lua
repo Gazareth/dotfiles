@@ -19,7 +19,21 @@ local function make_title_override(anchor_node_info)
   return title_builder.build_from_parsed(anchor_node_info, parsed)
 end
 
---- @return boolean true when relation rows must be skipped (file-scope navigation strip only).
+-- Walk up via resolve_next_highest_anchor until there is no higher anchor.
+-- Returns the topmost ancestor node_info, or nil for truly top-level anchors.
+local function find_topmost_anchor(anchor_node_info)
+  local current = anchor_node_info
+  local topmost = nil
+  while true do
+    local next = targets.resolve_next_highest_anchor(current)
+    if not next then break end
+    topmost = next
+    current = next
+  end
+  return topmost
+end
+
+--- @return boolean true when relation rows must be skipped.
 function navigation_rows.append(items, anchor_node_info, menu_opts, candidates, selected_index, jump_labels)
   row_labels.append(items, "nav_context")
 
@@ -30,13 +44,27 @@ function navigation_rows.append(items, anchor_node_info, menu_opts, candidates, 
 
   local nc = navigate_cfg.nav_context
 
-  if walker.is_file_scope_anchor(anchor_node, bufnr) then
-    if in_nav then
-      items[#items + 1] = {
-        label = nc.already_at_top_level,
-      }
-      return true
+  -- Container mode at file scope: already at the top, nothing more to offer.
+  if walker.is_file_scope_anchor(anchor_node, bufnr) and in_nav then
+    items[#items + 1] = {
+      label = nc.already_at_top_level,
+    }
+    return true
+  end
+
+  local title_override_cache = nil
+  local function get_title_override()
+    if not title_override_cache then
+      title_override_cache = make_title_override(anchor_node_info)
     end
+    return title_override_cache
+  end
+
+  local topmost = find_topmost_anchor(anchor_node_info)
+  local to_top_level_action = targets.jump_action(topmost)
+
+  if walker.is_file_scope_anchor(anchor_node, bufnr) then
+    -- H and h both navigate to file-root container mode — alias them together.
     local outline_row, scope_row
     for _, row in ipairs(navigate_cfg.items or {}) do
       if row.group == "nav_context" and row.outline_scope == true then
@@ -50,45 +78,42 @@ function navigation_rows.append(items, anchor_node_info, menu_opts, candidates, 
       key_alias = scope_row and scope_row.key or "h",
       icon = outline_row and outline_row.icon,
       label = nc.to_top_level,
-      action = function() end,
+      action = to_top_level_action,
       reopen = {
-        depth = depth,
+        depth = -1,
         container_scope = container_scope.file,
-        title_override = make_title_override(anchor_node_info),
+        title_override = get_title_override(),
       },
     }
-    return true
-  end
-
-  local title_override_cache = nil
-  for _, row in ipairs(navigate_cfg.items or {}) do
-    if row.group == "nav_context" and (row.outline_scope == true or row.current_scope == true) then
-      local label
-      local item_reopen
-      if row.outline_scope == true then
-        label = nc.to_top_level
-        if not title_override_cache then
-          title_override_cache = make_title_override(anchor_node_info)
+  else
+    -- Nested anchor: H (to file root) and h (to current scope) are distinct.
+    for _, row in ipairs(navigate_cfg.items or {}) do
+      if row.group == "nav_context" and (row.outline_scope == true or row.current_scope == true) then
+        local label, item_reopen, action
+        if row.outline_scope == true then
+          label = nc.to_top_level
+          action = to_top_level_action
+          item_reopen = {
+            depth = -1,
+            container_scope = container_scope.file,
+            title_override = get_title_override(),
+          }
+        else
+          label = nc.current_scope
+          action = function() end
+          item_reopen = {
+            depth = depth,
+            container_scope = container_scope.current_scope,
+          }
         end
-        item_reopen = {
-          depth = depth,
-          container_scope = container_scope.file,
-          title_override = title_override_cache,
-        }
-      else
-        label = nc.current_scope
-        item_reopen = {
-          depth = depth,
-          container_scope = container_scope.current_scope,
+        items[#items + 1] = {
+          key = row.key,
+          icon = row.icon,
+          label = label,
+          action = action,
+          reopen = item_reopen,
         }
       end
-      items[#items + 1] = {
-        key = row.key,
-        icon = row.icon,
-        label = label,
-        action = function() end,
-        reopen = item_reopen,
-      }
     end
   end
 
