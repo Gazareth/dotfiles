@@ -4,6 +4,13 @@ local picker_hydra = require("configs.hydra.atlantis.prepare.anchor_container.pi
 local schema = require("configs.hydra.atlantis.schema.menu.outline")
 local title_const = require("configs.hydra.atlantis.menu.components.title.constants")
 local targets = require("configs.hydra.atlantis.prepare.anchor_point.build.anchor_fill.nav_column.targets")
+local node_kinds = require("configs.hydra.atlantis.schema.constants").node_kinds
+
+-- Kinds whose nodes are themselves containers (functions, classes, etc.).
+-- Navigating to these should stay in container mode.
+local CONTAINER_KINDS = {
+  [node_kinds.declaration] = true,
+}
 
 local M = {}
 
@@ -96,10 +103,14 @@ function M.build(index, menu_opts, hydra_opts)
   local items = {}
   local row0, col0 = index_mod.cursor_pos0()
 
-  local reopen_args = {
-    depth = menu_opts.depth or 0,
-    container_scope = menu_opts.container_scope,
-  }
+  local base_depth = menu_opts.depth or 0
+
+  local function reopen_for_kind(kind_id)
+    if CONTAINER_KINDS[kind_id] then
+      return { depth = base_depth, container_scope = menu_opts.container_scope }
+    end
+    return { depth = base_depth }
+  end
 
   local by_kind = type(index) == "table" and index.by_kind or {}
   local kind_order = type(index) == "table" and index.kind_order or schema.kind_order
@@ -112,7 +123,7 @@ function M.build(index, menu_opts, hydra_opts)
         pair_i = pair_i + 1
         local keys = SECTION_KEY_PAIRS[pair_i] or { "1", "2" }
         local n = #list
-        append_category(items, list, row0, col0, reopen_args, hydra_opts, {
+        append_category(items, list, row0, col0, reopen_for_kind(kind_id), hydra_opts, {
           next_key = keys[1],
           pick_key = keys[2],
           section_heading = kind_section_heading(kind_id, n),
