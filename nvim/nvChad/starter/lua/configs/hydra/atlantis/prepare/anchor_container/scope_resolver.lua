@@ -87,11 +87,11 @@ local function body_container_if_cursor_in_top_level_callable(cursor_node, root)
     if FN_ANCESTOR_TYPES[t] then
       local p = n:parent()
       if p and p:id() == root:id() then
-        local ok, body = pcall(function()
-          return n:child_by_field_name(BODY_FIELD)
+        local ok, body_nodes = pcall(function()
+          return n:field(BODY_FIELD)
         end)
-        if ok and body and cursor_descendant_of(cursor_node, body) then
-          return body
+        if ok and body_nodes and #body_nodes > 0 and cursor_descendant_of(cursor_node, body_nodes[1]) then
+          return body_nodes[1]
         end
         return nil
       end
@@ -121,6 +121,28 @@ local function notify_container(bufnr, node)
   vim.notify("Atlantis: Walked up 3 or more layers to find " .. label .. ".", vim.log.levels.INFO)
 end
 
+local function get_callable_body(node)
+  if not node then return nil end
+  local t = node:type()
+  if FN_ANCESTOR_TYPES[t] then
+    local ok, body = pcall(function() return node:field(BODY_FIELD) end)
+    if ok and body and #body > 0 then return body[1] end
+  end
+  return node
+end
+
+local function get_innermost_callable(cursor_node, root)
+  local n = cursor_node
+  while n and n:id() ~= root:id() do
+    local t = n:type()
+    if FN_ANCESTOR_TYPES[t] then
+      return n
+    end
+    n = n:parent()
+  end
+  return nil
+end
+
 --- Outline container for navigation mode when not using file-root index.
 --- File-scoped anchors (top-level statements, top-level functions): the natural
 --- "collection" for navigation is usually the parse tree root — same outcome as "Top level..." (H).
@@ -145,14 +167,19 @@ function M.container_for_nav_mode(anchor_ctx, bufnr, cursor_node)
   if anchor_node:id() == root:id() then
     return root, true
   end
-  if not has_nested_function_ancestor(anchor_node, root) then
-    local body_scope = body_container_if_cursor_in_top_level_callable(cursor_node, root)
-    if body_scope then
-      return body_scope, false
+  
+  local innermost = get_innermost_callable(cursor_node, root)
+  if innermost then
+    if has_nested_function_ancestor(innermost, root) then
+      return get_callable_body(innermost), false
+    else
+      local body_scope = body_container_if_cursor_in_top_level_callable(cursor_node, root)
+      if body_scope then return body_scope, false end
+      return root, true
     end
-    return root, true
   end
-  return anchor_node, false
+  
+  return root, true
 end
 
 --- True when the anchor is file-scoped (parse root or top-level statement), i.e. not inside a

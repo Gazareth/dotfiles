@@ -140,44 +140,100 @@ local function merge_groups(specs)
   return result
 end
 
--- ── sub-grouping within a spec file ──────────────────────────────────────────
--- After stripping the section context, consecutive test names that share a
--- word-boundary prefix get a sub-heading so the shared part isn't repeated.
+local function build_tree(items)
+  if #items == 0 then return {} end
+  if #items == 1 then return { { is_leaf = true, name = items[1].name, ok = items[1].ok } } end
 
-local function subgroup(strs)
+  local lcp_all = items[1].name
+  for i = 2, #items do
+    lcp_all = word_lcp2(lcp_all, items[i].name)
+  end
+
+  if lcp_all ~= "" then
+    local sub_items = {}
+    for _, item in ipairs(items) do
+      table.insert(sub_items, { name = strip_prefix(item.name, lcp_all), ok = item.ok })
+    end
+    return { { is_leaf = false, heading = lcp_all, children = build_tree(sub_items) } }
+  end
+
   local groups = {}
   local i = 1
-  while i <= #strs do
-    local run_end = i
-    local run_pfx = nil
-    for j = i + 1, #strs do
-      -- Compute the prefix shared by strs[i] and strs[j], and ensure it is
-      -- consistent across all items i..j collected so far.
-      local p = word_lcp2(strs[i], strs[j])
-      if p == "" then break end
-      for k = i + 1, j - 1 do
-        local q = word_lcp2(strs[i], strs[k])
-        if q == "" then p = ""; break end
-        if #q < #p then p = q end
-      end
-      if p == "" then break end
-      run_end = j
-      run_pfx = p
+  while i <= #items do
+    if i == #items then
+      table.insert(groups, { is_leaf = true, name = items[i].name, ok = items[i].ok })
+      break
     end
 
-    if run_pfx and run_end > i then
-      local items = {}
-      for k = i, run_end do
-        items[#items + 1] = strip_prefix(strs[k], run_pfx)
+    local p = word_lcp2(items[i].name, items[i+1].name)
+    if p ~= "" then
+      local j = i + 1
+      local current_p = p
+      while j < #items do
+        local next_p = word_lcp2(current_p, items[j+1].name)
+        if next_p == "" then break end
+        current_p = next_p
+        j = j + 1
       end
-      groups[#groups + 1] = { heading = run_pfx, items = items }
-      i = run_end + 1
+      local sub_items = {}
+      for k = i, j do
+        table.insert(sub_items, { name = strip_prefix(items[k].name, current_p), ok = items[k].ok })
+      end
+      table.insert(groups, { is_leaf = false, heading = current_p, children = build_tree(sub_items) })
+      i = j + 1
     else
-      groups[#groups + 1] = { heading = "", items = { strs[i] } }
+      table.insert(groups, { is_leaf = true, name = items[i].name, ok = items[i].ok })
       i = i + 1
     end
   end
   return groups
+end
+
+local function print_tree(nodes, prefix)
+  for i, node in ipairs(nodes) do
+    local is_last_node = (i == #nodes)
+
+    local function print_chain(parts, last_name, is_leaf, ok)
+      local cur_prefix = prefix
+      for j, p in ipairs(parts) do
+        if j == 1 then
+          io.write(string.format("%s%s%s\n", cur_prefix, (is_last_node and "└── " or "├── "), p))
+          cur_prefix = cur_prefix .. (is_last_node and "    " or "│   ")
+        else
+          io.write(string.format("%s%s%s\n", cur_prefix, "└── ", p))
+          cur_prefix = cur_prefix .. "    "
+        end
+      end
+      
+      if is_leaf then
+        local status = ok and "o" or "x"
+        local name = last_name == "" and "<test>" or last_name
+        local connector = (#parts == 0) and (is_last_node and "└── " or "├── ") or "└── "
+        io.write(string.format("%s%s%s  %s\n", cur_prefix, connector, status, name))
+      else
+        local connector = (#parts == 0) and (is_last_node and "└── " or "├── ") or "└── "
+        io.write(string.format("%s%s%s\n", cur_prefix, connector, last_name))
+        return cur_prefix .. ((#parts == 0) and (is_last_node and "    " or "│   ") or "    ")
+      end
+    end
+
+    if node.is_leaf then
+      local parts = {}
+      for p in node.name:gmatch("(.-) %- ") do table.insert(parts, p) end
+      local last_part = node.name:match(".* %- (.*)") or node.name
+      print_chain(parts, last_part, true, node.ok)
+    else
+      local heading = node.heading:match("^(.-)%s*%-?%s*$") or node.heading
+      if heading == "" then heading = node.heading end
+      
+      local parts = {}
+      for p in heading:gmatch("(.-) %- ") do table.insert(parts, p) end
+      local last_part = heading:match(".* %- (.*)") or heading
+      
+      local next_prefix = print_chain(parts, last_part, false)
+      print_tree(node.children, next_prefix)
+    end
+  end
 end
 
 -- ── plenary output parser ─────────────────────────────────────────────────────
@@ -247,9 +303,10 @@ io.write(string.format("\n=== %s ===\n", suite_name))
 
 for _, section in ipairs(sections) do
   local sctx = section.section_ctx
+  local display_ctx = sctx:match("^(.-)%s*%-?%s*$") or sctx
 
-  if sctx ~= "" then
-    io.write(string.format("\n%s\n", sctx))
+  if display_ctx ~= "" then
+    io.write(string.format("\n%s\n", display_ctx))
   else
     io.write("\n")
   end
@@ -261,29 +318,13 @@ for _, section in ipairs(sections) do
 
     -- Strip the section context so all files within a section share the same
     -- stripping baseline.
-    local short_names   = {}
-    local short_statuses = {}
+    local items = {}
     for _, t in ipairs(s.tests) do
-      short_names[#short_names + 1]    = strip_prefix(t.name, sctx)
-      short_statuses[#short_statuses + 1] = t.ok
+      table.insert(items, { name = strip_prefix(t.name, sctx), ok = t.ok })
     end
 
-    local grps = subgroup(short_names)
-    local si   = 1
-    for _, g in ipairs(grps) do
-      if g.heading ~= "" then
-        io.write(string.format("  %s\n", g.heading))
-        for _, item in ipairs(g.items) do
-          io.write(string.format("    %s  %s\n", short_statuses[si] and "o" or "x", item))
-          si = si + 1
-        end
-      else
-        for _, item in ipairs(g.items) do
-          io.write(string.format("  %s  %s\n", short_statuses[si] and "o" or "x", item))
-          si = si + 1
-        end
-      end
-    end
+    local tree = build_tree(items)
+    print_tree(tree, "")
   end
 end
 

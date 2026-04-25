@@ -8,32 +8,39 @@ local jump_targets = {}
 local function walk_to_sibling(node, prev)
   local cur = node
   while cur do
-    local t = prev and cur:prev_named_sibling() or cur:next_named_sibling()
+    local t
+    if prev then
+      t = cur:prev_named_sibling()
+    else
+      t = cur:next_named_sibling()
+    end
     if t then return t end
-    cur = cur:parent()
+    local p = cur:parent()
+    if not p or p:named_child_count() > 1 then break end
+    cur = p
   end
 end
 
-local function find_tree_root(node)
+local function find_sibling_container(node)
   local cur = node
   while true do
     local p = cur:parent()
-    if not p then return cur end
+    if not p or p:named_child_count() > 1 then return p or cur end
     cur = p
   end
 end
 
 local function extreme_sibling(node, first)
-  local root = find_tree_root(node)
-  local n = root:named_child_count()
+  local container = find_sibling_container(node)
+  local n = container:named_child_count()
   if n <= 1 then return nil end
-  local candidate = first and root:named_child(0) or root:named_child(n - 1)
-  -- Avoid wrapping to the root child that already contains the current node.
-  -- Walk up from node to find which root child we're under.
+  local candidate = first and container:named_child(0) or container:named_child(n - 1)
+  -- Avoid wrapping to the container child that already contains the current node.
+  -- Walk up from node to find which container child we're under.
   local cur = node
   while cur do
     local p = cur:parent()
-    if p == root then
+    if p == container then
       if cur == candidate then return nil end
       break
     end

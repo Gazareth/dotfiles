@@ -3,7 +3,7 @@ local helpers = require("configs.hydra.atlantis.tests.helpers")
 local mr = require("configs.hydra.atlantis.tests.menu_resolution.helpers")
 
 return function()
-  describe("Outline only -", function()
+  describe("(Action behaviour)", function()
     local function assert_no_action_items(sec)
       for _, it in ipairs(sec.items or {}) do
         assert.is_nil(

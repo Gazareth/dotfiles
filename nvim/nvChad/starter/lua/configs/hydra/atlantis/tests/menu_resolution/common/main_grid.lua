@@ -10,7 +10,7 @@ return function()
       "end",
     }
 
-    local function assert_three_columns_between_title_and_footer(hint)
+    local function assert_three_columns_between_title_and_footer(hint, is_container)
       local lines_ = vim.split(hint, "\n")
       assert.is_true(#lines_ >= 4)
       local last = lines_[#lines_]
@@ -19,7 +19,11 @@ return function()
       local body = table.concat(lines_, "\n", 1, body_end)
       assert.truthy(body:find(" | ", 1, true), "padded column join")
       assert.truthy(body:find(column_titles.navigate(), 1, true))
-      assert.truthy(body:find(column_titles.interact(), 1, true))
+      if is_container then
+        assert.truthy(body:find(column_titles.outline(), 1, true))
+      else
+        assert.truthy(body:find(column_titles.interact(), 1, true))
+      end
       assert.truthy(body:find(column_titles.create(), 1, true))
     end
 
@@ -27,7 +31,7 @@ return function()
       helpers.with_lua(lines, 1, helpers.col0(lines[1], "foo"), function()
         local v = atlantis.build_view_spec({ depth = 0 }, {})
         assert.is_false(v.container_mode)
-        assert_three_columns_between_title_and_footer(mr.build_atlantis_hint_string(v.spec))
+        assert_three_columns_between_title_and_footer(mr.build_atlantis_hint_string(v.spec), false)
       end)
     end)
 
@@ -35,11 +39,11 @@ return function()
       helpers.with_lua(lines, 2, helpers.col0(lines[2], "return"), function()
         local v = atlantis.build_view_spec({ container_scope = "current_scope", depth = 0 }, {})
         assert.is_true(v.container_mode)
-        assert_three_columns_between_title_and_footer(mr.build_atlantis_hint_string(v.spec))
+        assert_three_columns_between_title_and_footer(mr.build_atlantis_hint_string(v.spec), true)
       end)
     end)
 
-    it("uses Navigate, Interact, and Create columns with items in each", function()
+    it("uses Navigate, Outline, and Create columns with items in each", function()
       local nested = {
         "local function outer()",
         "  local function inner(a, b)",
@@ -58,13 +62,13 @@ return function()
           end
         end
         assert.is_true(vim.tbl_contains(titles, column_titles.navigate()))
-        assert.is_true(vim.tbl_contains(titles, column_titles.interact()))
+        assert.is_true(vim.tbl_contains(titles, column_titles.outline()))
         assert.is_true(vim.tbl_contains(titles, column_titles.create()))
         local nav = mr.navigate_section(v.spec)
-        local inter = mr.interact_section(v.spec)
+        local outl = mr.outline_section(v.spec)
         local cre = mr.create_section(v.spec)
         assert.truthy(nav and nav.items)
-        assert.truthy(inter and inter.items)
+        assert.truthy(outl and outl.items)
         assert.truthy(cre and cre.items)
       end)
     end)

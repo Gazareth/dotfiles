@@ -36,7 +36,7 @@ return function()
           end
         end
         assert.is_true(vim.tbl_contains(titles, column_titles.navigate()))
-        assert.is_true(vim.tbl_contains(titles, column_titles.interact()))
+        assert.is_true(vim.tbl_contains(titles, column_titles.outline()))
         assert.is_true(vim.tbl_contains(titles, column_titles.create()))
       end)
     end)

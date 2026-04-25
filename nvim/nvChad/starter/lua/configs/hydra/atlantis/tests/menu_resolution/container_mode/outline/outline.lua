@@ -4,10 +4,10 @@ local mr = require("configs.hydra.atlantis.tests.menu_resolution.helpers")
 local outline_schema = require("configs.hydra.atlantis.schema.menu.outline")
 local nk = require("configs.hydra.atlantis.schema.constants").node_kinds
 
-local menu_opts = { container_scope = "current_scope", depth = 0 }
+local menu_opts = { container_scope = "current_scope", depth = 1 }
 
 return function()
-  describe("Outline -", function()
+  describe("(Content sections)", function()
     local function section_heading(sec, kind_name)
       for _, it in ipairs(sec.items or {}) do
         if it.separator and type(it.label) == "string" and it.label:find(kind_name, 1, true) then
@@ -105,7 +105,7 @@ return function()
             end
           end
           assert.truthy(nav, "expected a 'To next assignment' navigate item")
-          nav.action()
+          nav.action(nav)
           local row = vim.api.nvim_win_get_cursor(0)[1]
           assert.is_true(row >= 3 and row <= 5, "cursor should land on one of the assignments (lines 3-5)")
         end)
@@ -154,8 +154,7 @@ return function()
           local nav
           for _, it in ipairs(sec.items or {}) do
             if type(it.label) == "string"
-              and it.label:find("next", 1, true)
-              and it.label:lower():find("decl", 1, true)
+              and it.label:find("%[Function%]")
               and type(it.action) == "function"
             then
               nav = it
@@ -163,7 +162,7 @@ return function()
             end
           end
           assert.truthy(nav, "expected a 'To next declaration' navigate item")
-          nav.action()
+          nav.action(nav)
           local row = vim.api.nvim_win_get_cursor(0)[1]
           assert.is_true(row >= 3 and row <= 7, "cursor should land on alpha or beta (lines 3-7)")
         end)

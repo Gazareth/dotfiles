@@ -4,7 +4,7 @@ local helpers = require("configs.hydra.atlantis.tests.helpers")
 local mr = require("configs.hydra.atlantis.tests.menu_resolution.helpers")
 local outline_schema = require("configs.hydra.atlantis.schema.menu.outline")
 
-local menu_opts_nav = { container_scope = "current_scope", depth = 0 }
+local menu_opts_nav = { container_scope = "current_scope" }
 
 return function()
   describe("Anchor -", function()
@@ -18,7 +18,7 @@ return function()
     }
 
     it("function anchor shows Declarations group", function()
-      helpers.with_lua(fn_nested, 2, helpers.col0(fn_nested[2], "inner"), function()
+      helpers.with_lua(fn_nested, 1, helpers.col0(fn_nested[1], "outer"), function()
         local v = atlantis.build_view_spec(menu_opts_nav, {})
         local sec = mr.outline_section(v.spec)
         assert.truthy(sec)
