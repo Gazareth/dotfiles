@@ -32,14 +32,14 @@ M.relation_phrase = {
 }
 
 M.next_highest = {
-  key = "J",
+  key = "h",
   icon = "⤴",
   label_phrase = "To next highest",
 }
 
 M.items = {
   { group = "nav_context", key = "H", icon = "󰅴", outline_scope = true },
-  { group = "nav_context", key = "h", icon = "󰍎", current_scope = true },
+  { group = "nav_context", key = "l", icon = "󰍎", current_scope = true },
   { group = "child",   key = "a", icon = "⬇", relation = "child" },
   { group = "sibling", key = "u", icon = "⬅", relation = "prev_sibling" },
   { group = "sibling", key = "u", icon = "⏭", relation = "last_sibling",  fallback_for = "prev_sibling" },

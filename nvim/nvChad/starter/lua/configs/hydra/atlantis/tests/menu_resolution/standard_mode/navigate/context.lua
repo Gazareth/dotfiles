@@ -30,8 +30,11 @@ return function()
     describe("to top level action", function()
       it("is present for top-level anchors", function()
         m.with_navigate_ctx({ "local x = 1" }, 1, "x", function(ctx)
-          local item = find_item_with_label(ctx.nav_column_spec.items, navigate_cfg.nav_context.to_top_level)
+          local items = ctx.nav_column_spec.items
+          local item = find_item_with_label(items, navigate_cfg.nav_context.to_top_level)
           assert.is_not_nil(item, "expected to_top_level item for a file-scope anchor")
+          assert.are.equal("H", item.key)
+          assert.are.equal("h", item.key_alias, "H should alias to h at top level")
         end)
       end)
 
@@ -42,8 +45,11 @@ return function()
           "end",
         }
         m.with_navigate_ctx(lines, 2, "x", function(ctx)
-          local item = find_item_with_label(ctx.nav_column_spec.items, navigate_cfg.nav_context.to_top_level)
+          local items = ctx.nav_column_spec.items
+          local item = find_item_with_label(items, navigate_cfg.nav_context.to_top_level)
           assert.is_not_nil(item, "expected to_top_level item even inside a function")
+          assert.are.equal("H", item.key)
+          assert.is_nil(item.key_alias, "H should not alias to h when nested")
         end)
       end)
 
@@ -75,8 +81,12 @@ return function()
     describe("go up one level action", function()
       it("is absent for top-level anchors", function()
         m.with_navigate_ctx({ "local x = 1" }, 1, "x", function(ctx)
-          assert.is_nil(find_go_up_item(ctx.nav_column_spec.items),
+          local items = ctx.nav_column_spec.items
+          assert.is_nil(find_go_up_item(items),
             "go up one level should not appear for a top-level anchor")
+          
+          local item_h = m.find_item_by_key(items, "h")
+          assert.is_nil(item_h, "h should only act as an alias, not a distinct row")
         end)
       end)
 
@@ -87,8 +97,12 @@ return function()
           "end",
         }
         m.with_navigate_ctx(lines, 2, "x", function(ctx)
-          assert.is_not_nil(find_go_up_item(ctx.nav_column_spec.items),
+          local items = ctx.nav_column_spec.items
+          assert.is_not_nil(find_go_up_item(items),
             "expected go up one level item for anchor inside a function")
+            
+          local item_h = m.find_item_by_key(items, "h")
+          assert.is_not_nil(item_h, "Next highest should be present")
         end)
       end)
 
@@ -118,6 +132,48 @@ return function()
           item.action()
           local row, _ = unpack(vim.api.nvim_win_get_cursor(0))
           assert.are.same(1, row)
+        end)
+      end)
+    end)
+
+    describe("current scope action", function()
+      it("is absent for top-level anchors", function()
+        m.with_navigate_ctx({ "local x = 1" }, 1, "x", function(ctx)
+          local items = ctx.nav_column_spec.items
+          local item_l = m.find_item_by_key(items, "l")
+          assert.is_nil(item_l, "Current scope should not be present at top level")
+        end)
+      end)
+
+      it("is present when anchor is inside a function", function()
+        local lines = {
+          "local function outer()",
+          "  local x = 1",
+          "end",
+        }
+        m.with_navigate_ctx(lines, 2, "x", function(ctx)
+          local items = ctx.nav_column_spec.items
+          local item_l = m.find_item_by_key(items, "l")
+          assert.is_not_nil(item_l, "Current scope should be present when nested")
+        end)
+      end)
+    end)
+
+    describe("row ordering", function()
+      it("renders context rows in Top, Next highest, Current scope sequence", function()
+        local lines = {
+          "local function outer()",
+          "  local x = 1",
+          "end",
+        }
+        m.with_navigate_ctx(lines, 2, "x", function(ctx)
+          local context_keys = {}
+          for _, it in ipairs(ctx.nav_column_spec.items or {}) do
+            if it.key == "H" or it.key == "h" or it.key == "l" then
+              table.insert(context_keys, it.key)
+            end
+          end
+          assert.are.same({ "H", "h", "l" }, context_keys)
         end)
       end)
     end)

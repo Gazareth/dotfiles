@@ -71,7 +71,7 @@ M.action_menu_item = {
   jump_to_child = {
     key = "k",
     icon = ">",
-    label = "Jump to child…",
+    label = "Jump to childâ€¦",
     reopen_depth_delta = reopen.same,
   },
   rescope = {
@@ -82,7 +82,7 @@ M.action_menu_item = {
     reopen_depth_delta = reopen.close,
   },
   jump_function_header = {
-    key = "h",
+    key = "j",
     icon = ">",
     label = "Jump to function header",
     reopen_depth_delta = reopen.deeper,
@@ -100,13 +100,13 @@ M.action_menu_item = {
     reopen_depth_delta = reopen.deeper,
   },
   jump_to_parent_signature = {
-    key = "h",
+    key = "j",
     icon = ">",
     label = "Jump to parent signature",
     reopen_depth_delta = reopen.deeper,
   },
   jump_to_enclosing_function = {
-    key = "h",
+    key = "j",
     icon = ">",
     label = "Jump to enclosing function",
     reopen_depth_delta = reopen.deeper,
