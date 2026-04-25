@@ -5,26 +5,32 @@ local treesitter_config = require("configs.hydra.atlantis.prepare.anchor_point.p
 
 local jump_targets = {}
 
+local function walk_to_sibling(node, prev)
+  local cur = node
+  while cur do
+    local t = prev and cur:prev_named_sibling() or cur:next_named_sibling()
+    if t then return t end
+    cur = cur:parent()
+  end
+end
+
+local relation_resolvers = {
+  parent       = function(n) return n:parent() or n:prev_named_sibling() end,
+  prev_sibling = function(n) return walk_to_sibling(n, true) end,
+  next_sibling = function(n) return walk_to_sibling(n, false) end,
+  child        = function(n) return n:named_child(0) end,
+}
+
 function jump_targets.resolve(selected_node_info, relation)
   if not selected_node_info or not selected_node_info.node then
     return nil
   end
 
-  local node = selected_node_info.node
-  local target = nil
+  local resolver = relation_resolvers[relation]
+  if not resolver then return nil end
 
-  if relation == "parent" then
-    target = node:parent()
-    if not target then
-      target = node:prev_named_sibling()
-    end
-  elseif relation == "prev_sibling" then
-    target = node:prev_named_sibling()
-  elseif relation == "next_sibling" then
-    target = node:next_named_sibling()
-  elseif relation == "child" then
-    target = node:named_child(0)
-  end
+  local node = selected_node_info.node
+  local target = resolver(node)
 
   if not target then
     return nil
