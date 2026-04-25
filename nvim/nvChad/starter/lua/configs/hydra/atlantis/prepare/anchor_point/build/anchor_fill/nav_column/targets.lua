@@ -14,11 +14,41 @@ local function walk_to_sibling(node, prev)
   end
 end
 
+local function find_tree_root(node)
+  local cur = node
+  while true do
+    local p = cur:parent()
+    if not p then return cur end
+    cur = p
+  end
+end
+
+local function extreme_sibling(node, first)
+  local root = find_tree_root(node)
+  local n = root:named_child_count()
+  if n <= 1 then return nil end
+  local candidate = first and root:named_child(0) or root:named_child(n - 1)
+  -- Avoid wrapping to the root child that already contains the current node.
+  -- Walk up from node to find which root child we're under.
+  local cur = node
+  while cur do
+    local p = cur:parent()
+    if p == root then
+      if cur == candidate then return nil end
+      break
+    end
+    cur = p
+  end
+  return candidate
+end
+
 local relation_resolvers = {
-  parent       = function(n) return n:parent() or n:prev_named_sibling() end,
-  prev_sibling = function(n) return walk_to_sibling(n, true) end,
-  next_sibling = function(n) return walk_to_sibling(n, false) end,
-  child        = function(n) return n:named_child(0) end,
+  parent        = function(n) return n:parent() or n:prev_named_sibling() end,
+  prev_sibling  = function(n) return walk_to_sibling(n, true) end,
+  next_sibling  = function(n) return walk_to_sibling(n, false) end,
+  first_sibling = function(n) return extreme_sibling(n, true) end,
+  last_sibling  = function(n) return extreme_sibling(n, false) end,
+  child         = function(n) return n:named_child(0) end,
 }
 
 function jump_targets.resolve(selected_node_info, relation)

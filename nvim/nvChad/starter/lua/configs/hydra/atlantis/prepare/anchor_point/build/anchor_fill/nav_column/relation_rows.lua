@@ -59,6 +59,9 @@ function relation_rows.append(items, labeled, anchor_node_info, menu_opts)
   for _, row in ipairs(navigate_cfg.items or {}) do
     if type(row.relation) ~= "string" then
     elseif row.relation == "child" and skip_child then
+    elseif type(row.fallback_for) == "string"
+      and labeled[row.fallback_for]
+      and labeled[row.fallback_for].target then
     else
       if row.group ~= last_group then
         if row.group == "child" then
