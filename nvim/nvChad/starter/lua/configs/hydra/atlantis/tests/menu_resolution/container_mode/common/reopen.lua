@@ -87,7 +87,7 @@ return function()
         end)
       end)
 
-      it("navigate item for function declaration reopens in container mode", function()
+      it("navigate item for function declaration reopens in standard mode", function()
         local lines = {
           "local function outer()",
           "  local function container_fn()",
@@ -102,8 +102,8 @@ return function()
           local item = first_item_after_heading(sec, outline_schema.kind_heading[nk.declaration])
           assert.truthy(item, "expected navigate item under Declarations section")
           assert.is_table(item.reopen)
-          assert.are.equal("current_scope", item.reopen.container_scope,
-            "function declaration navigate should reopen in container mode")
+          assert.is_nil(item.reopen.container_scope,
+            "function declaration navigate should reopen in standard mode")
         end)
       end)
     end)

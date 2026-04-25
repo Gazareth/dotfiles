@@ -6,11 +6,7 @@ local title_const = require("configs.hydra.atlantis.menu.components.title.consta
 local targets = require("configs.hydra.atlantis.prepare.anchor_point.build.anchor_fill.nav_column.targets")
 local node_kinds = require("configs.hydra.atlantis.schema.constants").node_kinds
 
--- Kinds whose nodes are themselves containers (functions, classes, etc.).
--- Navigating to these should stay in container mode.
-local CONTAINER_KINDS = {
-  [node_kinds.declaration] = true,
-}
+
 
 local M = {}
 
@@ -106,9 +102,6 @@ function M.build(index, menu_opts, hydra_opts)
   local base_depth = menu_opts.depth or 0
 
   local function reopen_for_kind(kind_id)
-    if CONTAINER_KINDS[kind_id] then
-      return { depth = base_depth, container_scope = menu_opts.container_scope }
-    end
     return { depth = base_depth }
   end
 
