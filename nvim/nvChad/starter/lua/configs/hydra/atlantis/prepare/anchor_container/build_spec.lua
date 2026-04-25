@@ -1,7 +1,6 @@
 local fallback_navigate = require("configs.hydra.atlantis.menu.sections.navigate")
-local action_section = require("configs.hydra.atlantis.menu.sections.action")
 local create_section = require("configs.hydra.atlantis.menu.sections.create")
-local interact_outline_merge = require("configs.hydra.atlantis.menu.interact_outline_merge")
+local column_titles = require("configs.hydra.atlantis.menu.column_titles")
 local index_mod = require("configs.hydra.atlantis.prepare.anchor_container.index")
 local items_mod = require("configs.hydra.atlantis.prepare.anchor_container.items")
 local schema = require("configs.hydra.atlantis.schema.menu.outline")
@@ -32,9 +31,10 @@ function M.build(anchor_ctx, menu_opts, hydra_opts, container_node, _is_parse_ro
   local outline_items = items_mod.build(index, menu_opts, hydra_opts)
 
   local navigate_section = anchor_ctx.nav_column_spec or fallback_navigate
-  local interact_raw = action_section(anchor_ctx)
-  local interact_section =
-    interact_outline_merge.build_interact_section(interact_raw, outline_items, anchor_ctx.parsed_anchor)
+  local outline_section = {
+    title = column_titles.outline(),
+    items = outline_items,
+  }
 
   return {
     title = hint_title,
@@ -42,7 +42,7 @@ function M.build(anchor_ctx, menu_opts, hydra_opts, container_node, _is_parse_ro
       padding_left = schema.hint_padding_left,
       padding_right = schema.hint_padding_right,
     },
-    sections = { navigate_section, interact_section, create_section },
+    sections = { navigate_section, outline_section, create_section },
   }
 end
 

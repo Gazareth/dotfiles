@@ -3,12 +3,12 @@ local helpers = require("configs.hydra.atlantis.tests.helpers")
 local mr = require("configs.hydra.atlantis.tests.menu_resolution.helpers")
 
 return function()
-  describe("Base action -", function()
-    local function assert_no_action_items(inter)
-      for _, it in ipairs(inter.items or {}) do
+  describe("Outline only -", function()
+    local function assert_no_action_items(sec)
+      for _, it in ipairs(sec.items or {}) do
         assert.is_nil(
           it.action_id,
-          "unexpected anchor action in container mode Interact: " .. tostring(it.label or it.heading)
+          "unexpected anchor action in container mode Outline: " .. tostring(it.label or it.heading)
         )
       end
     end
@@ -33,21 +33,21 @@ return function()
     it("function anchor: no action_id items", function()
       helpers.with_lua(fn_nested, 2, helpers.col0(fn_nested[2], "inner"), function()
         local v = atlantis.build_view_spec(menu_opts_nav, {})
-        assert_no_action_items(mr.interact_section(v.spec))
+        assert_no_action_items(mr.outline_section(v.spec))
       end)
     end)
 
     it("assignment anchor: no action_id items", function()
       helpers.with_lua(assign_lines, 1, helpers.col0(assign_lines[1], "rhs"), function()
         local v = atlantis.build_view_spec(menu_opts_nav, {})
-        assert_no_action_items(mr.interact_section(v.spec))
+        assert_no_action_items(mr.outline_section(v.spec))
       end)
     end)
 
     it("boolean expression anchor: no action_id items", function()
       helpers.with_lua(boolean_lines, 1, helpers.col0(boolean_lines[1], "and"), function()
         local v = atlantis.build_view_spec(menu_opts_nav, {})
-        assert_no_action_items(mr.interact_section(v.spec))
+        assert_no_action_items(mr.outline_section(v.spec))
       end)
     end)
 
@@ -55,7 +55,7 @@ return function()
       local lines = { "local x = 1" }
       helpers.with_lua(lines, 1, helpers.col0(lines[1], "x"), function()
         local v = atlantis.build_view_spec({ container_scope = "top_level", depth = -1 }, {})
-        assert_no_action_items(mr.interact_section(v.spec))
+        assert_no_action_items(mr.outline_section(v.spec))
       end)
     end)
   end)

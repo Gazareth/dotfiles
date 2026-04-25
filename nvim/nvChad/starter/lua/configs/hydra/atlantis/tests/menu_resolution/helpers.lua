@@ -19,6 +19,10 @@ function M.interact_section(spec)
   return M.find_section(spec, column_titles.interact())
 end
 
+function M.outline_section(spec)
+  return M.find_section(spec, column_titles.outline())
+end
+
 function M.create_section(spec)
   return M.find_section(spec, column_titles.create())
 end

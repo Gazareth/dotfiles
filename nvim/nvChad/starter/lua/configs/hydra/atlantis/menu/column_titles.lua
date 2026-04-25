@@ -16,6 +16,10 @@ function M.create()
   return " 󰄬 Create"
 end
 
+function M.outline()
+  return " 󰷏 Outline"
+end
+
 --- Floating Hydra title when container/outline mode is active.
 function M.outline_window()
   return " 󰷏 Outline"

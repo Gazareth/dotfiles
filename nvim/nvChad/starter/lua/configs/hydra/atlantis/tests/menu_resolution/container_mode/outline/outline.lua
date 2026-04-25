@@ -1,7 +1,3 @@
--- Tests for the Interact column's node outline in container mode.
--- The column enumerates all anchor-point nodes within the current container
--- and groups them by semantic kind (Assignments, Declarations, etc.).
-
 local atlantis = require("configs.hydra.atlantis")
 local helpers = require("configs.hydra.atlantis.tests.helpers")
 local mr = require("configs.hydra.atlantis.tests.menu_resolution.helpers")
@@ -12,22 +8,12 @@ local menu_opts = { container_scope = "current_scope", depth = 0 }
 
 return function()
   describe("Outline -", function()
-    local function section_heading(inter, kind_name)
-      for _, it in ipairs(inter.items or {}) do
+    local function section_heading(sec, kind_name)
+      for _, it in ipairs(sec.items or {}) do
         if it.separator and type(it.label) == "string" and it.label:find(kind_name, 1, true) then
           return it
         end
       end
-    end
-
-    local function navigate_items(inter)
-      local out = {}
-      for _, it in ipairs(inter.items or {}) do
-        if not it.separator and type(it.key) == "string" and type(it.action) == "function" then
-          out[#out + 1] = it
-        end
-      end
-      return out
     end
 
     -- Fixture: inner() contains only assignments: a, b, c (lines 3-5)
@@ -68,10 +54,10 @@ return function()
       it("heading appears when container has assignments", function()
         helpers.with_lua(three_assignments, 2, helpers.col0(three_assignments[2], "inner"), function()
           local v = atlantis.build_view_spec(menu_opts, {})
-          local inter = mr.interact_section(v.spec)
-          assert.truthy(inter)
+          local sec = mr.outline_section(v.spec)
+          assert.truthy(sec)
           assert.truthy(
-            section_heading(inter, outline_schema.kind_heading[nk.assignment]),
+            section_heading(sec, outline_schema.kind_heading[nk.assignment]),
             "expected Assignments section heading"
           )
         end)
@@ -80,8 +66,8 @@ return function()
       it("heading includes the item count", function()
         helpers.with_lua(three_assignments, 2, helpers.col0(three_assignments[2], "inner"), function()
           local v = atlantis.build_view_spec(menu_opts, {})
-          local inter = mr.interact_section(v.spec)
-          local h = section_heading(inter, outline_schema.kind_heading[nk.assignment])
+          local sec = mr.outline_section(v.spec)
+          local h = section_heading(sec, outline_schema.kind_heading[nk.assignment])
           assert.truthy(h, "expected Assignments heading")
           assert.truthy(h.label:find("[3]", 1, true), "expected count [3] in heading: got " .. tostring(h.label))
         end)
@@ -97,8 +83,8 @@ return function()
         }
         helpers.with_lua(single, 2, helpers.col0(single[2], "inner"), function()
           local v = atlantis.build_view_spec(menu_opts, {})
-          local inter = mr.interact_section(v.spec)
-          local blob = mr.labels_blob(inter.items)
+          local sec = mr.outline_section(v.spec)
+          local blob = mr.labels_blob(sec.items)
           assert.truthy(blob:find("myvar", 1, true), "expected variable name 'myvar' in item labels")
         end)
       end)
@@ -106,9 +92,9 @@ return function()
       it("navigate item action moves cursor to the assignment", function()
         helpers.with_lua(three_assignments, 2, helpers.col0(three_assignments[2], "inner"), function()
           local v = atlantis.build_view_spec(menu_opts, {})
-          local inter = mr.interact_section(v.spec)
+          local sec = mr.outline_section(v.spec)
           local nav
-          for _, it in ipairs(inter.items or {}) do
+          for _, it in ipairs(sec.items or {}) do
             if type(it.label) == "string"
               and it.label:find("next", 1, true)
               and it.label:lower():find("assign", 1, true)
@@ -130,10 +116,10 @@ return function()
       it("heading appears when container has function declarations", function()
         helpers.with_lua(two_declarations, 2, helpers.col0(two_declarations[2], "container_fn"), function()
           local v = atlantis.build_view_spec(menu_opts, {})
-          local inter = mr.interact_section(v.spec)
-          assert.truthy(inter)
+          local sec = mr.outline_section(v.spec)
+          assert.truthy(sec)
           assert.truthy(
-            section_heading(inter, outline_schema.kind_heading[nk.declaration]),
+            section_heading(sec, outline_schema.kind_heading[nk.declaration]),
             "expected Declarations section heading"
           )
         end)
@@ -142,8 +128,8 @@ return function()
       it("heading includes the item count", function()
         helpers.with_lua(two_declarations, 2, helpers.col0(two_declarations[2], "container_fn"), function()
           local v = atlantis.build_view_spec(menu_opts, {})
-          local inter = mr.interact_section(v.spec)
-          local h = section_heading(inter, outline_schema.kind_heading[nk.declaration])
+          local sec = mr.outline_section(v.spec)
+          local h = section_heading(sec, outline_schema.kind_heading[nk.declaration])
           assert.truthy(h, "expected Declarations heading")
           assert.truthy(h.label:find("[2]", 1, true), "expected count [2] in heading: got " .. tostring(h.label))
         end)
@@ -152,8 +138,8 @@ return function()
       it("item label references a function name", function()
         helpers.with_lua(two_declarations, 2, helpers.col0(two_declarations[2], "container_fn"), function()
           local v = atlantis.build_view_spec(menu_opts, {})
-          local inter = mr.interact_section(v.spec)
-          local blob = mr.labels_blob(inter.items)
+          local sec = mr.outline_section(v.spec)
+          local blob = mr.labels_blob(sec.items)
           assert.truthy(
             blob:find("alpha", 1, true) or blob:find("beta", 1, true),
             "expected function name in item labels"
@@ -164,9 +150,9 @@ return function()
       it("navigate item action moves cursor to a declaration", function()
         helpers.with_lua(two_declarations, 2, helpers.col0(two_declarations[2], "container_fn"), function()
           local v = atlantis.build_view_spec(menu_opts, {})
-          local inter = mr.interact_section(v.spec)
+          local sec = mr.outline_section(v.spec)
           local nav
-          for _, it in ipairs(inter.items or {}) do
+          for _, it in ipairs(sec.items or {}) do
             if type(it.label) == "string"
               and it.label:find("next", 1, true)
               and it.label:lower():find("decl", 1, true)
@@ -188,8 +174,8 @@ return function()
       it("shows both Declarations and Assignments sections", function()
         helpers.with_lua(mixed_content, 2, helpers.col0(mixed_content[2], "mixed"), function()
           local v = atlantis.build_view_spec(menu_opts, {})
-          local inter = mr.interact_section(v.spec)
-          local blob = mr.labels_blob(inter.items)
+          local sec = mr.outline_section(v.spec)
+          local blob = mr.labels_blob(sec.items)
           assert.truthy(
             blob:find(outline_schema.kind_heading[nk.declaration], 1, true),
             "expected Declarations section"
@@ -204,9 +190,9 @@ return function()
       it("each section heading count reflects only its own kind", function()
         helpers.with_lua(mixed_content, 2, helpers.col0(mixed_content[2], "mixed"), function()
           local v = atlantis.build_view_spec(menu_opts, {})
-          local inter = mr.interact_section(v.spec)
-          local decl_h = section_heading(inter, outline_schema.kind_heading[nk.declaration])
-          local asgn_h = section_heading(inter, outline_schema.kind_heading[nk.assignment])
+          local sec = mr.outline_section(v.spec)
+          local decl_h = section_heading(sec, outline_schema.kind_heading[nk.declaration])
+          local asgn_h = section_heading(sec, outline_schema.kind_heading[nk.assignment])
           assert.truthy(decl_h and decl_h.label:find("[1]", 1, true),
             "expected Declarations [1]: got " .. tostring(decl_h and decl_h.label))
           assert.truthy(asgn_h and asgn_h.label:find("[1]", 1, true),
@@ -226,9 +212,9 @@ return function()
       it("does not show Assignments heading when body is empty", function()
         helpers.with_lua(empty_fn, 2, helpers.col0(empty_fn[2], "empty"), function()
           local v = atlantis.build_view_spec(menu_opts, {})
-          local inter = mr.interact_section(v.spec)
+          local sec = mr.outline_section(v.spec)
           assert.is_falsy(
-            section_heading(inter, outline_schema.kind_heading[nk.assignment]),
+            section_heading(sec, outline_schema.kind_heading[nk.assignment]),
             "no Assignments section for empty function"
           )
         end)
@@ -237,9 +223,9 @@ return function()
       it("does not show Declarations heading when body is empty", function()
         helpers.with_lua(empty_fn, 2, helpers.col0(empty_fn[2], "empty"), function()
           local v = atlantis.build_view_spec(menu_opts, {})
-          local inter = mr.interact_section(v.spec)
+          local sec = mr.outline_section(v.spec)
           assert.is_falsy(
-            section_heading(inter, outline_schema.kind_heading[nk.declaration]),
+            section_heading(sec, outline_schema.kind_heading[nk.declaration]),
             "no Declarations section for empty function"
           )
         end)
