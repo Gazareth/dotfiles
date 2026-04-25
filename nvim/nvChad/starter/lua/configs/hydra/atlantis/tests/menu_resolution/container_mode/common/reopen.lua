@@ -49,14 +49,14 @@ return function()
           local v = atlantis.build_view_spec(menu_opts_nav, {})
           local nav = mr.navigate_section(v.spec)
           local item_H = mr.find_item_by_key(nav.items, "H")
-          local item_h = mr.find_item_by_key(nav.items, "h")
+          local item_l = mr.find_item_by_key(nav.items, "l")
           if item_H then
             assert.is_table(item_H.reopen)
             assert.is_string(item_H.reopen.container_scope)
           end
-          if item_h then
-            assert.is_table(item_h.reopen)
-            assert.are.equal("current_scope", item_h.reopen.container_scope)
+          if item_l then
+            assert.is_table(item_l.reopen)
+            assert.are.equal("current_scope", item_l.reopen.container_scope)
           end
         end)
       end)

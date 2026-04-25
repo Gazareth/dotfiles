@@ -17,6 +17,11 @@ function context_rows.append_stack_neighbors(items, candidates, selected_index, 
   local row_spec = higher_spec
   local default_key = "w"
   local default_icon = "⬆"
+  local neighbor_ni = candidates[selected_index + 1] and candidates[selected_index + 1].node_info
+  local neighbor_reopen = { depth = depth }
+  if type(neighbor_ni) == "table" and neighbor_ni.node then
+    neighbor_reopen.anchor_pos = { bufnr = neighbor_ni.bufnr or 0, row = (neighbor_ni.start_row or 0) + 1, col = neighbor_ni.start_col or 0 }
+  end
   items[#items + 1] = {
     key = row_spec and row_spec.key or default_key,
     icon = row_spec and row_spec.icon or default_icon,
@@ -24,8 +29,8 @@ function context_rows.append_stack_neighbors(items, candidates, selected_index, 
       row_labels.nav_context_higher_in_chain(),
       row_labels.neighbor(selected_index + 1, candidates[selected_index + 1], jump_labels)
     ),
-    action = targets.jump_action(candidates[selected_index + 1] and candidates[selected_index + 1].node_info),
-    reopen = { depth = depth },
+    action = targets.jump_action(neighbor_ni),
+    reopen = neighbor_reopen,
   }
 end
 

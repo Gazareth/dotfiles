@@ -25,12 +25,16 @@ local function item_for_relation(row, labeled, depth, container_scope_val)
   if row.relation == "parent" and target and targets.is_document_root(target) then
     local dr = navigate_cfg.document_root_jump
     local phrase = type(dr) == "table" and dr.label_phrase or "To top"
+    local reopen_args = { depth = depth }
+    if type(target) == "table" and target.node then
+      reopen_args.anchor_pos = { bufnr = target.bufnr or 0, row = (target.start_row or 0) + 1, col = target.start_col or 0 }
+    end
     return {
       key = row.key,
       icon = type(dr) == "table" and dr.icon or "⇪",
       label = row_labels.with_quoted(phrase, quoted),
       action = targets.jump_action(target),
-      reopen = { depth = depth },
+      reopen = reopen_args,
     }
   end
 
@@ -38,6 +42,9 @@ local function item_for_relation(row, labeled, depth, container_scope_val)
     local reopen_args = { depth = depth }
     if row.relation == "child" and type(container_scope_val) == "string" then
       reopen_args.container_scope = container_scope_val
+    end
+    if type(target) == "table" and target.node then
+      reopen_args.anchor_pos = { bufnr = target.bufnr or 0, row = (target.start_row or 0) + 1, col = target.start_col or 0 }
     end
     return {
       key = row.key,

@@ -62,20 +62,20 @@ function navigation_rows.append(items, anchor_node_info, menu_opts, candidates, 
 
   local topmost = find_topmost_anchor(anchor_node_info)
   local to_top_level_action = targets.jump_action(topmost)
+  local next_target = targets.resolve_next_highest_anchor(anchor_node_info)
 
-  if walker.is_file_scope_anchor(anchor_node, bufnr) then
+  if not next_target then
+    -- We are TRULY at the top level (no higher standard anchor)
     -- H and h both navigate to file-root container mode — alias them together.
-    local outline_row, scope_row
+    local outline_row
     for _, row in ipairs(navigate_cfg.items or {}) do
       if row.group == "nav_context" and row.outline_scope == true then
         outline_row = row
-      elseif row.group == "nav_context" and row.current_scope == true then
-        scope_row = row
       end
     end
     items[#items + 1] = {
       key = outline_row and outline_row.key or "H",
-      key_alias = scope_row and scope_row.key or "h",
+      key_alias = "h",
       icon = outline_row and outline_row.icon,
       label = nc.to_top_level,
       action = to_top_level_action,
@@ -86,50 +86,63 @@ function navigation_rows.append(items, anchor_node_info, menu_opts, candidates, 
       },
     }
   else
-    -- Nested anchor: H (to file root) and h (to current scope) are distinct.
+    -- Nested anchor: H (to file root) and l (to current scope) are distinct.
+    local outline_row, scope_row
     for _, row in ipairs(navigate_cfg.items or {}) do
-      if row.group == "nav_context" and (row.outline_scope == true or row.current_scope == true) then
-        local label, item_reopen, action
+      if row.group == "nav_context" then
         if row.outline_scope == true then
-          label = nc.to_top_level
-          action = to_top_level_action
-          item_reopen = {
-            depth = -1,
-            container_scope = container_scope.file,
-            title_override = get_title_override(),
-          }
-        else
-          label = nc.current_scope
-          action = function() end
-          item_reopen = {
-            depth = depth,
-            container_scope = container_scope.current_scope,
-          }
+          outline_row = row
+        elseif row.current_scope == true then
+          scope_row = row
         end
-        items[#items + 1] = {
-          key = row.key,
-          icon = row.icon,
-          label = label,
-          action = action,
-          reopen = item_reopen,
-        }
       end
     end
-  end
 
-  local next_target = targets.resolve_next_highest_anchor(anchor_node_info)
-  if next_target then
+    -- 1. Top
+    if outline_row then
+      items[#items + 1] = {
+        key = outline_row.key,
+        icon = outline_row.icon,
+        label = nc.to_top_level,
+        action = to_top_level_action,
+        reopen = {
+          depth = -1,
+          container_scope = container_scope.file,
+          title_override = get_title_override(),
+        },
+      }
+    end
+
+    -- 2. Next highest
     local parsed = probe.parse(next_target)
     local quoted = menu_labels.quoted_target(next_target, parsed)
     local nh = navigate_cfg.next_highest or {}
     local phrase = type(nh.label_phrase) == "string" and nh.label_phrase or "To next highest"
+    local nh_reopen = { depth = depth }
+    if type(next_target) == "table" and next_target.node then
+      nh_reopen.anchor_pos = { bufnr = next_target.bufnr or 0, row = (next_target.start_row or 0) + 1, col = next_target.start_col or 0 }
+    end
     items[#items + 1] = {
-      key = nh.key or "J",
+      key = nh.key or "h",
       icon = nh.icon,
       label = row_labels.with_quoted(phrase, quoted),
       action = targets.jump_action(next_target),
-      reopen = { depth = depth },
+      reopen = nh_reopen,
     }
+
+    -- 3. Current
+    if scope_row then
+      items[#items + 1] = {
+        key = scope_row.key,
+        icon = scope_row.icon,
+        label = nc.current_scope,
+        action = function() end,
+        reopen = {
+          depth = depth,
+          container_scope = container_scope.current_scope,
+        },
+      }
+    end
   end
 
   context_rows.append_stack_neighbors(items, candidates or {}, selected_index, jump_labels, menu_opts)
