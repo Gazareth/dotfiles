@@ -15,7 +15,7 @@ return function()
           for _, it in ipairs(m.jump_items_with_key(ctx.nav_column_spec.items)) do
             assert.are_not.same("a", it.key)
           end
-        end)
+        end, 1)
       end)
     end)
 

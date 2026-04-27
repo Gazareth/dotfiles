@@ -118,7 +118,7 @@ function navigation_rows.append(items, anchor_node_info, menu_opts, candidates, 
     local quoted = menu_labels.quoted_target(next_target, parsed)
     local nh = navigate_cfg.next_highest or {}
     local phrase = type(nh.label_phrase) == "string" and nh.label_phrase or "To next highest"
-    local nh_reopen = { depth = depth }
+    local nh_reopen = { depth = 0 }
     if type(next_target) == "table" and next_target.node then
       nh_reopen.anchor_pos = { bufnr = next_target.bufnr or 0, row = (next_target.start_row or 0) + 1, col = next_target.start_col or 0 }
     end

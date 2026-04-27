@@ -50,7 +50,7 @@ return function()
           assert.is_not_nil(item, "expected to_top_level item even inside a function")
           assert.are.equal("H", item.key)
           assert.is_nil(item.key_alias, "H should not alias to h when nested")
-        end)
+        end, 1)
       end)
 
       it("reopens in file root container mode", function()
@@ -74,7 +74,7 @@ return function()
           item.action()
           local row, _ = unpack(vim.api.nvim_win_get_cursor(0))
           assert.are.same(1, row)
-        end)
+        end, 1)
       end)
     end)
 
@@ -100,10 +100,10 @@ return function()
           local items = ctx.nav_column_spec.items
           assert.is_not_nil(find_go_up_item(items),
             "expected go up one level item for anchor inside a function")
-            
+
           local item_h = m.find_item_by_key(items, "h")
           assert.is_not_nil(item_h, "Next highest should be present")
-        end)
+        end, 1)
       end)
 
       it("reopens in standard mode at depth 0", function()
@@ -117,7 +117,7 @@ return function()
           assert.is_not_nil(item)
           assert.are.same(0, item.reopen.depth)
           assert.is_nil(item.reopen.container_scope)
-        end)
+        end, 1)
       end)
 
       it("jumps cursor to the next highest anchor point", function()
@@ -132,7 +132,7 @@ return function()
           item.action()
           local row, _ = unpack(vim.api.nvim_win_get_cursor(0))
           assert.are.same(1, row)
-        end)
+        end, 1)
       end)
     end)
 
@@ -155,7 +155,7 @@ return function()
           local items = ctx.nav_column_spec.items
           local item_l = m.find_item_by_key(items, "l")
           assert.is_not_nil(item_l, "Current scope should be present when nested")
-        end)
+        end, 1)
       end)
     end)
 
@@ -174,7 +174,7 @@ return function()
             end
           end
           assert.are.same({ "H", "h", "l" }, context_keys)
-        end)
+        end, 1)
       end)
     end)
 
