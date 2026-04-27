@@ -10,6 +10,7 @@ return {
       node_tier = nt.settlement,
       node_kind = nk.declaration,
       actionable = true,
+      container = true,
     },
     field_expression = {
       node_tier = nt.chambers,

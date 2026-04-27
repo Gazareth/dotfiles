@@ -24,6 +24,7 @@ M.node_types = {
   function_definition = "function_definition",
   function_expression = "function_expression",
   arrow_function = "arrow_function",
+  return_statement = "return_statement",
   fn = "function",
 }
 

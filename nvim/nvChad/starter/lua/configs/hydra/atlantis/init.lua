@@ -101,10 +101,16 @@ function M.open(menu_opts, hydra_opts)
   local anchor_ctx = view.anchor_ctx
   local container_mode = view.container_mode
 
+  local skip_cursor_snap = menu_opts.skip_cursor_snap == true
+
   if container_mode and anchor_ctx.anchor_node_info and anchor_ctx.anchor_node_info.node then
-    position_cursor.at_node_info(anchor_ctx.anchor_node_info)
+    if not skip_cursor_snap then
+      position_cursor.at_node_info(anchor_ctx.anchor_node_info)
+    end
   elseif spec.anchor_node_info then
-    position_cursor.at_node_info(spec.anchor_node_info)
+    if not skip_cursor_snap then
+      position_cursor.at_node_info(spec.anchor_node_info)
+    end
     spec.anchor_node_info = nil
   end
 

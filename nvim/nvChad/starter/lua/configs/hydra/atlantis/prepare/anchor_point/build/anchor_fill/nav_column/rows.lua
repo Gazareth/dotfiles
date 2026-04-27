@@ -2,6 +2,9 @@ local menu_schema = require("configs.hydra.atlantis.schema.menu")
 local relative_jumps = require("configs.hydra.atlantis.prepare.anchor_point.build.anchor_fill.nav_column.sibling_jumps")
 local navigation_rows = require("configs.hydra.atlantis.prepare.anchor_point.build.anchor_fill.nav_column.navigation_rows")
 local relation_rows = require("configs.hydra.atlantis.prepare.anchor_point.build.anchor_fill.nav_column.relation_rows")
+local anchor_actionable = require("configs.hydra.atlantis.prepare.anchor_point.build.actionable")
+local build_node_info = require("configs.hydra.atlantis.prepare.anchor_point.probe.treesitter.node_info").build_node_info
+local treesitter_config = require("configs.hydra.atlantis.prepare.anchor_point.probe.treesitter.config")
 
 local jump_rows = {}
 
@@ -18,7 +21,26 @@ function jump_rows.build_items(anchor_node_info, find_result, menu_opts)
     return items
   end
 
-  local labeled = relative_jumps.labeled(anchor_node_info, navigate_cfg.items)
+  -- Pick the innermost candidate whose direct parent is a schema-recognised container.
+  -- This gives siblings at the right scope without coupling to tier abstractions.
+  local sibling_context = anchor_node_info
+  local cfg = treesitter_config.get()
+  local resolve_options = anchor_actionable.resolve_options_from_config(cfg)
+  for i = 1, #candidates do
+    local entry = candidates[i]
+    local node = entry.node_info and entry.node_info.node
+    if node then
+      local parent = node:parent()
+      if parent then
+        local parent_ni = build_node_info({ bufnr = entry.node_info.bufnr, node = parent })
+        if anchor_actionable.is_container(parent_ni, resolve_options) then
+          sibling_context = entry.node_info
+          break
+        end
+      end
+    end
+  end
+  local labeled = relative_jumps.labeled(sibling_context, navigate_cfg.items)
   relation_rows.append(items, labeled, anchor_node_info, menu_opts)
 
   return items

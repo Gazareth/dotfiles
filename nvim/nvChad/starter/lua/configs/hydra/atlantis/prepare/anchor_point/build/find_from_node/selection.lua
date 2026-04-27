@@ -30,7 +30,7 @@ local function select_standard_anchor_index(candidate_chain)
         if not best
           or tier_context_depth < best.tier_context_depth
           or (tier_context_depth == best.tier_context_depth and kind_context_depth < best.kind_context_depth)
-          or (tier_context_depth == best.tier_context_depth and kind_context_depth == best.kind_context_depth and index > best.index) then
+          or (tier_context_depth == best.tier_context_depth and kind_context_depth == best.kind_context_depth and index < best.index) then
           best = {
             index = index,
             tier_context_depth = tier_context_depth,

@@ -71,6 +71,8 @@ local function build_supported_result(language, mapping_source, node_info, mappi
     node_tier = node_tier,
     node_kind = node_kind,
     actionable = mapping.actionable == true,
+    container = mapping.container == true,
+    non_actionable_parent_types = mapping.non_actionable_parent_types,
   }
 end
 

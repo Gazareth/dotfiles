@@ -3,6 +3,14 @@ local build_node_info = require("configs.hydra.atlantis.prepare.anchor_point.pro
 local title_const = require("configs.hydra.atlantis.menu.components.title.constants")
 local treesitter_config = require("configs.hydra.atlantis.prepare.anchor_point.probe.treesitter.config")
 
+local function is_container_node(node, bufnr)
+  if not node then return false end
+  local cfg = treesitter_config.get()
+  local resolve_options = anchor_actionable.resolve_options_from_config(cfg)
+  local ni = build_node_info({ bufnr = bufnr, node = node })
+  return ni ~= nil and anchor_actionable.is_container(ni, resolve_options)
+end
+
 local M = {}
 
 function M.parse_tree_root(bufnr)
@@ -22,10 +30,6 @@ local function safe_root(bufnr)
   return M.parse_tree_root(bufnr)
 end
 
-local function qualifies(node)
-  return node and node:named_child_count() >= 2
-end
-
 -- Function-like TS node types: if such a node appears on the path to the parse root
 -- and its parent is *not* the root, the anchor lives inside a nested callable scope.
 local FN_ANCESTOR_TYPES = {
@@ -37,19 +41,21 @@ local FN_ANCESTOR_TYPES = {
   ["function"] = true,
 }
 
-local function has_nested_function_ancestor(anchor_node, root)
+local function has_actionable_ancestor(anchor_node, root, bufnr)
   if not anchor_node or not root then
     return false
   end
-  local n = anchor_node
+  local cfg = treesitter_config.get()
+  local resolve_options = anchor_actionable.resolve_options_from_config(cfg)
+  local n = anchor_node:parent()
   while n do
     if n:id() == root:id() then
       return false
     end
-    local t = n:type()
-    if FN_ANCESTOR_TYPES[t] then
-      local p = n:parent()
-      if p and p:id() ~= root:id() then
+    local ni = build_node_info({ bufnr = bufnr, node = n })
+    if ni then
+      local ok, _ = anchor_actionable.check(ni, resolve_options)
+      if ok then
         return true
       end
     end
@@ -170,7 +176,7 @@ function M.container_for_nav_mode(anchor_ctx, bufnr, cursor_node)
   
   local innermost = get_innermost_callable(cursor_node, root)
   if innermost then
-    if has_nested_function_ancestor(innermost, root) then
+    if has_actionable_ancestor(innermost, root, bufnr) then
       return get_callable_body(innermost), false
     else
       local body_scope = body_container_if_cursor_in_top_level_callable(cursor_node, root)
@@ -195,7 +201,7 @@ function M.is_file_scope_anchor(anchor_node, bufnr)
   if anchor_node:id() == root:id() then
     return true
   end
-  return not has_nested_function_ancestor(anchor_node, root)
+  return not has_actionable_ancestor(anchor_node, root, bufnr)
 end
 
 --- @return TSNode|nil container_node
@@ -212,7 +218,7 @@ function M.resolve_anchor_container(bufnr, cursor_node)
   local n = cursor_node
 
   while n do
-    if qualifies(n) then
+    if is_container_node(n, bufnr) then
       if failures >= 3 then
         notify_container(bufnr, n)
       end

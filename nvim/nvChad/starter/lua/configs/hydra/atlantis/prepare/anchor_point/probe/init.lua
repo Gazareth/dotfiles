@@ -37,6 +37,9 @@ local function resolve_probe_id(node_info, semantic)
 		return probe_id
 	end
 
+  local function fn()
+  end
+
 	return "generic"
 end
 

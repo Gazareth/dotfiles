@@ -43,6 +43,13 @@ local function item_for_relation(row, labeled, depth, container_scope_val)
     if row.relation == "child" and type(container_scope_val) == "string" then
       reopen_args.container_scope = container_scope_val
     end
+    -- Sibling jumps land the cursor at the sibling statement; tell open() not to
+    -- override that position by snapping to the first-class anchor.
+    local is_sibling = row.relation == "prev_sibling" or row.relation == "next_sibling"
+      or row.relation == "first_sibling" or row.relation == "last_sibling"
+    if is_sibling then
+      reopen_args.skip_cursor_snap = true
+    end
     if type(target) == "table" and target.node then
       reopen_args.anchor_pos = { bufnr = target.bufnr or 0, row = (target.start_row or 0) + 1, col = target.start_col or 0 }
     end

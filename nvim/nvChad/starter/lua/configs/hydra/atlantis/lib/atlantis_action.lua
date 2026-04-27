@@ -40,15 +40,14 @@ function M.wrap_item(item, session)
     it.action = inner
     action.execute(it)
     it.action = wrapper
+    -- Capture cursor immediately after the jump, before Hydra's exit cleanup can restore it.
+    local post_jump_buf = vim.api.nvim_get_current_buf()
+    local post_jump_pos = vim.api.nvim_win_get_cursor(0)
     vim.schedule(function()
       local hydra_opts = vim.tbl_extend("force", {}, session.hydra_opts)
-      if type(reopen_args.anchor_pos) == "table" then
-        local pos = reopen_args.anchor_pos
-        if type(pos.bufnr) == "number" and vim.api.nvim_buf_is_valid(pos.bufnr) then
-          pcall(vim.api.nvim_set_current_buf, pos.bufnr)
-          pcall(vim.api.nvim_win_set_cursor, 0, { pos.row or 1, pos.col or 0 })
-        end
-      end
+      -- Reapply the post-jump cursor position (Hydra may restore the pre-open position on exit).
+      pcall(vim.api.nvim_set_current_buf, post_jump_buf)
+      pcall(vim.api.nvim_win_set_cursor, 0, post_jump_pos)
       require("configs.hydra.atlantis").open(reopen_args, hydra_opts)
     end)
   end

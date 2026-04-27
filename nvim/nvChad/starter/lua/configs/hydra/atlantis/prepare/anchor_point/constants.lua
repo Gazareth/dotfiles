@@ -12,7 +12,9 @@ M.standard_preferred_tiers = {
   [node_tiers.colony] = true,
   [node_tiers.settlement] = true,
   [node_tiers.cluster] = true,
-  [node_tiers.habitat] = true,
+  -- habitat (individual statements/assignments) is intentionally excluded:
+  -- depth=0 resolves to first-class anchors (e.g. function declarations).
+  -- Use depth=1 to anchor to the nearest statement or parameter.
 }
 
 -- Standard tier context_depth score

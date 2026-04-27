@@ -155,11 +155,12 @@ function M.build_atlantis_hint_string(spec)
 end
 
 --- Set up a Lua scratch buffer from lines, position cursor at needle on row1, build nav ctx, pass ctx to fn.
-function M.with_navigate_ctx(lines, row1, needle, fn)
+--- depth defaults to 0. Pass depth=1 to resolve to the nearest statement/cluster inside a function body.
+function M.with_navigate_ctx(lines, row1, needle, fn, depth)
   local h = require("configs.hydra.atlantis.tests.helpers")
   local anchor_build = require("configs.hydra.atlantis.prepare.anchor_point.build")
   h.with_lua(lines, row1, h.col0(lines[row1], needle), function()
-    fn(anchor_build.build({ depth = 0 }))
+    fn(anchor_build.build({ depth = depth or 0 }))
   end)
 end
 
@@ -180,6 +181,7 @@ function M.with_all_sections_fixture(fn)
 end
 
 --- Nested assignment 'b' between 'a' and 'c' — prev and next siblings available.
+--- depth=1 is required: depth=0 resolves to the enclosing settlement-tier function, not the statement.
 function M.with_nested_sibling_fixture(fn)
   local lines = {
     "local function outer()",
@@ -190,7 +192,7 @@ function M.with_nested_sibling_fixture(fn)
     "  end",
     "end",
   }
-  M.with_navigate_ctx(lines, 4, "b", fn)
+  M.with_navigate_ctx(lines, 4, "b", fn, 1)
 end
 
 return M
