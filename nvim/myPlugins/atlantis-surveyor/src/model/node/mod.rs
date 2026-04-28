@@ -26,9 +26,10 @@ pub struct RawNode {
     pub kind: String,
     pub text: String,
     pub range: NodeRange,
-    /// Named children probed from the Lua API, keyed by Tree-sitter field name.
-    /// e.g. "name" -> identifier node, "body" -> block node, "condition" -> expr node
+    /// Named children keyed by Tree-sitter field name (e.g. "name", "body").
     pub fields: HashMap<String, RawNode>,
+    /// Unnamed named children in source order (e.g. parameters, arguments).
+    pub children: Vec<RawNode>,
 }
 
 impl RawNode {
@@ -57,6 +58,7 @@ impl RawNode {
             text: String::new(),
             range: self.range.clone(),
             fields: HashMap::new(),
+            children: vec![],
         }
     }
 }

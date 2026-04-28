@@ -1,4 +1,4 @@
-//! Decode the raw Lua table returned by the bridge into typed Rust values.
+//! Decode the raw Lua table returned by the query into typed Rust values.
 //!
 //! Every function takes an nvim-oxi `Dictionary` (the Rust view of a Lua table)
 //! and extracts one or more fields, converting them to concrete Rust types.
@@ -6,7 +6,7 @@
 use std::collections::HashMap;
 
 use nvim_oxi::conversion::FromObject;
-use nvim_oxi::Dictionary;
+use nvim_oxi::{Array, Dictionary};
 
 use crate::model::node::NodeRange;
 use crate::error::AtlantisError;
@@ -67,7 +67,23 @@ pub fn fields(d: &Dictionary) -> HashMap<String, TsFieldNode> {
         .unwrap_or_default()
 }
 
-/// Assemble a complete `TsSnapshot` from the top-level bridge Dictionary.
+/// Parse the `children` array into an ordered list of unnamed named child nodes.
+/// Malformed entries are silently dropped.
+pub fn children(d: &Dictionary) -> Vec<TsFieldNode> {
+    d.get("children")
+        .and_then(|o| Array::from_object(o.clone()).ok())
+        .map(|arr| {
+            arr.into_iter()
+                .filter_map(|val| {
+                    let d = Dictionary::from_object(val).ok()?;
+                    field_node(&d).ok()
+                })
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+/// Assemble a complete `TsSnapshot` from the top-level query Dictionary.
 pub fn snapshot(d: &Dictionary) -> Result<TsSnapshot, AtlantisError> {
     Ok(TsSnapshot {
         node_type: str(d, "node_type")?,
@@ -75,5 +91,6 @@ pub fn snapshot(d: &Dictionary) -> Result<TsSnapshot, AtlantisError> {
         text:      str(d, "text")?,
         filetype:  str(d, "filetype").unwrap_or_default(),
         fields:    fields(d),
+        children:  children(d),
     })
 }

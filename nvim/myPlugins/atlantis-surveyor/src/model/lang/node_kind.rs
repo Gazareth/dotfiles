@@ -11,6 +11,7 @@ pub enum NodeClass {
 #[derive(Debug, Clone, Copy)]
 pub enum SyntaxKind {
     Function,
+    Call,
     Assignment,
     Conditional,
 }

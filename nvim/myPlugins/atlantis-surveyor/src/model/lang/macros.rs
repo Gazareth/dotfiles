@@ -25,6 +25,7 @@ macro_rules! impl_lang_node_resolver {
         #[serde(tag = "type", rename_all = "snake_case")]
         pub enum $StdEnum {
             Function($crate::model::node::Node<$Lang, $crate::model::supported_nodes::FunctionDeclaration>),
+            Call($crate::model::node::Node<$Lang, $crate::model::supported_nodes::FunctionCall>),
             Assignment($crate::model::node::Node<$Lang, $crate::model::supported_nodes::Assignment>),
             Conditional($crate::model::node::Node<$Lang, $crate::model::supported_nodes::ConditionalStatement>),
             Unresolved($crate::model::node::Node<$Lang, $crate::model::node::Unresolved>),
@@ -49,6 +50,13 @@ macro_rules! impl_lang_node_resolver {
                     Some(NodeClass::Standard(SyntaxKind::Function)) => ResolveOutput::Standard(
                         $StdEnum::Function($crate::model::node::Node {
                             state: <$Lang as $crate::model::node::Extract<$crate::model::supported_nodes::FunctionDeclaration>>::extract(&self.raw),
+                            raw: self.raw,
+                            _lang: PhantomData,
+                        })
+                    ),
+                    Some(NodeClass::Standard(SyntaxKind::Call)) => ResolveOutput::Standard(
+                        $StdEnum::Call($crate::model::node::Node {
+                            state: <$Lang as $crate::model::node::Extract<$crate::model::supported_nodes::FunctionCall>>::extract(&self.raw),
                             raw: self.raw,
                             _lang: PhantomData,
                         })

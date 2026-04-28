@@ -1,4 +1,4 @@
-//! `luaeval` bridge: single round-trip to Neovim that returns node type, range,
+//! `luaeval` query: single round-trip to Neovim that returns node type, range,
 //! text, buffer filetype, and named child fields as a raw `Dictionary`.
 
 use nvim_oxi::api;
@@ -21,13 +21,14 @@ const LUA: &str = r#"(function(bufnr, row, col)
   local ok_txt, txt = pcall(vim.treesitter.get_node_text, node, bufnr)
   local ft = vim.bo[bufnr].filetype
   local fields = {}
+  local children = {}
   for i = 0, node:child_count() - 1 do
     local child = node:child(i)
     local fname = node:field_name_for_child(i)
-    if fname and child and child:is_named() then
+    if child and child:is_named() then
       local ok_ct, ct = pcall(vim.treesitter.get_node_text, child, bufnr)
       local csr, csc, cer, cec = child:range()
-      fields[fname] = {
+      local child_data = {
         node_type = child:type(),
         text = (ok_ct and ct) or "",
         start_row = csr,
@@ -35,6 +36,11 @@ const LUA: &str = r#"(function(bufnr, row, col)
         end_row = cer,
         end_col = cec,
       }
+      if fname then
+        fields[fname] = child_data
+      else
+        table.insert(children, child_data)
+      end
     end
   end
   return {
@@ -46,6 +52,7 @@ const LUA: &str = r#"(function(bufnr, row, col)
     text = (ok_txt and txt) or "",
     filetype = ft,
     fields = fields,
+    children = children,
   }
 end)(...)"#;
 

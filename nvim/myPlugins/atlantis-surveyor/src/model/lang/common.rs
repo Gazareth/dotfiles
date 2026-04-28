@@ -1,4 +1,4 @@
-use crate::model::supported_nodes::{HasAssignment, HasBody, HasConditionals, HasFunctions, HasParameterList};
+use crate::model::supported_nodes::{HasAssignment, HasBody, HasConditionals, HasFunctions, HasFunctionCalls, HasParameter, HasParameterList};
 
 // ── Convenience bundle ────────────────────────────────────────────────────
 //
@@ -7,12 +7,14 @@ use crate::model::supported_nodes::{HasAssignment, HasBody, HasConditionals, Has
 // automatically via the blanket impls below.
 
 pub trait CLike:
-    HasFunctions + HasAssignment + HasConditionals
-    + HasBody + HasParameterList
+    HasFunctions + HasFunctionCalls + HasAssignment + HasConditionals
+    + HasBody + HasParameter + HasParameterList
 {}
 
 impl<Lang: CLike> HasFunctions for Lang {}
+impl<Lang: CLike> HasFunctionCalls for Lang {}
 impl<Lang: CLike> HasAssignment for Lang {}
 impl<Lang: CLike> HasConditionals for Lang {}
 impl<Lang: CLike> HasBody for Lang {}
+impl<Lang: CLike> HasParameter for Lang {}
 impl<Lang: CLike> HasParameterList for Lang {}

@@ -12,6 +12,7 @@ crate::impl_language_syntax_map!(JavaScript, JAVASCRIPT_KINDS, {
     "assignment_expression" => NodeClass::Standard(SyntaxKind::Assignment),
     "variable_declarator"   => NodeClass::Standard(SyntaxKind::Assignment),
     "if_statement"          => NodeClass::Standard(SyntaxKind::Conditional),
+    "call_expression"       => NodeClass::Standard(SyntaxKind::Call),
     "formal_parameters"     => NodeClass::Container(StructureKind::ParameterList),
     "statement_block"       => NodeClass::Container(StructureKind::Body),
 });

@@ -28,15 +28,24 @@ fn snapshot_to_raw_node(snap: &TsSnapshot) -> RawNode {
             .fields
             .iter()
             .map(|(k, f)| {
-                (
-                    k.clone(),
-                    RawNode {
-                        kind: f.node_type.clone(),
-                        text: f.text.clone(),
-                        range: f.range.clone(),
-                        fields: HashMap::new(),
-                    },
-                )
+                (k.clone(), RawNode {
+                    kind: f.node_type.clone(),
+                    text: f.text.clone(),
+                    range: f.range.clone(),
+                    fields: HashMap::new(),
+                    children: vec![],
+                })
+            })
+            .collect(),
+        children: snap
+            .children
+            .iter()
+            .map(|c| RawNode {
+                kind: c.node_type.clone(),
+                text: c.text.clone(),
+                range: c.range.clone(),
+                fields: HashMap::new(),
+                children: vec![],
             })
             .collect(),
     }

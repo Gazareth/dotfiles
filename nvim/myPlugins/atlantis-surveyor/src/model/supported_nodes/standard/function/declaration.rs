@@ -1,12 +1,6 @@
-pub mod body;
-pub mod parameter_list;
-
-pub use body::{Body, HasBody};
-pub use parameter_list::{ParameterList, HasParameterList};
-
 use serde::{Deserialize, Serialize};
 use crate::model::node::{Extract, RawNode};
-use super::Named;
+use crate::model::supported_nodes::standard::Named;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FunctionDeclaration {
