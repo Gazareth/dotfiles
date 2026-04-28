@@ -1,7 +1,6 @@
-use crate::model::common::*;
-use crate::model::lang::NodeCategory;
+use crate::model::kinds::{Assignment, StandardConditionals, StandardFunctions};
+use crate::model::lang::NodeKind;
 use crate::model::node::{Extract, RawNode};
-use crate::model::states::Assignment;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Lua;
@@ -20,11 +19,11 @@ impl Extract<Assignment> for Lua {
 }
 
 crate::impl_language_syntax_map!(Lua, LUA_KINDS, {
-    "function_declaration" => NodeCategory::Function,
-    "local_function"       => NodeCategory::Function,
-    "assignment_statement" => NodeCategory::Assignment,
-    "local_declaration"    => NodeCategory::Assignment,
-    "if_statement"         => NodeCategory::Conditional,
+    "function_declaration" => NodeKind::Function,
+    "local_function"       => NodeKind::Function,
+    "assignment_statement" => NodeKind::Assignment,
+    "local_declaration"    => NodeKind::Assignment,
+    "if_statement"         => NodeKind::Conditional,
 });
 
 crate::impl_lang_node_resolver!(Lua, LuaNode);

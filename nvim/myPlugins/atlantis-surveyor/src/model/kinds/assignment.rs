@@ -1,0 +1,32 @@
+use serde::{Deserialize, Serialize};
+use crate::model::node::{Extract, RawNode};
+use super::Named;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Assignment {
+    /// The name being assigned to — needed for display and search.
+    pub name: String,
+    /// Whether this introduces a new locally-scoped binding (e.g. Lua's `local`).
+    pub is_local_binding: bool,
+    /// The right-hand side. Opaque until the user drills in.
+    pub value: RawNode,
+}
+
+impl Named for Assignment {
+    fn name(&self) -> &str {
+        &self.name
+    }
+}
+
+/// Languages where assignment follows: `name = value` with no scoping keyword.
+pub trait StandardAssignment {}
+
+impl<Lang: StandardAssignment> Extract<Assignment> for Lang {
+    fn extract(raw: &RawNode) -> Assignment {
+        Assignment {
+            name: raw.field_text("name"),
+            is_local_binding: false,
+            value: raw.field("value").cloned().unwrap_or_else(|| raw.placeholder("value")),
+        }
+    }
+}

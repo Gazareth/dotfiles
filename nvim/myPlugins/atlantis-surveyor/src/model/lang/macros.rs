@@ -2,13 +2,13 @@
 #[doc(hidden)]
 #[macro_export]
 macro_rules! impl_language_syntax_map {
-    ($Lang:ty, $map_name:ident, { $($kind:literal => $category:expr),* $(,)? }) => {
-        static $map_name: phf::Map<&'static str, $crate::model::lang::NodeCategory> = phf::phf_map! {
-            $($kind => $category),*
+    ($Lang:ty, $map_name:ident, { $($kind:literal => $node_kind:expr),* $(,)? }) => {
+        static $map_name: phf::Map<&'static str, $crate::model::lang::NodeKind> = phf::phf_map! {
+            $($kind => $node_kind),*
         };
 
         impl $crate::model::lang::LanguageConfig for $Lang {
-            fn kinds() -> &'static phf::Map<&'static str, $crate::model::lang::NodeCategory> {
+            fn kinds() -> &'static phf::Map<&'static str, $crate::model::lang::NodeKind> {
                 &$map_name
             }
         }
@@ -23,9 +23,9 @@ macro_rules! impl_lang_node_resolver {
         #[derive(Debug, serde::Serialize)]
         #[serde(tag = "type", rename_all = "snake_case")]
         pub enum $NodeEnum {
-            Function($crate::model::node::Node<$Lang, $crate::model::states::FunctionDeclaration>),
-            Assignment($crate::model::node::Node<$Lang, $crate::model::states::Assignment>),
-            Conditional($crate::model::node::Node<$Lang, $crate::model::states::ConditionalStatement>),
+            Function($crate::model::node::Node<$Lang, $crate::model::kinds::FunctionDeclaration>),
+            Assignment($crate::model::node::Node<$Lang, $crate::model::kinds::Assignment>),
+            Conditional($crate::model::node::Node<$Lang, $crate::model::kinds::ConditionalStatement>),
             Unresolved($crate::model::node::Node<$Lang, $crate::model::node::Unresolved>),
         }
 
@@ -36,23 +36,23 @@ macro_rules! impl_lang_node_resolver {
                 use std::marker::PhantomData;
                 let kind = self.raw.kind.clone();
                 match <$Lang as $crate::model::lang::LanguageConfig>::categorise(&kind) {
-                    Some($crate::model::lang::NodeCategory::Function) => $NodeEnum::Function(
+                    Some($crate::model::lang::NodeKind::Function) => $NodeEnum::Function(
                         $crate::model::node::Node {
-                            state: <$Lang as $crate::model::node::Extract<$crate::model::states::FunctionDeclaration>>::extract(&self.raw),
+                            state: <$Lang as $crate::model::node::Extract<$crate::model::kinds::FunctionDeclaration>>::extract(&self.raw),
                             raw: self.raw,
                             _lang: PhantomData,
                         }
                     ),
-                    Some($crate::model::lang::NodeCategory::Assignment) => $NodeEnum::Assignment(
+                    Some($crate::model::lang::NodeKind::Assignment) => $NodeEnum::Assignment(
                         $crate::model::node::Node {
-                            state: <$Lang as $crate::model::node::Extract<$crate::model::states::Assignment>>::extract(&self.raw),
+                            state: <$Lang as $crate::model::node::Extract<$crate::model::kinds::Assignment>>::extract(&self.raw),
                             raw: self.raw,
                             _lang: PhantomData,
                         }
                     ),
-                    Some($crate::model::lang::NodeCategory::Conditional) => $NodeEnum::Conditional(
+                    Some($crate::model::lang::NodeKind::Conditional) => $NodeEnum::Conditional(
                         $crate::model::node::Node {
-                            state: <$Lang as $crate::model::node::Extract<$crate::model::states::ConditionalStatement>>::extract(&self.raw),
+                            state: <$Lang as $crate::model::node::Extract<$crate::model::kinds::ConditionalStatement>>::extract(&self.raw),
                             raw: self.raw,
                             _lang: PhantomData,
                         }
