@@ -1,13 +1,12 @@
 //! atlantis_surveyor — Rust probe layer for Atlantis (Neovim + nvim-oxi).
 
 mod action;
-mod anchor;
 mod constants;
 mod endpoints;
 mod error;
 mod model;
-mod prepare;
 mod probe;
+mod survey;
 
 use nvim_oxi::{Dictionary, Function, Object};
 

@@ -19,9 +19,9 @@ impl Named for Assignment {
 }
 
 /// Languages where assignment follows: `name = value` with no scoping keyword.
-pub trait StandardAssignment {}
+pub trait HasAssignment {}
 
-impl<Lang: StandardAssignment> Extract<Assignment> for Lang {
+impl<Lang: HasAssignment> Extract<Assignment> for Lang {
     fn extract(raw: &RawNode) -> Assignment {
         Assignment {
             name: raw.field_text("name"),

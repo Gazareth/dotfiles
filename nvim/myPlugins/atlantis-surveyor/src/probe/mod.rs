@@ -1,4 +1,4 @@
 //! Buffer / Tree-sitter probing.
 
-pub mod atlantis;
+pub mod language;
 pub mod treesitter;

@@ -2,25 +2,31 @@
 //
 // Module layout:
 //
-//   node/      — RawNode, Node<Lang, State>, pipeline states, AtlantisCursor,
-//                Extract trait.
+//   node/             — RawNode, NodeRange, Node<Lang, State>, pipeline states,
+//                       AtlantisCursor, Extract + HasSiblings traits.
 //
-//   kinds/     — One file per node kind. Each file owns the state struct,
-//                the Standard* marker trait, and the blanket Extract impl.
-//                Add a new file here for each new kind.
+//   supported_nodes/  — One file per supported node. Each file owns the state
+//                       struct, the Standard*/Container* marker trait, and the
+//                       blanket Extract impl. Add a new file here for each new
+//                       supported node type.
 //
-//   lang/      — Language markers, NodeKind enum, LanguageConfig trait,
-//                per-language Extract overrides, node enums, resolvers.
+//   lang/             — Language markers, NodeClass/SyntaxKind/StructureKind,
+//                       LanguageConfig trait, per-language Extract overrides,
+//                       node enums, resolvers.
+//
+//   resolved/         — AnyStandardNode + AnyContainerNode wrappers.
 
-pub mod kinds;
+pub mod supported_nodes;
 pub mod lang;
 pub mod node;
+pub mod resolved;
 
-// Re-export the most commonly used types so consumers can write:
-//   use atlantis_surveyor::model::{Node, AtlantisCursor, LuaNode};
-// rather than reaching into submodules.
-
-pub use kinds::{Assignment, ConditionalStatement, FunctionDeclaration};
-pub use lang::{JavaScriptNode, LuaNode, PythonNode, TypeScriptNode};
-pub use node::{AtlantisCursor, Node, RawNode, Unknown, Unresolved};
-pub use crate::anchor::AnchorRange as Range;
+pub use supported_nodes::{Assignment, ConditionalStatement, FunctionDeclaration};
+pub use lang::{
+    JavaScriptContainerNode, JavaScriptNode,
+    LuaContainerNode, LuaNode,
+    PythonContainerNode, PythonNode,
+    TypeScriptContainerNode, TypeScriptNode,
+};
+pub use node::{AtlantisCursor, Node, NodeRange, RawNode, Unknown, Unresolved};
+pub use resolved::{AnyContainerNode, AnyStandardNode};

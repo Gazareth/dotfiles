@@ -1,10 +1,19 @@
 use std::marker::PhantomData;
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
-use crate::anchor::AnchorRange;
 
 pub mod traits;
 pub use traits::Extract;
+
+// ── Positional range ──────────────────────────────────────────────────────
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct NodeRange {
+    pub start_row: u32,
+    pub start_col: u32,
+    pub end_row: u32,
+    pub end_col: u32,
+}
 
 // ── Raw data from Tree-sitter (populated via Lua API) ─────────────────────
 //
@@ -16,7 +25,7 @@ pub use traits::Extract;
 pub struct RawNode {
     pub kind: String,
     pub text: String,
-    pub range: AnchorRange,
+    pub range: NodeRange,
     /// Named children probed from the Lua API, keyed by Tree-sitter field name.
     /// e.g. "name" -> identifier node, "body" -> block node, "condition" -> expr node
     pub fields: HashMap<String, RawNode>,
@@ -47,7 +56,7 @@ impl RawNode {
             kind: kind.to_string(),
             text: String::new(),
             range: self.range.clone(),
-            fields: std::collections::HashMap::new(),
+            fields: HashMap::new(),
         }
     }
 }
@@ -77,7 +86,7 @@ pub struct Node<Lang, State = Unknown> {
 }
 
 impl<Lang, State> Node<Lang, State> {
-    pub fn range(&self) -> &AnchorRange {
+    pub fn range(&self) -> &NodeRange {
         &self.raw.range
     }
 

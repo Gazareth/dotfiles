@@ -1,12 +1,14 @@
-use crate::model::kinds::{Assignment, StandardConditionals, StandardFunctions};
-use crate::model::lang::NodeKind;
+use crate::model::supported_nodes::{Assignment, HasBody, HasConditionals, HasFunctions, HasParameterList};
+use crate::model::lang::{NodeClass, StructureKind, SyntaxKind};
 use crate::model::node::{Extract, RawNode};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Lua;
 
-impl StandardFunctions for Lua {}
-impl StandardConditionals for Lua {}
+impl HasFunctions for Lua {}
+impl HasConditionals for Lua {}
+impl HasBody for Lua {}
+impl HasParameterList for Lua {}
 
 impl Extract<Assignment> for Lua {
     fn extract(raw: &RawNode) -> Assignment {
@@ -19,11 +21,13 @@ impl Extract<Assignment> for Lua {
 }
 
 crate::impl_language_syntax_map!(Lua, LUA_KINDS, {
-    "function_declaration" => NodeKind::Function,
-    "local_function"       => NodeKind::Function,
-    "assignment_statement" => NodeKind::Assignment,
-    "local_declaration"    => NodeKind::Assignment,
-    "if_statement"         => NodeKind::Conditional,
+    "function_declaration" => NodeClass::Standard(SyntaxKind::Function),
+    "local_function"       => NodeClass::Standard(SyntaxKind::Function),
+    "assignment_statement" => NodeClass::Standard(SyntaxKind::Assignment),
+    "local_declaration"    => NodeClass::Standard(SyntaxKind::Assignment),
+    "if_statement"         => NodeClass::Standard(SyntaxKind::Conditional),
+    "parameters"           => NodeClass::Container(StructureKind::ParameterList),
+    "block"                => NodeClass::Container(StructureKind::Body),
 });
 
-crate::impl_lang_node_resolver!(Lua, LuaNode);
+crate::impl_lang_node_resolver!(Lua, LuaNode, LuaContainerNode);

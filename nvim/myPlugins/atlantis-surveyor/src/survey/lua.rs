@@ -6,15 +6,15 @@ use nvim_oxi::serde::Serializer;
 use nvim_oxi::Object;
 use serde::Serialize;
 
-use super::base::AnchorInfo;
+use super::AtlantisNode;
 
-impl ToObject for AnchorInfo {
+impl ToObject for AtlantisNode {
     fn to_object(self) -> Result<Object, nvim_oxi::conversion::Error> {
         self.serialize(Serializer::new()).map_err(Into::into)
     }
 }
 
-impl lua::Pushable for AnchorInfo {
+impl lua::Pushable for AtlantisNode {
     unsafe fn push(
         self,
         lstate: *mut lua::ffi::State,

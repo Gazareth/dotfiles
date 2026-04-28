@@ -1,13 +1,18 @@
-use crate::model::kinds::{StandardAssignment, StandardConditionals, StandardFunctions};
+use crate::model::supported_nodes::{HasAssignment, HasBody, HasConditionals, HasFunctions, HasParameterList};
 
 // ── Convenience bundle ────────────────────────────────────────────────────
 //
-// CLike bundles all three standard groups for languages that share
-// most C-family surface syntax. Implementing CLike satisfies all three
-// individual marker traits automatically via the blanket impls below.
+// CLike bundles all standard and container marker traits for C-family
+// languages. Implementing CLike satisfies each individual marker trait
+// automatically via the blanket impls below.
 
-pub trait CLike: StandardFunctions + StandardAssignment + StandardConditionals {}
+pub trait CLike:
+    HasFunctions + HasAssignment + HasConditionals
+    + HasBody + HasParameterList
+{}
 
-impl<Lang: CLike> StandardFunctions for Lang {}
-impl<Lang: CLike> StandardAssignment for Lang {}
-impl<Lang: CLike> StandardConditionals for Lang {}
+impl<Lang: CLike> HasFunctions for Lang {}
+impl<Lang: CLike> HasAssignment for Lang {}
+impl<Lang: CLike> HasConditionals for Lang {}
+impl<Lang: CLike> HasBody for Lang {}
+impl<Lang: CLike> HasParameterList for Lang {}

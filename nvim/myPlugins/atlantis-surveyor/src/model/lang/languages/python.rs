@@ -1,18 +1,22 @@
-use crate::model::kinds::{StandardAssignment, StandardConditionals, StandardFunctions};
-use crate::model::lang::NodeKind;
+use crate::model::supported_nodes::{HasAssignment, HasBody, HasConditionals, HasFunctions, HasParameterList};
+use crate::model::lang::{NodeClass, StructureKind, SyntaxKind};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Python;
 
-impl StandardFunctions for Python {}
-impl StandardAssignment for Python {}
-impl StandardConditionals for Python {}
+impl HasFunctions for Python {}
+impl HasAssignment for Python {}
+impl HasConditionals for Python {}
+impl HasBody for Python {}
+impl HasParameterList for Python {}
 
 crate::impl_language_syntax_map!(Python, PYTHON_KINDS, {
-    "function_definition"  => NodeKind::Function,
-    "assignment"           => NodeKind::Assignment,
-    "augmented_assignment" => NodeKind::Assignment,
-    "if_statement"         => NodeKind::Conditional,
+    "function_definition"  => NodeClass::Standard(SyntaxKind::Function),
+    "assignment"           => NodeClass::Standard(SyntaxKind::Assignment),
+    "augmented_assignment" => NodeClass::Standard(SyntaxKind::Assignment),
+    "if_statement"         => NodeClass::Standard(SyntaxKind::Conditional),
+    "parameters"           => NodeClass::Container(StructureKind::ParameterList),
+    "block"                => NodeClass::Container(StructureKind::Body),
 });
 
-crate::impl_lang_node_resolver!(Python, PythonNode);
+crate::impl_lang_node_resolver!(Python, PythonNode, PythonContainerNode);

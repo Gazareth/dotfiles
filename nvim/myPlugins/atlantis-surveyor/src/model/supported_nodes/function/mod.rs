@@ -1,3 +1,9 @@
+pub mod body;
+pub mod parameter_list;
+
+pub use body::{Body, HasBody};
+pub use parameter_list::{ParameterList, HasParameterList};
+
 use serde::{Deserialize, Serialize};
 use crate::model::node::{Extract, RawNode};
 use super::Named;
@@ -22,9 +28,9 @@ impl Named for FunctionDeclaration {
 
 /// Languages where functions follow: `[async] function name(...) { body }`
 /// or close enough that the same field names apply.
-pub trait StandardFunctions {}
+pub trait HasFunctions {}
 
-impl<Lang: StandardFunctions> Extract<FunctionDeclaration> for Lang {
+impl<Lang: HasFunctions> Extract<FunctionDeclaration> for Lang {
     fn extract(raw: &RawNode) -> FunctionDeclaration {
         FunctionDeclaration {
             name: raw.field_text("name"),

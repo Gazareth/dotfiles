@@ -12,9 +12,9 @@ pub struct ConditionalStatement {
 }
 
 /// Languages where conditionals follow: `if (condition) { consequent } [else { alternate }]`
-pub trait StandardConditionals {}
+pub trait HasConditionals {}
 
-impl<Lang: StandardConditionals> Extract<ConditionalStatement> for Lang {
+impl<Lang: HasConditionals> Extract<ConditionalStatement> for Lang {
     fn extract(raw: &RawNode) -> ConditionalStatement {
         ConditionalStatement {
             condition: raw.field("condition").cloned().unwrap_or_else(|| raw.placeholder("condition")),
