@@ -6,6 +6,7 @@ pub struct JavaScript;
 impl CLike for JavaScript {}
 
 crate::impl_language_syntax_map!(JavaScript, JAVASCRIPT_KINDS, {
+    "program"               => NodeClass::Container(StructureKind::FileRoot),
     "function_declaration"  => NodeClass::Standard(SyntaxKind::Function),
     "arrow_function"        => NodeClass::Standard(SyntaxKind::Function),
     "method_definition"     => NodeClass::Standard(SyntaxKind::Function),

@@ -1,9 +1,10 @@
-use crate::model::supported_nodes::{HasAssignment, HasBody, HasConditionals, HasFunctions, HasFunctionCalls, HasParameter, HasParameterList};
+use crate::model::supported_nodes::{HasAssignment, HasBody, HasConditionals, HasFileRoot, HasFunctions, HasFunctionCalls, HasParameter, HasParameterList};
 use crate::model::lang::{NodeClass, StructureKind, SyntaxKind};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Python;
 
+impl HasFileRoot for Python {}
 impl HasFunctions for Python {}
 impl HasAssignment for Python {}
 impl HasConditionals for Python {}
@@ -13,6 +14,7 @@ impl HasParameterList for Python {}
 impl HasFunctionCalls for Python {}
 
 crate::impl_language_syntax_map!(Python, PYTHON_KINDS, {
+    "module"               => NodeClass::Container(StructureKind::FileRoot),
     "function_definition"  => NodeClass::Standard(SyntaxKind::Function),
     "assignment"           => NodeClass::Standard(SyntaxKind::Assignment),
     "augmented_assignment" => NodeClass::Standard(SyntaxKind::Assignment),

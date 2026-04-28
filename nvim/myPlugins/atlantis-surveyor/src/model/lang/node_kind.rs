@@ -19,6 +19,7 @@ pub enum SyntaxKind {
 /// The specific kind of Container node — a structural grouping of child nodes.
 #[derive(Debug, Clone, Copy)]
 pub enum StructureKind {
+    FileRoot,
     Body,
     ParameterList,
     ArgumentList,

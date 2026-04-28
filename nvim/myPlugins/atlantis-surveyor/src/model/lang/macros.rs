@@ -34,6 +34,7 @@ macro_rules! impl_lang_node_resolver {
         #[derive(Debug, serde::Serialize)]
         #[serde(tag = "type", rename_all = "snake_case")]
         pub enum $CtrEnum {
+            FileRoot($crate::model::node::Node<$Lang, $crate::model::supported_nodes::FileRoot>),
             Body($crate::model::node::Node<$Lang, $crate::model::supported_nodes::Body>),
             ParameterList($crate::model::node::Node<$Lang, $crate::model::supported_nodes::ParameterList>),
             Unresolved($crate::model::node::Node<$Lang, $crate::model::node::Unresolved>),
@@ -71,6 +72,13 @@ macro_rules! impl_lang_node_resolver {
                     Some(NodeClass::Standard(SyntaxKind::Conditional)) => ResolveOutput::Standard(
                         $StdEnum::Conditional($crate::model::node::Node {
                             state: <$Lang as $crate::model::node::Extract<$crate::model::supported_nodes::ConditionalStatement>>::extract(&self.raw),
+                            raw: self.raw,
+                            _lang: PhantomData,
+                        })
+                    ),
+                    Some(NodeClass::Container(StructureKind::FileRoot)) => ResolveOutput::Container(
+                        $CtrEnum::FileRoot($crate::model::node::Node {
+                            state: <$Lang as $crate::model::node::Extract<$crate::model::supported_nodes::FileRoot>>::extract(&self.raw),
                             raw: self.raw,
                             _lang: PhantomData,
                         })

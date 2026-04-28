@@ -6,6 +6,7 @@ pub struct TypeScript;
 impl CLike for TypeScript {}
 
 crate::impl_language_syntax_map!(TypeScript, TYPESCRIPT_KINDS, {
+    "program"               => NodeClass::Container(StructureKind::FileRoot),
     "function_declaration"  => NodeClass::Standard(SyntaxKind::Function),
     "arrow_function"        => NodeClass::Standard(SyntaxKind::Function),
     "method_definition"     => NodeClass::Standard(SyntaxKind::Function),
