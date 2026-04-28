@@ -5,6 +5,7 @@ mod anchor;
 mod constants;
 mod endpoints;
 mod error;
+mod model;
 mod prepare;
 mod probe;
 

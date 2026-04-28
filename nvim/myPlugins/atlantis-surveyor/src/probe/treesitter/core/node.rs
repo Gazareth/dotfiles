@@ -30,7 +30,7 @@ const LUA: &str = r#"(function(bufnr, row, col)
 end)(...)"#;
 
 /// Return a `Dictionary` of node info or error code
-pub fn get_node_info(bufnr: i32, row: u32, col: u32) -> Result<Dictionary, AtlantisError> {
+pub fn capture_raw_dictionary(bufnr: i32, row: u32, col: u32) -> Result<Dictionary, AtlantisError> {
     let oneline: String = LUA
         .lines()
         .map(str::trim)

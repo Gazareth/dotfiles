@@ -59,3 +59,27 @@ git submodule add https://github.com/<you>/atlantis-surveyor.git nvim/myPlugins/
 ```
 
 Then point Lazy’s `dir` at that path (or switch the spec to the Git URL once published).
+
+## Node Hierarchy
+
+Atlantis resolves Tree-sitter nodes into a structured hierarchy to provide consistent behavior across different languages.
+
+```mermaid
+graph TD
+    Node --> Actionable
+    Node --> NonActionable
+    Actionable --> Standard
+    Actionable --> Container
+    Standard --> FunctionDeclaration
+    Standard --> Assignment
+    Standard --> Boolean
+    Container --> FileRoot
+    Container --> FunctionBody
+    FunctionBody --> Parameters
+    FunctionBody --> Body
+```
+
+- **Node**: The base type for all resolved Tree-sitter elements.
+- **Actionable**: Nodes that support user interactions (jump, rename, etc.).
+- **Standard**: Individual elements that act as a single unit.
+- **Container**: Structural elements that contain other nodes (e.g., functions, classes, files).
