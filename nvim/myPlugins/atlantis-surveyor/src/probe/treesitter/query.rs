@@ -12,6 +12,7 @@ const LUA: &str = r#"(function(bufnr, row, col)
   if not ok_parser or parser == nil then
     return { err = "no_parser" }
   end
+  parser:parse()
   local node = vim.treesitter.get_node({ bufnr = bufnr, pos = { row, col } })
   if node == nil then
     return { err = "no_node" }
@@ -22,10 +23,8 @@ const LUA: &str = r#"(function(bufnr, row, col)
   local ft = vim.bo[bufnr].filetype
   local fields = {}
   local children = {}
-  for i = 0, node:child_count() - 1 do
-    local child = node:child(i)
-    local fname = node:field_name_for_child(i)
-    if child and child:is_named() then
+  for child, fname in node:iter_children() do
+    if child:named() then
       local ok_ct, ct = pcall(vim.treesitter.get_node_text, child, bufnr)
       local csr, csc, cer, cec = child:range()
       local child_data = {
@@ -54,7 +53,7 @@ const LUA: &str = r#"(function(bufnr, row, col)
     fields = fields,
     children = children,
   }
-end)(...)"#;
+end)(_A[1], _A[2], _A[3])"#;
 
 pub fn call(bufnr: i32, row: u32, col: u32) -> Result<Dictionary, AtlantisError> {
     let oneline: String = LUA
