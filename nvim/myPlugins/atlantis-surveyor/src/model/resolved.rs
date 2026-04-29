@@ -1,5 +1,6 @@
 use serde::Serialize;
 
+use crate::action::ConstructActions;
 use crate::model::lang::languages::{
     JavaScriptContainerNode, JavaScriptNode,
     LuaContainerNode, LuaNode,
@@ -15,6 +16,17 @@ pub enum AnyConstructNode {
     JavaScript(JavaScriptNode),
     TypeScript(TypeScriptNode),
     Python(PythonNode),
+}
+
+impl AnyConstructNode {
+    pub fn available_actions(&self) -> &'static [&'static str] {
+        match self {
+            AnyConstructNode::Lua(n)        => n.available_actions(),
+            AnyConstructNode::JavaScript(n) => n.available_actions(),
+            AnyConstructNode::TypeScript(n) => n.available_actions(),
+            AnyConstructNode::Python(n)     => n.available_actions(),
+        }
+    }
 }
 
 /// Any language's resolved Container node.

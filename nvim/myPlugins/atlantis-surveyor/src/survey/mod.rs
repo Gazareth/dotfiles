@@ -17,6 +17,8 @@ pub struct AtlantisNode {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub text: Option<String>,
     pub variant: AtlantisVariant,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub available_actions: Vec<&'static str>,
 }
 
 /// The Atlantis classification of the node at this position.
@@ -41,12 +43,17 @@ impl AtlantisNode {
         text: String,
         variant: AtlantisVariant,
     ) -> Self {
+        let available_actions = match &variant {
+            AtlantisVariant::Construct(n) => n.available_actions().to_vec(),
+            _ => vec![],
+        };
         Self {
             bufnr,
             node_type: Some(node_type),
             range: Some(range),
             text: Some(text),
             variant,
+            available_actions,
         }
     }
 
@@ -57,6 +64,7 @@ impl AtlantisNode {
             range: None,
             text: None,
             variant: AtlantisVariant::Error { message: err.user_message() },
+            available_actions: vec![],
         }
     }
 }

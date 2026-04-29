@@ -46,6 +46,18 @@ macro_rules! impl_lang_node_resolver {
             Unresolved($crate::model::node::Node<$Lang, $crate::model::node::Unresolved>),
         }
 
+        impl $crate::action::ConstructActions for $StdEnum {
+            fn available_actions(&self) -> &'static [&'static str] {
+                match self {
+                    $StdEnum::Function(_)    => &["jump_to_body", "jump_to_params", "rename", "yank", "delete"],
+                    $StdEnum::Call(_)        => &["jump_to_params", "rename", "yank"],
+                    $StdEnum::Assignment(_)  => &["jump_lhs", "jump_rhs", "rename", "yank"],
+                    $StdEnum::Conditional(_) => &["jump_to_body", "jump_to_condition", "yank"],
+                    $StdEnum::Unresolved(_)  => &[],
+                }
+            }
+        }
+
         impl $crate::model::lang::Resolve for $crate::model::node::Node<$Lang, $crate::model::node::Unknown> {
             type Output = $crate::model::lang::ResolveOutput<$StdEnum, $CtrEnum>;
 
