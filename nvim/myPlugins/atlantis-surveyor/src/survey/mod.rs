@@ -4,7 +4,7 @@ mod lua;
 use serde::Serialize;
 
 use crate::error::AtlantisError;
-use crate::model::resolved::{AnyContainerNode, AnyStandardNode};
+use crate::model::resolved::{AnyContainerNode, AnyConstructNode};
 
 /// What Atlantis knows about a node at a given buffer position.
 #[derive(Debug, Serialize)]
@@ -24,7 +24,7 @@ pub struct AtlantisNode {
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum AtlantisVariant {
     /// A direct language construct — function, assignment, conditional, etc.
-    Standard(AnyStandardNode),
+    Construct(AnyConstructNode),
     /// A structural grouping — parameter list, body, argument list, etc.
     Container(AnyContainerNode),
     /// Atlantis has no registered behaviour for this node type.

@@ -1,22 +1,28 @@
-use crate::model::supported_nodes::{HasAssignment, HasBody, HasConditionals, HasFileRoot, HasFunctions, HasFunctionCalls, HasParameter, HasParameterList};
+use crate::model::supported_nodes::{HasAssignment, HasFunctionBody, HasConditionals, HasFileRoot, HasFunctions, HasFunctionCalls, HasParameter, HasParameterList};
 
-// ── Convenience bundle ────────────────────────────────────────────────────
+// ── Convenience bundles ───────────────────────────────────────────────────
 //
-// CLike bundles all standard and container marker traits for C-family
-// languages. Implementing CLike satisfies each individual marker trait
-// automatically via the blanket impls below.
+// Common bundles traits universal across all supported languages — excluding
+// HasFunctionCalls (field names vary, e.g. Lua) and HasAssignment (same).
+//
+// CLike extends Common with HasFunctionCalls + HasAssignment for languages
+// where both follow standard C-family field names (JavaScript, TypeScript).
 
-pub trait CLike:
+pub trait Common:
     HasFileRoot
-    + HasFunctions + HasFunctionCalls + HasAssignment + HasConditionals
-    + HasBody + HasParameter + HasParameterList
+    + HasFunctions + HasConditionals
+    + HasFunctionBody + HasParameter + HasParameterList
 {}
 
-impl<Lang: CLike> HasFileRoot for Lang {}
-impl<Lang: CLike> HasFunctions for Lang {}
+impl<Lang: Common> HasConditionals for Lang {}
+impl<Lang: Common> HasFileRoot for Lang {}
+impl<Lang: Common> HasFunctions for Lang {}
+impl<Lang: Common> HasFunctionBody for Lang {}
+impl<Lang: Common> HasParameter for Lang {}
+impl<Lang: Common> HasParameterList for Lang {}
+
+pub trait CLike: Common + HasFunctionCalls + HasAssignment {}
+
+impl<Lang: CLike> Common for Lang {}
 impl<Lang: CLike> HasFunctionCalls for Lang {}
 impl<Lang: CLike> HasAssignment for Lang {}
-impl<Lang: CLike> HasConditionals for Lang {}
-impl<Lang: CLike> HasBody for Lang {}
-impl<Lang: CLike> HasParameter for Lang {}
-impl<Lang: CLike> HasParameterList for Lang {}

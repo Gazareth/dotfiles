@@ -7,10 +7,10 @@ use crate::model::lang::languages::{
     TypeScriptContainerNode, TypeScriptNode,
 };
 
-/// Any language's resolved Standard node.
+/// Any language's resolved Construct node.
 #[derive(Debug, Serialize)]
 #[serde(tag = "lang", content = "node", rename_all = "snake_case")]
-pub enum AnyStandardNode {
+pub enum AnyConstructNode {
     Lua(LuaNode),
     JavaScript(JavaScriptNode),
     TypeScript(TypeScriptNode),

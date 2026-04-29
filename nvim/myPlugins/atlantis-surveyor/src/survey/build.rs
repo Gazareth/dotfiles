@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::model::lang::languages::{JavaScript, Lua, Python, TypeScript};
 use crate::model::lang::{ResolveOutput, Resolve};
 use crate::model::node::{Node, RawNode};
-use crate::model::resolved::{AnyContainerNode, AnyStandardNode};
+use crate::model::resolved::{AnyContainerNode, AnyConstructNode};
 use crate::probe::language::{detect, SnapshotLanguage};
 use crate::probe::treesitter::{self, TsSnapshot};
 use crate::survey::{AtlantisNode, AtlantisVariant};
@@ -55,22 +55,22 @@ fn resolve_for_language(filetype: &str, raw: RawNode) -> AtlantisVariant {
     match detect(filetype) {
         SnapshotLanguage::Lua => resolve_output(
             Node::<Lua>::new(raw).resolve(),
-            AnyStandardNode::Lua,
+            AnyConstructNode::Lua,
             AnyContainerNode::Lua,
         ),
         SnapshotLanguage::JavaScript => resolve_output(
             Node::<JavaScript>::new(raw).resolve(),
-            AnyStandardNode::JavaScript,
+            AnyConstructNode::JavaScript,
             AnyContainerNode::JavaScript,
         ),
         SnapshotLanguage::TypeScript => resolve_output(
             Node::<TypeScript>::new(raw).resolve(),
-            AnyStandardNode::TypeScript,
+            AnyConstructNode::TypeScript,
             AnyContainerNode::TypeScript,
         ),
         SnapshotLanguage::Python => resolve_output(
             Node::<Python>::new(raw).resolve(),
-            AnyStandardNode::Python,
+            AnyConstructNode::Python,
             AnyContainerNode::Python,
         ),
         SnapshotLanguage::Unknown => AtlantisVariant::Unrecognised,
@@ -79,11 +79,11 @@ fn resolve_for_language(filetype: &str, raw: RawNode) -> AtlantisVariant {
 
 fn resolve_output<S, C>(
     output: ResolveOutput<S, C>,
-    wrap_std: impl FnOnce(S) -> AnyStandardNode,
+    wrap_std: impl FnOnce(S) -> AnyConstructNode,
     wrap_ctr: impl FnOnce(C) -> AnyContainerNode,
 ) -> AtlantisVariant {
     match output {
-        ResolveOutput::Standard(n)  => AtlantisVariant::Standard(wrap_std(n)),
+        ResolveOutput::Construct(n)  => AtlantisVariant::Construct(wrap_std(n)),
         ResolveOutput::Container(c) => AtlantisVariant::Container(wrap_ctr(c)),
         ResolveOutput::Unresolved   => AtlantisVariant::Unrecognised,
     }

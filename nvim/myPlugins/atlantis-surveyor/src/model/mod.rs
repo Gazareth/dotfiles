@@ -10,11 +10,11 @@
 //                       blanket Extract impl. Add a new file here for each new
 //                       supported node type.
 //
-//   lang/             — Language markers, NodeClass/SyntaxKind/StructureKind,
+//   lang/             — Language markers, NodeClass/ConstructNode/ContainerNode,
 //                       LanguageConfig trait, per-language Extract overrides,
 //                       node enums, resolvers.
 //
-//   resolved/         — AnyStandardNode + AnyContainerNode wrappers.
+//   resolved/         — AnyConstructNode + AnyContainerNode wrappers.
 
 pub mod supported_nodes;
 pub mod lang;
@@ -29,4 +29,4 @@ pub use lang::{
     TypeScriptContainerNode, TypeScriptNode,
 };
 pub use node::{AtlantisCursor, Node, NodeRange, RawNode, Unknown, Unresolved};
-pub use resolved::{AnyContainerNode, AnyStandardNode};
+pub use resolved::{AnyContainerNode, AnyConstructNode};

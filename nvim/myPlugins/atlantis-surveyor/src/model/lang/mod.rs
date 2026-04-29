@@ -15,8 +15,8 @@ pub mod macros;
 pub mod node_kind;
 pub mod resolve;
 
-pub use common::CLike;
-pub use node_kind::{LanguageConfig, NodeClass, StructureKind, SyntaxKind};
+pub use common::{CLike, Common};
+pub use node_kind::{LanguageConfig, NodeClass, ContainerNode, ConstructNode};
 pub use languages::{
     JavaScript, JavaScriptContainerNode, JavaScriptNode,
     Lua, LuaContainerNode, LuaNode,

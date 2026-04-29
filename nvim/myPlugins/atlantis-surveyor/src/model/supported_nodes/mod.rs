@@ -26,6 +26,6 @@ pub use standard::{
 };
 pub use container::{
     FileRoot, HasFileRoot,
-    Body, HasBody,
+    Body, HasFunctionBody,
     ParameterList, HasParameterList,
 };

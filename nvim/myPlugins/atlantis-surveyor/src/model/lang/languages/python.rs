@@ -1,27 +1,37 @@
-use crate::model::supported_nodes::{HasAssignment, HasBody, HasConditionals, HasFileRoot, HasFunctions, HasFunctionCalls, HasParameter, HasParameterList};
-use crate::model::lang::{NodeClass, StructureKind, SyntaxKind};
+use crate::model::supported_nodes::{Assignment, HasFunctionCalls};
+use crate::model::lang::Common;
+use crate::model::node::{Extract, RawNode};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Python;
 
-impl HasFileRoot for Python {}
-impl HasFunctions for Python {}
-impl HasAssignment for Python {}
-impl HasConditionals for Python {}
-impl HasBody for Python {}
-impl HasParameter for Python {}
-impl HasParameterList for Python {}
+impl Common for Python {}
 impl HasFunctionCalls for Python {}
 
+// Python assignments use `left`/`right` fields, not `name`/`value`.
+impl Extract<Assignment> for Python {
+    fn extract(raw: &RawNode) -> Assignment {
+        Assignment {
+            name: raw.field_text("left"),
+            is_local_binding: false,
+            value: raw.field("right").cloned().unwrap_or_else(|| raw.placeholder("right")),
+        }
+    }
+}
+
 crate::impl_language_syntax_map!(Python, PYTHON_KINDS, {
-    "module"               => NodeClass::Container(StructureKind::FileRoot),
-    "function_definition"  => NodeClass::Standard(SyntaxKind::Function),
-    "assignment"           => NodeClass::Standard(SyntaxKind::Assignment),
-    "augmented_assignment" => NodeClass::Standard(SyntaxKind::Assignment),
-    "if_statement"         => NodeClass::Standard(SyntaxKind::Conditional),
-    "call"                 => NodeClass::Standard(SyntaxKind::Call),
-    "parameters"           => NodeClass::Container(StructureKind::ParameterList),
-    "block"                => NodeClass::Container(StructureKind::Body),
+    construct: {
+        "function_definition"  => Function,
+        "assignment"           => Assignment,
+        "augmented_assignment" => Assignment,
+        "if_statement"         => Conditional,
+        "call"                 => Call,
+    },
+    container: {
+        "module"     => FileRoot,
+        "parameters" => ParameterList,
+        "block"      => Body,
+    },
 });
 
 crate::impl_lang_node_resolver!(Python, PythonNode, PythonContainerNode);

@@ -3,13 +3,13 @@
 /// grouping (Container); never both.
 #[derive(Debug, Clone, Copy)]
 pub enum NodeClass {
-    Standard(SyntaxKind),
-    Container(StructureKind),
+    Construct(ConstructNode),
+    Container(ContainerNode),
 }
 
 /// The specific kind of Standard node — a direct language building block.
 #[derive(Debug, Clone, Copy)]
-pub enum SyntaxKind {
+pub enum ConstructNode {
     Function,
     Call,
     Assignment,
@@ -18,7 +18,7 @@ pub enum SyntaxKind {
 
 /// The specific kind of Container node — a structural grouping of child nodes.
 #[derive(Debug, Clone, Copy)]
-pub enum StructureKind {
+pub enum ContainerNode {
     FileRoot,
     Body,
     ParameterList,

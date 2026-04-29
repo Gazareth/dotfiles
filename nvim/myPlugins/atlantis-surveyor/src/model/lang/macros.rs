@@ -1,10 +1,16 @@
 // Generates a static phf map and LanguageConfig impl from a plain data declaration.
+// Standard and container entries are in separate sections; the macro wraps each
+// in the appropriate NodeClass variant so call sites only name the leaf variant.
 #[doc(hidden)]
 #[macro_export]
 macro_rules! impl_language_syntax_map {
-    ($Lang:ty, $map_name:ident, { $($kind:literal => $node_class:expr),* $(,)? }) => {
+    ($Lang:ty, $map_name:ident, {
+        construct:  { $($std_kind:literal => $std_node:ident),* $(,)? },
+        container: { $($ctr_kind:literal => $ctr_node:ident),* $(,)? } $(,)?
+    }) => {
         static $map_name: phf::Map<&'static str, $crate::model::lang::NodeClass> = phf::phf_map! {
-            $($kind => $node_class),*
+            $($std_kind => $crate::model::lang::NodeClass::Construct($crate::model::lang::ConstructNode::$std_node),)*
+            $($ctr_kind => $crate::model::lang::NodeClass::Container($crate::model::lang::ContainerNode::$ctr_node),)*
         };
 
         impl $crate::model::lang::LanguageConfig for $Lang {
@@ -45,59 +51,59 @@ macro_rules! impl_lang_node_resolver {
 
             fn resolve(self) -> Self::Output {
                 use std::marker::PhantomData;
-                use $crate::model::lang::{NodeClass, ResolveOutput, SyntaxKind, StructureKind};
+                use $crate::model::lang::{NodeClass, ResolveOutput, ConstructNode, ContainerNode};
                 let kind = self.raw.kind.clone();
                 match <$Lang as $crate::model::lang::LanguageConfig>::classify(&kind) {
-                    Some(NodeClass::Standard(SyntaxKind::Function)) => ResolveOutput::Standard(
+                    Some(NodeClass::Construct(ConstructNode::Function)) => ResolveOutput::Construct(
                         $StdEnum::Function($crate::model::node::Node {
                             state: <$Lang as $crate::model::node::Extract<$crate::model::supported_nodes::FunctionDeclaration>>::extract(&self.raw),
                             raw: self.raw,
                             _lang: PhantomData,
                         })
                     ),
-                    Some(NodeClass::Standard(SyntaxKind::Call)) => ResolveOutput::Standard(
+                    Some(NodeClass::Construct(ConstructNode::Call)) => ResolveOutput::Construct(
                         $StdEnum::Call($crate::model::node::Node {
                             state: <$Lang as $crate::model::node::Extract<$crate::model::supported_nodes::FunctionCall>>::extract(&self.raw),
                             raw: self.raw,
                             _lang: PhantomData,
                         })
                     ),
-                    Some(NodeClass::Standard(SyntaxKind::Assignment)) => ResolveOutput::Standard(
+                    Some(NodeClass::Construct(ConstructNode::Assignment)) => ResolveOutput::Construct(
                         $StdEnum::Assignment($crate::model::node::Node {
                             state: <$Lang as $crate::model::node::Extract<$crate::model::supported_nodes::Assignment>>::extract(&self.raw),
                             raw: self.raw,
                             _lang: PhantomData,
                         })
                     ),
-                    Some(NodeClass::Standard(SyntaxKind::Conditional)) => ResolveOutput::Standard(
+                    Some(NodeClass::Construct(ConstructNode::Conditional)) => ResolveOutput::Construct(
                         $StdEnum::Conditional($crate::model::node::Node {
                             state: <$Lang as $crate::model::node::Extract<$crate::model::supported_nodes::ConditionalStatement>>::extract(&self.raw),
                             raw: self.raw,
                             _lang: PhantomData,
                         })
                     ),
-                    Some(NodeClass::Container(StructureKind::FileRoot)) => ResolveOutput::Container(
+                    Some(NodeClass::Container(ContainerNode::FileRoot)) => ResolveOutput::Container(
                         $CtrEnum::FileRoot($crate::model::node::Node {
                             state: <$Lang as $crate::model::node::Extract<$crate::model::supported_nodes::FileRoot>>::extract(&self.raw),
                             raw: self.raw,
                             _lang: PhantomData,
                         })
                     ),
-                    Some(NodeClass::Container(StructureKind::Body)) => ResolveOutput::Container(
+                    Some(NodeClass::Container(ContainerNode::Body)) => ResolveOutput::Container(
                         $CtrEnum::Body($crate::model::node::Node {
                             state: <$Lang as $crate::model::node::Extract<$crate::model::supported_nodes::Body>>::extract(&self.raw),
                             raw: self.raw,
                             _lang: PhantomData,
                         })
                     ),
-                    Some(NodeClass::Container(StructureKind::ParameterList)) => ResolveOutput::Container(
+                    Some(NodeClass::Container(ContainerNode::ParameterList)) => ResolveOutput::Container(
                         $CtrEnum::ParameterList($crate::model::node::Node {
                             state: <$Lang as $crate::model::node::Extract<$crate::model::supported_nodes::ParameterList>>::extract(&self.raw),
                             raw: self.raw,
                             _lang: PhantomData,
                         })
                     ),
-                    Some(NodeClass::Container(StructureKind::ArgumentList)) => ResolveOutput::Container(
+                    Some(NodeClass::Container(ContainerNode::ArgumentList)) => ResolveOutput::Container(
                         $CtrEnum::Unresolved($crate::model::node::Node {
                             state: $crate::model::node::Unresolved,
                             raw: self.raw,

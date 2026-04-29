@@ -7,9 +7,9 @@ pub struct Body {
     pub statements: Vec<RawNode>,
 }
 
-pub trait HasBody {}
+pub trait HasFunctionBody {}
 
-impl<Lang: HasBody> Extract<Body> for Lang {
+impl<Lang: HasFunctionBody> Extract<Body> for Lang {
     fn extract(raw: &RawNode) -> Body {
         Body {
             statements: raw.children.clone(),

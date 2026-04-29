@@ -1,7 +1,6 @@
 //! atlantis_surveyor — Rust probe layer for Atlantis (Neovim + nvim-oxi).
 
 mod action;
-mod constants;
 mod endpoints;
 mod error;
 mod model;
