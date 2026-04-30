@@ -62,11 +62,17 @@ local M = { {
         and "powershell -NoProfile -ExecutionPolicy Bypass -File build.ps1"
         or "chmod +x build.sh && ./build.sh",
     config = function()
-      vim.api.nvim_create_user_command("SurveyorAnchor", function()
+      vim.api.nvim_create_user_command("SurveyorNode", function()
         local s = require("atlantis_surveyor")
-        vim.print(s.anchor(0, vim.fn.line(".") - 1, vim.fn.col(".") - 1))
+        vim.print(s.node(0, vim.fn.line(".") - 1, vim.fn.col(".") - 1))
       end, {
-        desc = "Atlantis surveyor: print AnchorInfo at cursor (0-based TS pos)",
+        desc = "Atlantis surveyor: print node at cursor",
+      })
+
+      vim.api.nvim_create_user_command("AtlantisNouveau", function()
+        require("configs.hydra.atlantis_nouveau").open()
+      end, {
+        desc = "Atlantis Nouveau: open node menu at cursor",
       })
     end,
   },

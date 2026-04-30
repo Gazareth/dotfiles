@@ -1,5 +1,8 @@
 use std::collections::HashMap;
 
+use nvim_oxi::Dictionary;
+
+use crate::error::AtlantisError;
 use crate::model::lang::languages::{JavaScript, Lua, Python, TypeScript};
 use crate::model::lang::{ResolveOutput, Resolve};
 use crate::model::node::{Node, RawNode};
@@ -13,10 +16,29 @@ pub fn build(bufnr: i32, row: u32, col: u32) -> AtlantisNode {
         Ok(snap) => {
             let raw = snapshot_to_raw_node(&snap);
             let variant = resolve_for_language(&snap.filetype, raw);
-            AtlantisNode::ok(bufnr, snap.node_type, snap.range, snap.text, variant)
+            AtlantisNode::ok(bufnr, snap.node_type, snap.range, variant)
         }
         Err(e) => AtlantisNode::err(bufnr, e),
     }
+}
+
+/// Walk the pre-collected ancestry (innermost → outermost) and return the first
+/// node whose type is registered in the language's construct/container map.
+pub fn build_from_ancestry(bufnr: i32, ancestry: Dictionary) -> AtlantisNode {
+    let (filetype, ancestry) = match treesitter::decode::ancestry::decode(&ancestry) {
+        Ok(v) => v,
+        Err(e) => return AtlantisNode::err(bufnr, e),
+    };
+
+    for snap in ancestry {
+        let raw = snapshot_to_raw_node(&snap);
+        let variant = resolve_for_language(&filetype, raw);
+        if !matches!(variant, AtlantisVariant::Unrecognised) {
+            return AtlantisNode::ok(bufnr, snap.node_type, snap.range, variant);
+        }
+    }
+
+    AtlantisNode::err(bufnr, AtlantisError::Api("no supported node in ancestry".into()))
 }
 
 fn snapshot_to_raw_node(snap: &TsSnapshot) -> RawNode {

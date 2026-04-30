@@ -56,8 +56,56 @@ local buf = vim.api.nvim_create_buf(false, true)
 vim.api.nvim_buf_set_lines(buf, 0, -1, false, fixture_lines)
 vim.bo[buf].filetype = "lua"
 
+-- ── collect_ancestry helper (mirrors atlantis_nouveau/init.lua) ──────────────────
+
+local function node_data(bufnr, n)
+  local sr, sc, er, ec = n:range()
+  local data = {
+    node_type = n:type(),
+    start_row = sr, start_col = sc,
+    end_row   = er, end_col   = ec,
+    fields    = {},
+    children  = {},
+  }
+  for child, fname in n:iter_children() do
+    if child:named() then
+      local csr, csc, cer, cec = child:range()
+      local entry = {
+        node_type = child:type(),
+        start_row = csr, start_col = csc,
+        end_row   = cer, end_col   = cec,
+      }
+      if csr == cer then
+        local ok_t, t = pcall(vim.treesitter.get_node_text, child, bufnr)
+        if ok_t then entry.text = t end
+      end
+      if fname then
+        data.fields[fname] = entry
+      else
+        table.insert(data.children, entry)
+      end
+    end
+  end
+  return data
+end
+
+local function collect_ancestry(bufnr, row, col)
+  local ft = vim.bo[bufnr].filetype
+  local parser = vim.treesitter.get_parser(bufnr, ft)
+  parser:parse()
+  local node = vim.treesitter.get_node({ bufnr = bufnr, pos = { row, col } })
+  local ancestry = {}
+  local cur = node
+  while cur do
+    table.insert(ancestry, node_data(bufnr, cur))
+    cur = cur:parent()
+  end
+  return { filetype = ft, ancestry = ancestry }
+end
+
 local function survey(row, col)
-  return surveyor.node(buf, row, col)
+  local scan = collect_ancestry(buf, row, col)
+  return surveyor.resolve(buf, scan)
 end
 
 -- ── Constructs ────────────────────────────────────────────────────────────────
@@ -129,9 +177,11 @@ end
 print("\n── Unrecognised ──")
 
 do -- return statement  (row 5, col 4)
+  -- return_statement is not in the map → ancestry walk climbs to block → Body (container)
   local r = survey(5, 4)
-  eq("unrecognised: variant.kind", r.variant.kind,      "unrecognised")
-  eq("unrecognised: no actions",   r.available_actions, nil)
+  eq("return→ancestor: node_type",    r.node_type,         "block")
+  eq("return→ancestor: variant.kind", r.variant.kind,      "container")
+  eq("return→ancestor: node.type",    r.variant.node.type, "body")
 end
 
 -- ── Summary ───────────────────────────────────────────────────────────────────

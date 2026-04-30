@@ -15,5 +15,12 @@ fn atlantis_surveyor() -> Dictionary {
         |(bufnr, row, col): (i32, i64, i64)| endpoints::node::run(bufnr, row, col),
     );
 
-    Dictionary::from_iter([("node", Object::from(node))])
+    let resolve = Function::from_fn(
+        |(bufnr, ancestry): (i32, Dictionary)| endpoints::resolve::run(bufnr, ancestry),
+    );
+
+    Dictionary::from_iter([
+        ("node",    Object::from(node)),
+        ("resolve", Object::from(resolve)),
+    ])
 }

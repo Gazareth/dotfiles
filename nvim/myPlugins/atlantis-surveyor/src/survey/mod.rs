@@ -14,8 +14,6 @@ pub struct AtlantisNode {
     pub node_type: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub range: Option<crate::model::node::NodeRange>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub text: Option<String>,
     pub variant: AtlantisVariant,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub available_actions: Vec<&'static str>,
@@ -40,7 +38,6 @@ impl AtlantisNode {
         bufnr: i32,
         node_type: String,
         range: crate::model::node::NodeRange,
-        text: String,
         variant: AtlantisVariant,
     ) -> Self {
         let available_actions = match &variant {
@@ -51,7 +48,6 @@ impl AtlantisNode {
             bufnr,
             node_type: Some(node_type),
             range: Some(range),
-            text: Some(text),
             variant,
             available_actions,
         }
@@ -62,7 +58,6 @@ impl AtlantisNode {
             bufnr,
             node_type: None,
             range: None,
-            text: None,
             variant: AtlantisVariant::Error { message: err.user_message() },
             available_actions: vec![],
         }

@@ -3,6 +3,8 @@
 //! Every function takes an nvim-oxi `Dictionary` (the Rust view of a Lua table)
 //! and extracts one or more fields, converting them to concrete Rust types.
 
+pub mod ancestry;
+
 use std::collections::HashMap;
 
 use nvim_oxi::conversion::FromObject;

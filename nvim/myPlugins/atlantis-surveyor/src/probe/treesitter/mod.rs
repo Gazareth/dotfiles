@@ -1,7 +1,7 @@
 //! Tree-sitter probe using Neovim's incremental tree.
 
 mod query;
-mod decode;
+pub(crate) mod decode;
 
 use std::collections::HashMap;
 
