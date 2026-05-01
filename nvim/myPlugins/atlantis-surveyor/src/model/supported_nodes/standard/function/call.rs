@@ -7,7 +7,7 @@ pub struct FunctionCall {
     /// The name of the function being called — needed for display.
     pub name: String,
     /// The argument list. Opaque until the user drills in.
-    pub arguments: RawNode,
+    pub parameters: RawNode,
 }
 
 impl Named for FunctionCall {
@@ -24,8 +24,8 @@ pub trait HasFunctionCalls {}
 impl<Lang: HasFunctionCalls> Extract<FunctionCall> for Lang {
     fn extract(raw: &RawNode) -> FunctionCall {
         FunctionCall {
-            name: raw.field_text("function"),
-            arguments: raw.field("arguments").cloned().unwrap_or_else(|| raw.placeholder("arguments")),
+            name:       raw.field_text("function"),
+            parameters: raw.field("arguments").cloned().unwrap_or_else(|| raw.placeholder("arguments")),
         }
     }
 }

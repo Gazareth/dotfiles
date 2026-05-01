@@ -11,8 +11,8 @@ impl Extract<FunctionCall> for Lua {
     fn extract(raw: &RawNode) -> FunctionCall {
         FunctionCall {
             // Lua function_call uses `name`, not `function`, for the callee field.
-            name: raw.field_text("name"),
-            arguments: raw.field("args").cloned().unwrap_or_else(|| raw.placeholder("args")),
+            name:       raw.field_text("name"),
+            parameters: raw.field("args").cloned().unwrap_or_else(|| raw.placeholder("args")),
         }
     }
 }

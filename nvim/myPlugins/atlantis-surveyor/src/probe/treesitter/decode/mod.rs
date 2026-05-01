@@ -13,7 +13,7 @@ use nvim_oxi::{Array, Dictionary};
 use crate::model::node::NodeRange;
 use crate::error::AtlantisError;
 
-use super::{TsFieldNode, TsSnapshot};
+use super::{TsFieldNode, TsCapture};
 
 /// Pull a string value out by key; error if the key is absent or not a string.
 pub fn str(d: &Dictionary, key: &str) -> Result<String, AtlantisError> {
@@ -48,7 +48,7 @@ pub fn field_node(d: &Dictionary) -> Result<TsFieldNode, AtlantisError> {
     Ok(TsFieldNode {
         node_type: str(d, "node_type")?,
         range:     range(d)?,
-        text:      str(d, "text")?,
+        text:      str(d, "text").unwrap_or_default(),
     })
 }
 
@@ -85,14 +85,30 @@ pub fn children(d: &Dictionary) -> Vec<TsFieldNode> {
         .unwrap_or_default()
 }
 
-/// Assemble a complete `TsSnapshot` from the top-level query Dictionary.
-pub fn snapshot(d: &Dictionary) -> Result<TsSnapshot, AtlantisError> {
-    Ok(TsSnapshot {
+/// Parse the `siblings` array into an ordered list of named sibling nodes.
+pub fn siblings(d: &Dictionary) -> Vec<TsFieldNode> {
+    d.get("siblings")
+        .and_then(|o| Array::from_object(o.clone()).ok())
+        .map(|arr| {
+            arr.into_iter()
+                .filter_map(|val| {
+                    let d = Dictionary::from_object(val).ok()?;
+                    field_node(&d).ok()
+                })
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+/// Assemble a complete `TsCapture` from the top-level query Dictionary.
+pub fn snapshot(d: &Dictionary) -> Result<TsCapture, AtlantisError> {
+    Ok(TsCapture {
         node_type: str(d, "node_type")?,
         range:     range(d)?,
         text:      str(d, "text")?,
         filetype:  str(d, "filetype").unwrap_or_default(),
         fields:    fields(d),
         children:  children(d),
+        siblings:  siblings(d),
     })
 }

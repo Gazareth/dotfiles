@@ -3,35 +3,12 @@ local menu     = require("configs.hydra.atlantis_nouveau.menu")
 
 local M = {}
 
-local function node_data(bufnr, n)
+local function node_data(n)
   local sr, sc, er, ec = n:range()
-  local data = {
+  return {
     node_type = n:type(),
     start_row = sr, start_col = sc,
-    end_row   = er, end_col   = ec,
-    fields    = {},
-    children  = {},
   }
-  for child, fname in n:iter_children() do
-    if child:named() then
-      local csr, csc, cer, cec = child:range()
-      local entry = {
-        node_type = child:type(),
-        start_row = csr, start_col = csc,
-        end_row   = cer, end_col   = cec,
-      }
-      if csr == cer then
-        local ok_t, t = pcall(vim.treesitter.get_node_text, child, bufnr)
-        if ok_t then entry.text = t end
-      end
-      if fname then
-        data.fields[fname] = entry
-      else
-        table.insert(data.children, entry)
-      end
-    end
-  end
-  return data
 end
 
 local function collect_ancestry(bufnr, row, col)
@@ -50,18 +27,18 @@ local function collect_ancestry(bufnr, row, col)
   local ancestry = {}
   local cur = node
   while cur do
-    table.insert(ancestry, node_data(bufnr, cur))
+    table.insert(ancestry, node_data(cur))
     cur = cur:parent()
   end
 
   return { filetype = ft, ancestry = ancestry }
 end
 
-function M.open(bufnr, row, col)
+function M.open(bufnr)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
   local cursor = vim.api.nvim_win_get_cursor(0)
-  row = row or (cursor[1] - 1)  -- nvim cursor is 1-based; surveyor expects 0-based
-  col = col or cursor[2]
+  local row = cursor[1] - 1
+  local col = cursor[2]
 
   local scan, err = collect_ancestry(bufnr, row, col)
   if not scan then
@@ -69,19 +46,35 @@ function M.open(bufnr, row, col)
     return
   end
 
-  local result = surveyor.resolve(bufnr, scan)
+  local results = surveyor.resolve(bufnr, scan)
 
-  if result.variant.kind == "error" then
-    vim.notify("[atlantis] " .. result.variant.message, vim.log.levels.WARN)
-    return
-  end
-
-  if result.variant.kind == "unrecognised" or not result.available_actions or #result.available_actions == 0 then
+  if #results == 0 then
     vim.notify("[atlantis] nothing here", vim.log.levels.INFO)
     return
   end
 
-  menu.open(result)
+  local primary = results[1]
+  if primary.variant.kind == "error" then
+    vim.notify("[atlantis] " .. primary.variant.message, vim.log.levels.WARN)
+    return
+  end
+
+  if primary.variant.kind == "unrecognised" or not primary.available_actions or #primary.available_actions == 0 then
+    -- Try to find the first supported node if the innermost is unrecognised
+    for i=2, #results do
+      if results[i].variant.kind ~= "unrecognised" then
+        primary = results[i]
+        break
+      end
+    end
+  end
+
+  if primary.variant.kind == "unrecognised" then
+    vim.notify("[atlantis] nothing here", vim.log.levels.INFO)
+    return
+  end
+
+  menu.open(primary, results)
 end
 
 return M

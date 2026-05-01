@@ -7,7 +7,7 @@ pub use traits::Extract;
 
 // ── Positional range ──────────────────────────────────────────────────────
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct NodeRange {
     pub start_row: u32,
     pub start_col: u32,
@@ -107,22 +107,3 @@ impl<Lang> Node<Lang, Unknown> {
     }
 }
 
-// ── Cursor ────────────────────────────────────────────────────────────────
-//
-// AtlantisCursor is the result of navigating to any position in the tree.
-// It holds the resolved current node plus opaque handles for everything
-// immediately surrounding it. Parent, siblings, and children are RawNodes
-// — they remain unresolved until the user navigates to them, at which
-// point a new cursor is produced for that position.
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct AtlantisCursor<Lang, State> {
-    /// The node at the current position, fully resolved.
-    pub current: Node<Lang, State>,
-    /// Where we came from. None if we are at the root.
-    pub parent: Option<RawNode>,
-    /// Peers at this level in the tree, unresolved.
-    pub siblings: Vec<RawNode>,
-    /// Immediate children of the current node, unresolved.
-    pub children: Vec<RawNode>,
-}

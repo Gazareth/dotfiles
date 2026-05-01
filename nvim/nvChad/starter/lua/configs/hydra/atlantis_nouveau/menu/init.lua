@@ -11,10 +11,10 @@ local function menu_title(result)
   return result.node_type or "node"
 end
 
-function M.open(result)
+function M.open(result, all_results)
   make_hydra.open({
     title    = menu_title(result),
-    sections = standard.sections(result),
+    sections = standard.sections(result, all_results),
   })
 end
 

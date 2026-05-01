@@ -1,4 +1,4 @@
-pub enum SnapshotLanguage {
+pub enum Language {
     Lua,
     JavaScript,
     TypeScript,
@@ -6,12 +6,12 @@ pub enum SnapshotLanguage {
     Unknown,
 }
 
-pub fn detect(filetype: &str) -> SnapshotLanguage {
+pub fn detect(filetype: &str) -> Language {
     match filetype {
-        "lua"        => SnapshotLanguage::Lua,
-        "javascript" => SnapshotLanguage::JavaScript,
-        "typescript" => SnapshotLanguage::TypeScript,
-        "python"     => SnapshotLanguage::Python,
-        _            => SnapshotLanguage::Unknown,
+        "lua"        => Language::Lua,
+        "javascript" => Language::JavaScript,
+        "typescript" => Language::TypeScript,
+        "python"     => Language::Python,
+        _            => Language::Unknown,
     }
 }

@@ -6,15 +6,15 @@ use nvim_oxi::serde::Serializer;
 use nvim_oxi::Object;
 use serde::Serialize;
 
-use super::AtlantisNode;
+use super::SurveyResult;
 
-impl ToObject for AtlantisNode {
+impl ToObject for SurveyResult {
     fn to_object(self) -> Result<Object, nvim_oxi::conversion::Error> {
         self.serialize(Serializer::new()).map_err(Into::into)
     }
 }
 
-impl lua::Pushable for AtlantisNode {
+impl lua::Pushable for SurveyResult {
     unsafe fn push(
         self,
         lstate: *mut lua::ffi::State,

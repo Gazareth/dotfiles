@@ -3,7 +3,7 @@
 // Module layout:
 //
 //   node/             — RawNode, NodeRange, Node<Lang, State>, pipeline states,
-//                       AtlantisCursor, Extract + HasSiblings traits.
+//                       Extract trait.
 //
 //   supported_nodes/  — One file per supported node. Each file owns the state
 //                       struct, the Standard*/Container* marker trait, and the
@@ -28,5 +28,5 @@ pub use lang::{
     PythonContainerNode, PythonNode,
     TypeScriptContainerNode, TypeScriptNode,
 };
-pub use node::{AtlantisCursor, Node, NodeRange, RawNode, Unknown, Unresolved};
+pub use node::{Node, NodeRange, RawNode, Unknown, Unresolved};
 pub use resolved::{AnyContainerNode, AnyConstructNode};

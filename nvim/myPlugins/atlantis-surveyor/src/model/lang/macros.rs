@@ -52,7 +52,7 @@ macro_rules! impl_lang_node_resolver {
                     $StdEnum::Function(_)    => &["jump_to_body", "jump_to_params", "rename", "yank", "delete"],
                     $StdEnum::Call(_)        => &["jump_to_params", "rename", "yank"],
                     $StdEnum::Assignment(_)  => &["jump_lhs", "jump_rhs", "rename", "yank"],
-                    $StdEnum::Conditional(_) => &["jump_to_body", "jump_to_condition", "yank"],
+                    $StdEnum::Conditional(_) => &["jump_to_consequence", "jump_to_condition", "yank"],
                     $StdEnum::Unresolved(_)  => &[],
                 }
             }
