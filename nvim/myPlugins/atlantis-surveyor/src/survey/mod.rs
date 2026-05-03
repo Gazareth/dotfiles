@@ -1,7 +1,5 @@
-mod ancestry;
 mod focused_node;
 mod lua;
-mod navigation_targets;
 
 use nvim_oxi::Dictionary;
 use serde::Serialize;
@@ -10,7 +8,7 @@ use crate::error::AtlantisError;
 use crate::model::node::NodeRange;
 
 pub use crate::model::AtlantisNode;
-pub use self::navigation_targets::NavigationInfo;
+pub use self::focused_node::NavigationInfo;
 
 use self::focused_node::FocusedNode;
 
@@ -33,15 +31,12 @@ pub enum SurveyResult {
 
 impl From<FocusedNode> for SurveyResult {
     fn from(f: FocusedNode) -> Self {
-        let available_actions = match &f.node {
-            AtlantisNode::Construct(n) => n.available_actions().to_vec(),
-            _ => vec![],
-        };
+        let available_actions = f.available_actions();
         Self::Ok {
             node_type:         f.node_type,
             range:             f.range,
-            node:              f.node,
             available_actions,
+            node:              f.node,
             navigation:        f.navigation,
         }
     }
@@ -49,11 +44,10 @@ impl From<FocusedNode> for SurveyResult {
 
 impl SurveyResult {
     pub fn generate(raw: Dictionary) -> Self {
-        match ancestry::NodeAncestry::parse(&raw) {
-            Err(e)       => Self::Err { message: e.user_message() },
-            Ok(ancestry) => FocusedNode::from_ancestry(ancestry)
-                .map(Self::from)
-                .unwrap_or_else(|| Self::Err { message: AtlantisError::UnsupportedLanguage.user_message() }),
+        match FocusedNode::from_raw(&raw) {
+            Err(e)      => Self::Err { message: e.user_message() },
+            Ok(None)    => Self::Err { message: AtlantisError::UnsupportedLanguage.user_message() },
+            Ok(Some(f)) => Self::from(f),
         }
     }
 }

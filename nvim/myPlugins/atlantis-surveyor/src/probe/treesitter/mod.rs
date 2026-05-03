@@ -8,9 +8,9 @@ use std::collections::HashMap;
 use crate::model::node::{NodeRange, RawNode};
 use crate::error::AtlantisError;
 
-/// A single named child field returned by the query.
+/// A single child node within a snapshot (field, unnamed child, or sibling).
 #[derive(Debug, Clone)]
-pub struct TsFieldNode {
+pub struct SnapshotChild {
     pub node_type: String,
     pub range: NodeRange,
     pub text: String,
@@ -23,25 +23,25 @@ pub struct NodeOutline {
     pub range: NodeRange,
 }
 
-/// Full Tree-sitter capture — rich with fields, children, siblings, and text.
+/// Full Tree-sitter node snapshot — rich with fields, children, siblings, and text.
 #[derive(Debug, Clone)]
-pub struct TsCapture {
+pub struct NodeSnapshot {
     pub node_type: String,
     pub range: NodeRange,
     pub text: String,
-    pub fields: HashMap<String, TsFieldNode>,
+    pub fields: HashMap<String, SnapshotChild>,
     /// Unnamed named children — positional nodes like parameters, arguments.
-    pub children: Vec<TsFieldNode>,
+    pub children: Vec<SnapshotChild>,
     /// All named siblings (for filtering supported navigation in the model).
-    pub siblings: Vec<TsFieldNode>,
+    pub siblings: Vec<SnapshotChild>,
 }
 
-pub fn capture(
+pub fn snapshot(
     row: u32,
     col: u32,
     target_type: Option<&str>,
     target_start: Option<(u32, u32)>,
-) -> Result<TsCapture, AtlantisError> {
+) -> Result<NodeSnapshot, AtlantisError> {
     let d = query::call(row, col, target_type, target_start)?;
 
     if d.get("err").is_some() {
@@ -51,20 +51,20 @@ pub fn capture(
     decode::snapshot(&d)
 }
 
-impl From<&TsCapture> for RawNode {
-    fn from(cap: &TsCapture) -> Self {
+impl From<&NodeSnapshot> for RawNode {
+    fn from(snapshot: &NodeSnapshot) -> Self {
         RawNode {
-            kind:     cap.node_type.clone(),
-            text:     cap.text.clone(),
-            range:    cap.range.clone(),
-            fields:   cap.fields.iter().map(|(k, f)| (k.clone(), RawNode::from(f))).collect(),
-            children: cap.children.iter().map(RawNode::from).collect(),
+            kind:     snapshot.node_type.clone(),
+            text:     snapshot.text.clone(),
+            range:    snapshot.range.clone(),
+            fields:   snapshot.fields.iter().map(|(k, f)| (k.clone(), RawNode::from(f))).collect(),
+            children: snapshot.children.iter().map(RawNode::from).collect(),
         }
     }
 }
 
-impl From<&TsFieldNode> for RawNode {
-    fn from(f: &TsFieldNode) -> Self {
+impl From<&SnapshotChild> for RawNode {
+    fn from(f: &SnapshotChild) -> Self {
         RawNode {
             kind:     f.node_type.clone(),
             text:     f.text.clone(),

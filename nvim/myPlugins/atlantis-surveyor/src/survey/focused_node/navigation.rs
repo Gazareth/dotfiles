@@ -1,7 +1,7 @@
 use serde::Serialize;
 
 use crate::model::node::{NodeRange, RawNode};
-use crate::probe::treesitter::{NodeOutline, TsCapture, TsFieldNode};
+use crate::probe::treesitter::{NodeOutline, NodeSnapshot, SnapshotChild};
 
 /// Pointer to a navigation destination — enough to jump to and re-probe if needed.
 #[derive(Debug, Serialize, Clone)]
@@ -28,7 +28,7 @@ impl NavigationInfo {
     pub(super) fn resolve(
         all:           &[&NodeOutline],
         focus_idx:     usize,
-        cap:           &TsCapture,
+        node_snapshot: &NodeSnapshot,
         is_recognised: impl Fn(RawNode) -> bool,
     ) -> Self {
         let parent = all.iter().skip(focus_idx + 1)
@@ -39,16 +39,16 @@ impl NavigationInfo {
             .find(|n| is_recognised(RawNode::from(**n)))
             .map(|n| NavigationTarget::from(*n));
 
-        let supported_siblings: Vec<NavigationTarget> = cap.siblings.iter()
+        let supported_siblings: Vec<NavigationTarget> = node_snapshot.siblings.iter()
             .filter(|s| is_recognised(RawNode::from(*s)))
             .map(NavigationTarget::from)
             .collect();
 
-        let (prev_sibling, next_sibling) = sibling_nav(&supported_siblings, &cap.node_type, &cap.range);
+        let (prev_sibling, next_sibling) = sibling_nav(&supported_siblings, &node_snapshot.node_type, &node_snapshot.range);
 
         let is_at_top = top_level.as_ref().is_some_and(|tl| {
-            tl.range.start_row == cap.range.start_row &&
-            tl.range.start_col == cap.range.start_col
+            tl.range.start_row == node_snapshot.range.start_row &&
+            tl.range.start_col == node_snapshot.range.start_col
         });
 
         Self { parent, top_level, prev_sibling, next_sibling, is_at_top }
@@ -61,8 +61,8 @@ impl From<&NodeOutline> for NavigationTarget {
     }
 }
 
-impl From<&TsFieldNode> for NavigationTarget {
-    fn from(f: &TsFieldNode) -> Self {
+impl From<&SnapshotChild> for NavigationTarget {
+    fn from(f: &SnapshotChild) -> Self {
         Self { node_type: f.node_type.clone(), range: f.range.clone() }
     }
 }

@@ -13,7 +13,7 @@ use nvim_oxi::{Array, Dictionary};
 use crate::model::node::NodeRange;
 use crate::error::AtlantisError;
 
-use super::{TsFieldNode, TsCapture};
+use super::{SnapshotChild, NodeSnapshot};
 
 /// Pull a string value out by key; error if the key is absent or not a string.
 pub fn str(d: &Dictionary, key: &str) -> Result<String, AtlantisError> {
@@ -44,8 +44,8 @@ pub fn range(d: &Dictionary) -> Result<NodeRange, AtlantisError> {
 }
 
 /// Parse one entry from the `fields` table — a named child node.
-pub fn field_node(d: &Dictionary) -> Result<TsFieldNode, AtlantisError> {
-    Ok(TsFieldNode {
+pub fn snapshot_child(d: &Dictionary) -> Result<SnapshotChild, AtlantisError> {
+    Ok(SnapshotChild {
         node_type: str(d, "node_type")?,
         range:     range(d)?,
         text:      str(d, "text").unwrap_or_default(),
@@ -54,7 +54,7 @@ pub fn field_node(d: &Dictionary) -> Result<TsFieldNode, AtlantisError> {
 
 /// Parse the `fields` table into a map of field name → child node.
 /// Malformed entries are silently dropped; partial data shouldn't abort the capture.
-pub fn fields(d: &Dictionary) -> HashMap<String, TsFieldNode> {
+pub fn fields(d: &Dictionary) -> HashMap<String, SnapshotChild> {
     d.get("fields")
         .and_then(|o| Dictionary::from_object(o.clone()).ok())
         .map(|fields_dict| {
@@ -62,7 +62,7 @@ pub fn fields(d: &Dictionary) -> HashMap<String, TsFieldNode> {
                 .into_iter()
                 .filter_map(|(key, val)| {
                     let d = Dictionary::from_object(val).ok()?;
-                    Some((key.to_string(), field_node(&d).ok()?))
+                    Some((key.to_string(), snapshot_child(&d).ok()?))
                 })
                 .collect()
         })
@@ -71,14 +71,14 @@ pub fn fields(d: &Dictionary) -> HashMap<String, TsFieldNode> {
 
 /// Parse the `children` array into an ordered list of unnamed named child nodes.
 /// Malformed entries are silently dropped.
-pub fn children(d: &Dictionary) -> Vec<TsFieldNode> {
+pub fn children(d: &Dictionary) -> Vec<SnapshotChild> {
     d.get("children")
         .and_then(|o| Array::from_object(o.clone()).ok())
         .map(|arr| {
             arr.into_iter()
                 .filter_map(|val| {
                     let d = Dictionary::from_object(val).ok()?;
-                    field_node(&d).ok()
+                    snapshot_child(&d).ok()
                 })
                 .collect()
         })
@@ -86,23 +86,23 @@ pub fn children(d: &Dictionary) -> Vec<TsFieldNode> {
 }
 
 /// Parse the `siblings` array into an ordered list of named sibling nodes.
-pub fn siblings(d: &Dictionary) -> Vec<TsFieldNode> {
+pub fn siblings(d: &Dictionary) -> Vec<SnapshotChild> {
     d.get("siblings")
         .and_then(|o| Array::from_object(o.clone()).ok())
         .map(|arr| {
             arr.into_iter()
                 .filter_map(|val| {
                     let d = Dictionary::from_object(val).ok()?;
-                    field_node(&d).ok()
+                    snapshot_child(&d).ok()
                 })
                 .collect()
         })
         .unwrap_or_default()
 }
 
-/// Assemble a complete `TsCapture` from the top-level query Dictionary.
-pub fn snapshot(d: &Dictionary) -> Result<TsCapture, AtlantisError> {
-    Ok(TsCapture {
+/// Assemble a complete `NodeSnapshot` from the top-level query Dictionary.
+pub fn snapshot(d: &Dictionary) -> Result<NodeSnapshot, AtlantisError> {
+    Ok(NodeSnapshot {
         node_type: str(d, "node_type")?,
         range:     range(d)?,
         text:      str(d, "text")?,
