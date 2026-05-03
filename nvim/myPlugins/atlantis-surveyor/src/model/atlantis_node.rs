@@ -16,12 +16,10 @@ pub enum AtlantisNode {
     Container(AnyContainerNode),
     /// Atlantis has no registered behaviour for this node type.
     Unrecognised,
-    /// The probe failed to capture a node at this position.
-    Error { message: String },
 }
 
 impl AtlantisNode {
-    pub(super) fn from_raw(raw: RawNode, language: &Language) -> Self {
+    pub fn from_raw(raw: RawNode, language: &Language) -> Self {
         match language {
             Language::Lua => resolve_output(
                 Node::<Lua>::new(raw).resolve(),

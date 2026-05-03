@@ -29,7 +29,6 @@ pub struct TsCapture {
     pub node_type: String,
     pub range: NodeRange,
     pub text: String,
-    pub filetype: String,
     pub fields: HashMap<String, TsFieldNode>,
     /// Unnamed named children — positional nodes like parameters, arguments.
     pub children: Vec<TsFieldNode>,
@@ -38,13 +37,12 @@ pub struct TsCapture {
 }
 
 pub fn capture(
-    bufnr: i32,
     row: u32,
     col: u32,
     target_type: Option<&str>,
     target_start: Option<(u32, u32)>,
 ) -> Result<TsCapture, AtlantisError> {
-    let d = query::call(bufnr, row, col, target_type, target_start)?;
+    let d = query::call(row, col, target_type, target_start)?;
 
     if d.get("err").is_some() {
         return Err(AtlantisError::from_lua_err_code(&decode::str(&d, "err")?));

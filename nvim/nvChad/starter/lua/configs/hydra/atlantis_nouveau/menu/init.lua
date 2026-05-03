@@ -4,17 +4,17 @@ local standard   = require("configs.hydra.atlantis_nouveau.menu.modes.standard")
 local M = {}
 
 local function menu_title(result)
-  local node = result.variant and result.variant.node
+  local node = result.node and result.node.node
   if node and node.type and node.name then
     return node.type .. ": " .. node.name
   end
   return result.node_type or "node"
 end
 
-function M.open(result, all_results)
+function M.open(result)
   make_hydra.open({
     title    = menu_title(result),
-    sections = standard.sections(result, all_results),
+    sections = standard.sections(result),
   })
 end
 

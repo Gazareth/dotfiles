@@ -106,7 +106,6 @@ pub fn snapshot(d: &Dictionary) -> Result<TsCapture, AtlantisError> {
         node_type: str(d, "node_type")?,
         range:     range(d)?,
         text:      str(d, "text")?,
-        filetype:  str(d, "filetype").unwrap_or_default(),
         fields:    fields(d),
         children:  children(d),
         siblings:  siblings(d),

@@ -3,9 +3,9 @@ local navigate = require("configs.hydra.atlantis_nouveau.menu.sections.navigate"
 
 local M = {}
 
-function M.sections(result, all_results)
+function M.sections(result)
   return {
-    navigate.build(result, all_results),
+    navigate.build(result),
     interact.build(result),
   }
 end

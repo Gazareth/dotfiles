@@ -14,7 +14,7 @@ end
 --- If the state field is a scalar (e.g. a name string), falls back to the raw node's range.
 function M.to_field(field)
   return function(result)
-    local node = result.variant and result.variant.node
+    local node = result.node and result.node.node
     if not node then return end
     local state = node.state
     if not state then return end

@@ -1,5 +1,5 @@
 return function(result)
-  local node = result.variant.node
+  local node = result.node and result.node.node
   local current_name = node and node.state and node.state.name or ""
   vim.ui.input({ prompt = "Rename: ", default = current_name }, function(new_name)
     if not new_name or new_name == "" or new_name == current_name then return end

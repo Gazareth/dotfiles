@@ -20,6 +20,7 @@ pub mod supported_nodes;
 pub mod lang;
 pub mod node;
 pub mod resolved;
+pub mod atlantis_node;
 
 pub use supported_nodes::{Assignment, ConditionalStatement, FunctionDeclaration};
 pub use lang::{
@@ -30,3 +31,4 @@ pub use lang::{
 };
 pub use node::{Node, NodeRange, RawNode, Unknown, Unresolved};
 pub use resolved::{AnyContainerNode, AnyConstructNode};
+pub use atlantis_node::AtlantisNode;

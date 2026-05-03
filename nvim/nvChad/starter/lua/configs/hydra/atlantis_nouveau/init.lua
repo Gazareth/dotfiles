@@ -46,35 +46,14 @@ function M.open(bufnr)
     return
   end
 
-  local results = surveyor.resolve(bufnr, scan)
+  local result = surveyor(scan)
 
-  if #results == 0 then
-    vim.notify("[atlantis] nothing here", vim.log.levels.INFO)
+  if result.kind == "err" then
+    vim.notify("[atlantis] " .. result.message, vim.log.levels.WARN)
     return
   end
 
-  local primary = results[1]
-  if primary.variant.kind == "error" then
-    vim.notify("[atlantis] " .. primary.variant.message, vim.log.levels.WARN)
-    return
-  end
-
-  if primary.variant.kind == "unrecognised" or not primary.available_actions or #primary.available_actions == 0 then
-    -- Try to find the first supported node if the innermost is unrecognised
-    for i=2, #results do
-      if results[i].variant.kind ~= "unrecognised" then
-        primary = results[i]
-        break
-      end
-    end
-  end
-
-  if primary.variant.kind == "unrecognised" then
-    vim.notify("[atlantis] nothing here", vim.log.levels.INFO)
-    return
-  end
-
-  menu.open(primary, results)
+  menu.open(result)
 end
 
 return M

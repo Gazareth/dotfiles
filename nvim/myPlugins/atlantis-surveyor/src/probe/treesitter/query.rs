@@ -7,7 +7,8 @@ use nvim_oxi::{Array, Dictionary, Object};
 
 use crate::error::AtlantisError;
 
-const LUA: &str = r#"(function(bufnr, row, col, target_type, target_start_row, target_start_col)
+const LUA: &str = r#"(function(row, col, target_type, target_start_row, target_start_col)
+  local bufnr = vim.api.nvim_get_current_buf()
   local ok_parser, parser = pcall(vim.treesitter.get_parser, bufnr)
   if not ok_parser or parser == nil then
     return { err = "no_parser" }
@@ -80,10 +81,9 @@ const LUA: &str = r#"(function(bufnr, row, col, target_type, target_start_row, t
     children = children,
     siblings = siblings,
   }
-end)(_A[1], _A[2], _A[3], _A[4], _A[5], _A[6])"#;
+end)(_A[1], _A[2], _A[3], _A[4], _A[5])"#;
 
 pub fn call(
-    bufnr: i32,
     row: u32,
     col: u32,
     target_type: Option<&str>,
@@ -105,7 +105,6 @@ pub fn call(
     };
 
     let args = Array::from_iter([
-        Object::from(bufnr as i64),
         Object::from(row as i64),
         Object::from(col as i64),
         type_val,
