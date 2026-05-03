@@ -53,6 +53,7 @@ end
 
 local fixture_lines = vim.fn.readfile(fixture_path)
 local buf = vim.api.nvim_create_buf(false, true)
+vim.api.nvim_set_current_buf(buf)
 vim.api.nvim_buf_set_lines(buf, 0, -1, false, fixture_lines)
 vim.bo[buf].filetype = "lua"
 
@@ -105,7 +106,7 @@ end
 
 local function survey(row, col)
   local scan = collect_ancestry(buf, row, col)
-  return surveyor.resolve(buf, scan)
+  return surveyor(scan)
 end
 
 -- ── Constructs ────────────────────────────────────────────────────────────────
@@ -115,11 +116,11 @@ print("\n── Constructs ──")
 do -- Function  (row 1, col 0 → function_declaration)
   local r = survey(1, 0)
   eq("function: node_type",         r.node_type,                    "function_declaration")
-  eq("function: variant.kind",      r.variant.kind,                 "construct")
-  eq("function: variant.lang",      r.variant.lang,                 "lua")
-  eq("function: node.type",         r.variant.node.type,            "function")
-  eq("function: state.name",        r.variant.node.state.name,      "add")
-  eq("function: state.is_async",    r.variant.node.state.is_async,  false)
+  eq("function: node.kind",         r.node.kind,                 "construct")
+  eq("function: node.lang",         r.node.lang,                 "lua")
+  eq("function: node.node.type",    r.node.node.type,            "function")
+  eq("function: state.name",        r.node.node.state.name,      "add")
+  eq("function: state.is_async",    r.node.node.state.is_async,  false)
   eq("function: available_actions", r.available_actions,
     { "jump_to_body", "jump_to_params", "rename", "yank", "delete" })
 end
@@ -127,10 +128,10 @@ end
 do -- Assignment  (row 3, col 2 → variable_declaration)
   local r = survey(3, 2)
   eq("assignment: node_type",               r.node_type,                             "variable_declaration")
-  eq("assignment: variant.kind",            r.variant.kind,                          "construct")
-  eq("assignment: node.type",               r.variant.node.type,                     "assignment")
-  eq("assignment: state.name",              r.variant.node.state.name,               "sum")
-  eq("assignment: state.is_local_binding",  r.variant.node.state.is_local_binding,   true)
+  eq("assignment: variant.kind",            r.node.kind,                          "construct")
+  eq("assignment: node.type",               r.node.node.type,                     "assignment")
+  eq("assignment: state.name",              r.node.node.state.name,               "sum")
+  eq("assignment: state.is_local_binding",  r.node.node.state.is_local_binding,   true)
   eq("assignment: available_actions",       r.available_actions,
     { "jump_lhs", "jump_rhs", "rename", "yank" })
 end
@@ -138,10 +139,10 @@ end
 do -- Conditional  (row 4, col 2 → if_statement)
   local r = survey(4, 2)
   eq("conditional: node_type",         r.node_type,         "if_statement")
-  eq("conditional: variant.kind",      r.variant.kind,      "construct")
-  eq("conditional: node.type",         r.variant.node.type, "conditional")
+  eq("conditional: variant.kind",      r.node.kind,      "construct")
+  eq("conditional: node.type",         r.node.node.type, "conditional")
   eq("conditional: available_actions", r.available_actions,
-    { "jump_to_body", "jump_to_condition", "yank" })
+    { "jump_to_consequence", "jump_to_condition", "yank" })
 end
 
 -- ── Containers ────────────────────────────────────────────────────────────────
@@ -151,24 +152,24 @@ print("\n── Containers ──")
 do -- FileRoot  (row 0 → chunk; blank line before any code)
   local r = survey(0, 0)
   eq("file_root: node_type",    r.node_type,         "chunk")
-  eq("file_root: variant.kind", r.variant.kind,      "container")
-  eq("file_root: node.type",    r.variant.node.type, "file_root")
+  eq("file_root: variant.kind", r.node.kind,      "container")
+  eq("file_root: node.type",    r.node.node.type, "file_root")
   eq("file_root: no actions",   r.available_actions, nil)
 end
 
 do -- ParameterList  (row 1, col 18 → `(` of `add(x, y)`)
   local r = survey(1, 18)
   eq("param_list: node_type",    r.node_type,         "parameters")
-  eq("param_list: variant.kind", r.variant.kind,      "container")
-  eq("param_list: node.type",    r.variant.node.type, "parameter_list")
+  eq("param_list: variant.kind", r.node.kind,      "container")
+  eq("param_list: node.type",    r.node.node.type, "parameter_list")
   eq("param_list: no actions",   r.available_actions, nil)
 end
 
 do -- Body  (row 4, col 0 → block node is innermost before the `if` keyword)
   local r = survey(4, 0)
   eq("body: node_type",    r.node_type,         "block")
-  eq("body: variant.kind", r.variant.kind,      "container")
-  eq("body: node.type",    r.variant.node.type, "body")
+  eq("body: variant.kind", r.node.kind,      "container")
+  eq("body: node.type",    r.node.node.type, "body")
   eq("body: no actions",   r.available_actions, nil)
 end
 
@@ -180,8 +181,8 @@ do -- return statement  (row 5, col 4)
   -- return_statement is not in the map → ancestry walk climbs to block → Body (container)
   local r = survey(5, 4)
   eq("return→ancestor: node_type",    r.node_type,         "block")
-  eq("return→ancestor: variant.kind", r.variant.kind,      "container")
-  eq("return→ancestor: node.type",    r.variant.node.type, "body")
+  eq("return→ancestor: variant.kind", r.node.kind,      "container")
+  eq("return→ancestor: node.type",    r.node.node.type, "body")
 end
 
 -- ── Summary ───────────────────────────────────────────────────────────────────
