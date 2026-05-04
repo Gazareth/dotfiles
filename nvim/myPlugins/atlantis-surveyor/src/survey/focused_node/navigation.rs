@@ -4,13 +4,7 @@ use crate::model::node::{NodeRange, RawNode};
 use crate::model::{AtlantisNode, FocusMode};
 use crate::probe::treesitter::{NodeOutline, NodeSnapshot, SnapshotChild};
 
-/// Pointer to a navigation destination — enough to jump to and re-probe if needed.
-#[derive(Debug, Serialize, Clone)]
-pub struct NavigationTarget {
-    pub node_type: String,
-    pub range: NodeRange,
-    pub target_mode: FocusMode,
-}
+use crate::model::NavigationTarget;
 
 /// Pre-computed navigation targets for a resolved node.
 #[derive(Debug, Serialize)]

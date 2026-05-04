@@ -1,3 +1,4 @@
+use crate::model::NavigationTarget;
 use crate::model::supported_nodes::{Assignment, FunctionCall};
 use crate::model::lang::Common;
 use crate::model::node::{Extract, RawNode};
@@ -12,7 +13,7 @@ impl Extract<FunctionCall> for Lua {
         FunctionCall {
             // Lua function_call uses `name`, not `function`, for the callee field.
             name:       raw.field_text("name"),
-            parameters: raw.field("args").cloned().unwrap_or_else(|| raw.placeholder("args")),
+            parameters: raw.field("args").map(NavigationTarget::container),
         }
     }
 }
@@ -31,20 +32,20 @@ impl Extract<Assignment> for Lua {
                 Assignment {
                     name,
                     is_local_binding: true,
-                    value: inner.cloned().unwrap_or_else(|| raw.placeholder("value")),
+                    value: inner.map(|r| NavigationTarget::construct(r)),
                 }
             }
             // Modern grammar: bare `x = y` → assignment_statement( variable_list, =, expression_list )
             "assignment_statement" => Assignment {
                 name: raw.children.first().map(|c| c.text.clone()).unwrap_or_default(),
                 is_local_binding: false,
-                value: raw.children.get(1).cloned().unwrap_or_else(|| raw.placeholder("value")),
+                value: raw.children.get(1).map(|r| NavigationTarget::construct(r)),
             },
             // Old nvim-treesitter grammar (field names: "name", "value")
             _ => Assignment {
                 name: raw.field_text("name"),
                 is_local_binding: raw.kind == "local_declaration",
-                value: raw.field("value").cloned().unwrap_or_else(|| raw.placeholder("value")),
+                value: raw.field("value").map(|r| NavigationTarget::construct(r)),
             },
         }
     }

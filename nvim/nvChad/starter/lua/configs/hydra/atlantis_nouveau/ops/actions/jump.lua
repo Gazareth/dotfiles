@@ -1,10 +1,7 @@
 local M = {}
 
-local function jump_to_range(bufnr, range)
+local function jump_to_range(range)
   if not range then return end
-  if bufnr and vim.api.nvim_buf_is_valid(bufnr) then
-    vim.api.nvim_set_current_buf(bufnr)
-  end
   vim.api.nvim_win_set_cursor(0, { range.start_row + 1, range.start_col })
   vim.cmd("normal! zz")
 end
@@ -20,10 +17,18 @@ function M.to_field(field)
     if not state then return end
     local target = state[field]
     if type(target) == "table" and target.range then
-      jump_to_range(result.bufnr, target.range)
+      if target.target_mode then
+        -- It's a NavigationTarget — jump and reopen Atlantis in the correct mode
+        jump_to_range(target.range)
+        vim.schedule(function()
+          require("configs.hydra.atlantis_nouveau").open(result.bufnr, target.target_mode)
+        end)
+      else
+        jump_to_range(target.range)
+      end
     else
       -- field is a scalar (e.g. Assignment.name is a string) — jump to the node start
-      jump_to_range(result.bufnr, node.raw and node.raw.range)
+      jump_to_range(node.raw and node.raw.range)
     end
   end
 end

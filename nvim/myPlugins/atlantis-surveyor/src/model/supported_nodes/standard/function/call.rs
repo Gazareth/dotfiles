@@ -1,13 +1,14 @@
 use serde::{Deserialize, Serialize};
 use crate::model::node::{Extract, RawNode};
 use crate::model::supported_nodes::standard::Named;
+use crate::model::NavigationTarget;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FunctionCall {
     /// The name of the function being called — needed for display.
     pub name: String,
-    /// The argument list. Opaque until the user drills in.
-    pub parameters: RawNode,
+    /// The argument list.
+    pub parameters: Option<NavigationTarget>,
 }
 
 impl Named for FunctionCall {
@@ -25,7 +26,7 @@ impl<Lang: HasFunctionCalls> Extract<FunctionCall> for Lang {
     fn extract(raw: &RawNode) -> FunctionCall {
         FunctionCall {
             name:       raw.field_text("function"),
-            parameters: raw.field("arguments").cloned().unwrap_or_else(|| raw.placeholder("arguments")),
+            parameters: raw.field("arguments").map(NavigationTarget::container),
         }
     }
 }

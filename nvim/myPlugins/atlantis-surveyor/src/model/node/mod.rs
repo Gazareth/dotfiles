@@ -7,7 +7,7 @@ pub use traits::Extract;
 
 // ── Positional range ──────────────────────────────────────────────────────
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct NodeRange {
     pub start_row: u32,
     pub start_col: u32,

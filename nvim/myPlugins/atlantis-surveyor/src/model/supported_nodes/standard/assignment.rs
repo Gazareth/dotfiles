@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use crate::model::node::{Extract, RawNode};
+use crate::model::NavigationTarget;
 use super::Named;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -8,8 +9,8 @@ pub struct Assignment {
     pub name: String,
     /// Whether this introduces a new locally-scoped binding (e.g. Lua's `local`).
     pub is_local_binding: bool,
-    /// The right-hand side. Opaque until the user drills in.
-    pub value: RawNode,
+    /// The right-hand side.
+    pub value: Option<NavigationTarget>,
 }
 
 impl Named for Assignment {
@@ -26,7 +27,7 @@ impl<Lang: HasAssignment> Extract<Assignment> for Lang {
         Assignment {
             name: raw.field_text("name"),
             is_local_binding: false,
-            value: raw.field("value").cloned().unwrap_or_else(|| raw.placeholder("value")),
+            value: raw.field("value").map(NavigationTarget::construct),
         }
     }
 }

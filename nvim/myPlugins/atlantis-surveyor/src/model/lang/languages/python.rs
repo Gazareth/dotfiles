@@ -1,3 +1,4 @@
+use crate::model::NavigationTarget;
 use crate::model::supported_nodes::{Assignment, HasFunctionCalls};
 use crate::model::lang::Common;
 use crate::model::node::{Extract, RawNode};
@@ -14,7 +15,7 @@ impl Extract<Assignment> for Python {
         Assignment {
             name: raw.field_text("left"),
             is_local_binding: false,
-            value: raw.field("right").cloned().unwrap_or_else(|| raw.placeholder("right")),
+            value: raw.field("right").map(NavigationTarget::construct),
         }
     }
 }
