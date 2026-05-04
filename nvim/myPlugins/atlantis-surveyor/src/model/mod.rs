@@ -10,7 +10,7 @@
 //                       blanket Extract impl. Add a new file here for each new
 //                       supported node type.
 //
-//   lang/             — Language markers, NodeClass/ConstructNode/ContainerNode,
+//   lang/             — Language markers, NodeKind/ConstructNode/ContainerNode,
 //                       LanguageConfig trait, per-language Extract overrides,
 //                       node enums, resolvers.
 //
@@ -21,6 +21,7 @@ pub mod lang;
 pub mod node;
 pub mod resolved;
 pub mod atlantis_node;
+pub mod focus;
 
 pub use supported_nodes::{Assignment, ConditionalStatement, FunctionDeclaration};
 pub use lang::{
@@ -32,3 +33,4 @@ pub use lang::{
 pub use node::{Node, NodeRange, RawNode, Unknown, Unresolved};
 pub use resolved::{AnyContainerNode, AnyConstructNode};
 pub use atlantis_node::AtlantisNode;
+pub use focus::FocusMode;

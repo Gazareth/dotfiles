@@ -1,6 +1,7 @@
-use crate::model::lang::{LanguageConfig, NodeClass, ContainerNode};
+use crate::model::lang::{LanguageConfig, NodeKind, ContainerNode};
 use crate::model::lang::languages::{JavaScript, Lua, Python, TypeScript};
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Language {
     Lua,
     JavaScript,
@@ -31,6 +32,6 @@ impl Language {
             Language::Python     => Python::classify(node_type),
             Language::Unknown    => return None,
         };
-        Some(matches!(class, Some(NodeClass::Container(ContainerNode::FileRoot))))
+        Some(matches!(class, Some(NodeKind::Container(ContainerNode::FileRoot))))
     }
 }

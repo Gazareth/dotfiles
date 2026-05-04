@@ -8,7 +8,8 @@ use crate::probe::treesitter::{self, NodeOutline};
 
 /// Language-aware view of the ancestry chain.
 /// The `root` field guarantees at least one node is always present.
-pub(super) struct NodeAncestry {
+#[derive(Clone)]
+pub struct NodeAncestry {
     inner:    Vec<NodeOutline>,  // innermost nodes, cursor → just inside the file root
     root:     NodeOutline,       // always the outermost — validated as a file root on construction
     language: Language,
@@ -33,14 +34,19 @@ impl NodeAncestry {
             ));
         }
 
-        Ok(Self { inner: outlines, root, language })
+    Ok(Self { inner: outlines, root, language })
     }
 
-    pub(super) fn all(&self) -> impl Iterator<Item = &NodeOutline> {
+    #[cfg(test)]
+    pub fn new_test(inner: Vec<NodeOutline>, root: NodeOutline, language: Language) -> Self {
+        Self { inner, root, language }
+    }
+
+    pub fn all(&self) -> impl Iterator<Item = &NodeOutline> {
         self.inner.iter().chain(std::iter::once(&self.root))
     }
 
-    pub(super) fn classify(&self, raw: RawNode) -> AtlantisNode {
+    pub fn classify(&self, raw: RawNode) -> AtlantisNode {
         AtlantisNode::from_raw(raw, &self.language)
     }
 }

@@ -1,4 +1,4 @@
-mod focused_node;
+pub(crate) mod focused_node;
 mod lua;
 
 use nvim_oxi::Dictionary;
@@ -7,7 +7,7 @@ use serde::Serialize;
 use crate::error::AtlantisError;
 use crate::model::node::NodeRange;
 
-pub use crate::model::AtlantisNode;
+pub use crate::model::{AtlantisNode, FocusMode};
 pub use self::focused_node::NavigationInfo;
 
 use self::focused_node::FocusedNode;
@@ -43,8 +43,13 @@ impl From<FocusedNode> for SurveyResult {
 }
 
 impl SurveyResult {
-    pub fn generate(raw: Dictionary) -> Self {
-        match FocusedNode::from_raw(&raw) {
+    pub fn generate(raw: Dictionary, mode: Option<String>) -> Self {
+        let focus_mode = match mode.as_deref() {
+            Some("container") => FocusMode::Container,
+            _                 => FocusMode::Construct,
+        };
+
+        match FocusedNode::from_raw(&raw, focus_mode) {
             Err(e)      => Self::Err { message: e.user_message() },
             Ok(None)    => Self::Err { message: AtlantisError::UnsupportedLanguage.user_message() },
             Ok(Some(f)) => Self::from(f),

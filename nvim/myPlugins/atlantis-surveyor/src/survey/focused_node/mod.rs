@@ -1,12 +1,12 @@
 mod actions;
-mod ancestry;
+pub(crate) mod ancestry;
 mod navigation;
 
 use nvim_oxi::Dictionary;
 
 use crate::error::AtlantisError;
 use crate::model::node::{NodeRange, RawNode};
-use crate::model::AtlantisNode;
+use crate::model::{AtlantisNode, FocusMode};
 use crate::probe::treesitter::{self, NodeOutline};
 
 use self::ancestry::NodeAncestry;
@@ -15,7 +15,7 @@ pub use self::navigation::NavigationInfo;
 
 /// A resolved node ready to be turned into a `SurveyResult` — holds classification,
 /// position, and pre-computed navigation targets.
-pub(super) struct FocusedNode {
+pub struct FocusedNode {
     pub node_type:  String,
     pub range:      NodeRange,
     pub node:       AtlantisNode,
@@ -25,19 +25,34 @@ pub(super) struct FocusedNode {
 impl FocusedNode {
     /// Parse the raw Lua ancestry dict and resolve the innermost supported node.
     /// Returns `None` for unknown or unsupported languages.
-    pub(super) fn from_raw(raw: &Dictionary) -> Result<Option<Self>, AtlantisError> {
+    pub fn from_raw(raw: &Dictionary, focus_mode: FocusMode) -> Result<Option<Self>, AtlantisError> {
         let ancestry = NodeAncestry::parse(raw)?;
-        Ok(Self::from_ancestry(ancestry))
+        Ok(Self::from_ancestry(ancestry, focus_mode))
     }
 
-    fn from_ancestry(ancestry: NodeAncestry) -> Option<Self> {
+    pub fn from_ancestry(ancestry: NodeAncestry, focus_mode: FocusMode) -> Option<Self> {
         let all: Vec<&NodeOutline> = ancestry.all().collect();
 
-        let is_recognised = |raw: RawNode| {
-            !matches!(ancestry.classify(raw), AtlantisNode::Unrecognised)
-        };
+        // Find the innermost recognised node that matches the requested FocusMode.
+        let first_idx = all.iter().position(|n| {
+            let classified = ancestry.classify(RawNode::from(*n));
+            match (focus_mode, classified) {
+                (FocusMode::Construct, AtlantisNode::Construct(_)) => true,
+                (FocusMode::Container, AtlantisNode::Container(_)) => true,
+                _ => false,
+            }
+        })?;
 
-        let focus_idx = all.iter().position(|n| is_recognised(RawNode::from(*n)))?;
+        // Walk UP through consecutive ancestors that classify to the same construct kind
+        // (e.g. assignment_statement → variable_declaration both resolve to Assignment).
+        // Focusing the outermost means the user skips the intermediate wrapper entirely.
+        let first_kind = ancestry.classify(RawNode::from(all[first_idx]));
+        let focus_idx = all[first_idx..].iter()
+            .enumerate()
+            .take_while(|(_, n)| first_kind.same_construct_kind(&ancestry.classify(RawNode::from(**n))))
+            .last()
+            .map(|(i, _)| first_idx + i)
+            .unwrap_or(first_idx);
 
         let outline = all[focus_idx];
 
@@ -49,7 +64,7 @@ impl FocusedNode {
         ).ok()?;
 
         let node = ancestry.classify(RawNode::from(&node_snapshot));
-        let navigation = NavigationInfo::resolve(&all, focus_idx, &node_snapshot, is_recognised);
+        let navigation = NavigationInfo::resolve(&all, focus_idx, &node_snapshot, |raw| ancestry.classify(raw));
 
         Some(Self { node_type: node_snapshot.node_type, range: node_snapshot.range, node, navigation })
     }

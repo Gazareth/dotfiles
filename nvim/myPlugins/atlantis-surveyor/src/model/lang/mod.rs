@@ -5,7 +5,7 @@
 // 1. Create `src/model/lang/languages/your_lang.rs`.
 // 2. Define a marker struct: `pub struct YourLang;`.
 // 3. Opt into CLike or individual Standard*/Container* traits from `model/supported_nodes/`.
-// 4. Use `impl_language_syntax_map!` to map TS kind strings to NodeClass values.
+// 4. Use `impl_language_syntax_map!` to map TS kind strings to NodeKind values.
 // 5. Use `impl_lang_node_resolver!` to generate the Standard + Container node enums.
 // 6. Register the new module in `languages/mod.rs` and re-export below.
 
@@ -16,7 +16,7 @@ pub mod node_kind;
 pub mod resolve;
 
 pub use common::{CLike, Common};
-pub use node_kind::{LanguageConfig, NodeClass, ContainerNode, ConstructNode};
+pub use node_kind::{LanguageConfig, NodeKind, ContainerNode, ConstructNode};
 pub use languages::{
     JavaScript, JavaScriptContainerNode, JavaScriptNode,
     Lua, LuaContainerNode, LuaNode,

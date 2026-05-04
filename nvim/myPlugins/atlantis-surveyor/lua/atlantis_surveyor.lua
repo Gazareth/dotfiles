@@ -8,11 +8,34 @@ local function plugin_root()
 end
 
 local ext = vim.fn.has("win32") == 1 and "dll" or "so"
-local lib = vim.fs.joinpath(plugin_root(), "lua", "native", "atlantis_surveyor." .. ext)
+local root = plugin_root()
 
-local loadfn, err = package.loadlib(lib, "luaopen_atlantis_surveyor")
+local paths_to_try = {
+  vim.fs.joinpath(root, "target", "debug", "atlantis_surveyor." .. ext),
+  vim.fs.joinpath(root, "target", "release", "atlantis_surveyor." .. ext),
+  vim.fs.joinpath(root, "lua", "native", "atlantis_surveyor." .. ext),
+}
+
+local newest_lib = nil
+local max_mtime = 0
+
+for _, path in ipairs(paths_to_try) do
+  local stat = vim.uv.fs_stat(path)
+  if stat and stat.type == "file" then
+    if stat.mtime.sec > max_mtime then
+      max_mtime = stat.mtime.sec
+      newest_lib = path
+    end
+  end
+end
+
+if not newest_lib then
+  error("[atlantis_surveyor] Could not find compiled library. Run `cargo build`.")
+end
+
+local loadfn, err = package.loadlib(newest_lib, "luaopen_atlantis_surveyor")
 if not loadfn then
-  error(("[atlantis_surveyor] could not load %s: %s"):format(lib, err or "?"))
+  error(("[atlantis_surveyor] could not load %s: %s"):format(newest_lib, err or "?"))
 end
 
 return loadfn()

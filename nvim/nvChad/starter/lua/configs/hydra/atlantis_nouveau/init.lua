@@ -34,7 +34,7 @@ local function collect_ancestry(bufnr, row, col)
   return { filetype = ft, ancestry = ancestry }
 end
 
-function M.open(bufnr)
+function M.open(bufnr, focus_mode)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
   local cursor = vim.api.nvim_win_get_cursor(0)
   local row = cursor[1] - 1
@@ -46,7 +46,7 @@ function M.open(bufnr)
     return
   end
 
-  local result = surveyor(scan)
+  local result = surveyor(scan, focus_mode)
 
   if result.kind == "err" then
     vim.notify("[atlantis] " .. result.message, vim.log.levels.WARN)

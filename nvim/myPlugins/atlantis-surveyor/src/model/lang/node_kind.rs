@@ -2,7 +2,7 @@
 /// A node is either a direct language construct (Standard) or a structural
 /// grouping (Container); never both.
 #[derive(Debug, Clone, Copy)]
-pub enum NodeClass {
+pub enum NodeKind {
     Construct(ConstructNode),
     Container(ContainerNode),
 }
@@ -26,9 +26,9 @@ pub enum ContainerNode {
 }
 
 pub trait LanguageConfig {
-    fn kinds() -> &'static phf::Map<&'static str, NodeClass>;
+    fn kinds() -> &'static phf::Map<&'static str, NodeKind>;
 
-    fn classify(kind: &str) -> Option<NodeClass> {
+    fn classify(kind: &str) -> Option<NodeKind> {
         Self::kinds().get(kind).copied()
     }
 }

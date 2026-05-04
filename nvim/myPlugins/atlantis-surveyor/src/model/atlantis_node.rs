@@ -21,27 +21,27 @@ pub enum AtlantisNode {
 impl AtlantisNode {
     pub fn from_raw(raw: RawNode, language: &Language) -> Self {
         match language {
-            Language::Lua => resolve_output(
-                Node::<Lua>::new(raw).resolve(),
-                AnyConstructNode::Lua,
-                AnyContainerNode::Lua,
-            ),
-            Language::JavaScript => resolve_output(
-                Node::<JavaScript>::new(raw).resolve(),
-                AnyConstructNode::JavaScript,
-                AnyContainerNode::JavaScript,
-            ),
-            Language::TypeScript => resolve_output(
-                Node::<TypeScript>::new(raw).resolve(),
-                AnyConstructNode::TypeScript,
-                AnyContainerNode::TypeScript,
-            ),
-            Language::Python => resolve_output(
-                Node::<Python>::new(raw).resolve(),
-                AnyConstructNode::Python,
-                AnyContainerNode::Python,
-            ),
-            Language::Unknown => AtlantisNode::Unrecognised,
+            Language::Lua        => resolve_output(Node::<Lua>::new(raw).resolve(),        AnyConstructNode::Lua,        AnyContainerNode::Lua),
+            Language::JavaScript => resolve_output(Node::<JavaScript>::new(raw).resolve(), AnyConstructNode::JavaScript, AnyContainerNode::JavaScript),
+            Language::TypeScript => resolve_output(Node::<TypeScript>::new(raw).resolve(), AnyConstructNode::TypeScript, AnyContainerNode::TypeScript),
+            Language::Python     => resolve_output(Node::<Python>::new(raw).resolve(),     AnyConstructNode::Python,     AnyContainerNode::Python),
+            Language::Unknown    => AtlantisNode::Unrecognised,
+        }
+    }
+
+    /// Returns `true` when both nodes are constructs of the **same variant** in the same
+    /// language — e.g. two `LuaNode::Assignment` nodes, regardless of their inner state.
+    ///
+    /// Used by navigation to detect semantically-identical wrappers in the ancestry chain
+    /// (e.g. `assignment_statement` inside `variable_declaration`) so they can be collapsed.
+    pub fn same_construct_kind(&self, other: &Self) -> bool {
+        use AnyConstructNode::*;
+        match (self, other) {
+            (Self::Construct(Lua(a)),        Self::Construct(Lua(b)))        => std::mem::discriminant(a) == std::mem::discriminant(b),
+            (Self::Construct(JavaScript(a)), Self::Construct(JavaScript(b))) => std::mem::discriminant(a) == std::mem::discriminant(b),
+            (Self::Construct(TypeScript(a)), Self::Construct(TypeScript(b))) => std::mem::discriminant(a) == std::mem::discriminant(b),
+            (Self::Construct(Python(a)),     Self::Construct(Python(b)))     => std::mem::discriminant(a) == std::mem::discriminant(b),
+            _ => false,
         }
     }
 }

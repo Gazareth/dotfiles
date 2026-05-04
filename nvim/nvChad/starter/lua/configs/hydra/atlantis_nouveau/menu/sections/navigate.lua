@@ -6,7 +6,7 @@ local function jump_and_reopen(bufnr, target)
   vim.api.nvim_win_set_cursor(0, { range.start_row + 1, range.start_col })
   vim.cmd("normal! zz")
   vim.schedule(function()
-    require("configs.hydra.atlantis_nouveau").open(bufnr)
+    require("configs.hydra.atlantis_nouveau").open(bufnr, target.target_mode)
   end)
 end
 
