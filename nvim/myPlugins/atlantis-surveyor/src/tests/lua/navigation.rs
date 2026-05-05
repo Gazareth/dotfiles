@@ -128,7 +128,7 @@ fn parent_navigation_jumps_from_assignment_to_conditional() {
 
 #[test]
 fn focus_mode_filtering_skips_construct_when_in_container_mode() {
-    use crate::survey::focused_node::FocusedNode;
+    use crate::survey::focused_node::AnyFocusedNode;
     use crate::survey::focused_node::ancestry::NodeAncestry;
     use crate::probe::language::Language;
 
@@ -142,13 +142,39 @@ fn focus_mode_filtering_skips_construct_when_in_container_mode() {
 
     // If we ask for Construct, we should get variable_declaration
     snap("variable_declaration").inject();
-    let focus_construct = FocusedNode::from_ancestry(ancestry.clone(), FocusMode::Construct)
+    let focus_construct = AnyFocusedNode::from_ancestry(ancestry.clone(), FocusMode::Construct)
+        .expect("should run")
         .expect("should find a focus");
-    assert_eq!(focus_construct.node_type, "variable_declaration");
+    assert_eq!(focus_construct.node_type(), "variable_declaration");
 
     // If we ask for Container, we should skip variable_declaration and get block
     snap("block").inject();
-    let focus_container = FocusedNode::from_ancestry(ancestry, FocusMode::Container)
+    let focus_container = AnyFocusedNode::from_ancestry(ancestry, FocusMode::Container)
+        .expect("should run")
         .expect("should find a focus");
-    assert_eq!(focus_container.node_type, "block");
+    assert_eq!(focus_container.node_type(), "block");
+}
+
+#[test]
+fn from_ancestry_returns_unsupported_language_when_no_node_matches() {
+    use crate::survey::focused_node::AnyFocusedNode;
+    use crate::survey::focused_node::ancestry::NodeAncestry;
+    use crate::probe::language::Language;
+    use crate::error::AtlantisError;
+
+    // Structure: some unknown nodes
+    let range = NodeRange { start_row: 1, start_col: 0, end_row: 1, end_col: 10 };
+    let unknown = NodeOutline { node_type: "comment".into(), range: range.clone() };
+    let root    = NodeOutline { node_type: "chunk".into(),   range: range.clone() };
+
+    let ancestry = NodeAncestry::new_test(vec![unknown], root, Language::Lua);
+
+    // Lua doesn't classify 'comment' or 'chunk' as Container or Construct
+    let result = AnyFocusedNode::from_ancestry(ancestry, FocusMode::Container);
+    
+    match result {
+        Err(AtlantisError::UnsupportedLanguage) => {},
+        Ok(_) => panic!("Expected UnsupportedLanguage error, got Ok"),
+        Err(e) => panic!("Expected UnsupportedLanguage error, got {:?}", e),
+    }
 }

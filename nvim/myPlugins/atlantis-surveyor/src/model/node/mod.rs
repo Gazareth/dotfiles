@@ -28,7 +28,7 @@ pub struct RawNode {
     pub range: NodeRange,
     /// Named children keyed by Tree-sitter field name (e.g. "name", "body").
     pub fields: HashMap<String, RawNode>,
-    /// Unnamed named children in source order (e.g. parameters, arguments).
+    /// All named children in source order (e.g. parameters, statements).
     pub children: Vec<RawNode>,
 }
 

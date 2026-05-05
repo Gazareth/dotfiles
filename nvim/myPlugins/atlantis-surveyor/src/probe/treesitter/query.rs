@@ -9,7 +9,8 @@ use crate::error::AtlantisError;
 
 const LUA: &str = r#"(function(row, col, target_type, target_start_row, target_start_col)
   local bufnr = vim.api.nvim_get_current_buf()
-  local ok_parser, parser = pcall(vim.treesitter.get_parser, bufnr)
+  local ft = vim.bo[bufnr].filetype
+  local ok_parser, parser = pcall(vim.treesitter.get_parser, bufnr, ft)
   if not ok_parser or parser == nil then
     return { err = "no_parser" }
   end
@@ -50,9 +51,8 @@ const LUA: &str = r#"(function(row, col, target_type, target_start_row, target_s
       }
       if fname then
         fields[fname] = child_data
-      else
-        table.insert(children, child_data)
       end
+      table.insert(children, child_data)
     end
   end
   local siblings = {}

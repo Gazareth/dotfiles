@@ -6,11 +6,12 @@ use serde::Serialize;
 
 use crate::error::AtlantisError;
 use crate::model::node::NodeRange;
+use crate::model::OutlineItem;
 
 pub use crate::model::{AtlantisNode, FocusMode};
 pub use self::focused_node::NavigationInfo;
 
-use self::focused_node::FocusedNode;
+use self::focused_node::AnyFocusedNode;
 
 /// Lua-serialised response. The `kind` field discriminates success from failure:
 ///   ok  — full survey result with node classification and navigation targets
@@ -25,19 +26,29 @@ pub enum SurveyResult {
         #[serde(skip_serializing_if = "Vec::is_empty")]
         available_actions: Vec<&'static str>,
         navigation:        NavigationInfo,
+        #[serde(skip_serializing_if = "Vec::is_empty")]
+        outline:           Vec<OutlineItem>,
     },
     Err { message: String },
 }
 
-impl From<FocusedNode> for SurveyResult {
-    fn from(f: FocusedNode) -> Self {
-        let available_actions = f.available_actions();
-        Self::Ok {
-            node_type:         f.node_type,
-            range:             f.range,
-            available_actions,
-            node:              f.node,
-            navigation:        f.navigation,
+impl From<AnyFocusedNode> for SurveyResult {
+    fn from(f: AnyFocusedNode) -> Self {
+        match f {
+            AnyFocusedNode::Construct(n) => {
+                let available_actions = n.available_actions();
+                Self::Ok {
+                    node_type: n.node_type, range: n.range, node: n.node,
+                    available_actions, navigation: n.navigation, outline: vec![],
+                }
+            }
+            AnyFocusedNode::Container(n) => {
+                let available_actions = n.available_actions();
+                Self::Ok {
+                    node_type: n.node_type, range: n.range, node: n.node,
+                    available_actions, navigation: n.navigation, outline: n.mode.outline,
+                }
+            }
         }
     }
 }
@@ -49,7 +60,7 @@ impl SurveyResult {
             _                 => FocusMode::Construct,
         };
 
-        match FocusedNode::from_raw(&raw, focus_mode) {
+        match AnyFocusedNode::from_raw(&raw, focus_mode) {
             Err(e)      => Self::Err { message: e.user_message() },
             Ok(None)    => Self::Err { message: AtlantisError::UnsupportedLanguage.user_message() },
             Ok(Some(f)) => Self::from(f),

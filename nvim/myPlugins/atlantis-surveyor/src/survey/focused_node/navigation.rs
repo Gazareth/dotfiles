@@ -2,7 +2,7 @@ use serde::Serialize;
 
 use crate::model::node::{NodeRange, RawNode};
 use crate::model::{AtlantisNode, FocusMode};
-use crate::probe::treesitter::{NodeOutline, NodeSnapshot, SnapshotChild};
+use crate::probe::treesitter::{NodeOutline, NodeSnapshot};
 
 use crate::model::NavigationTarget;
 
@@ -20,6 +20,20 @@ pub struct NavigationInfo {
     pub is_at_top: bool,
 }
 
+/// Classify a raw node and build a NavigationTarget. Returns None for Unrecognised nodes.
+/// Shared by the sibling pipeline (NavigationInfo::resolve) and the container outline (outline.rs).
+pub(in crate::survey::focused_node) fn as_navigation_target(
+    raw:      RawNode,
+    classify: &impl Fn(RawNode) -> AtlantisNode,
+) -> Option<NavigationTarget> {
+    let target_mode = match classify(raw.clone()) {
+        AtlantisNode::Container(_) => FocusMode::Container,
+        AtlantisNode::Construct(_) => FocusMode::Construct,
+        AtlantisNode::Unrecognised => return None,
+    };
+    Some(NavigationTarget { node_type: raw.kind, range: raw.range, target_mode })
+}
+
 impl NavigationInfo {
     pub fn resolve(
         all:           &[&NodeOutline],
@@ -33,44 +47,22 @@ impl NavigationInfo {
             _                          => FocusMode::Construct,
         };
 
-        let to_target = |n: RawNode| {
-            let classified = classify(n.clone());
-            let target_mode = match classified {
-                AtlantisNode::Container(_) => FocusMode::Container,
-                _                          => FocusMode::Construct,
-            };
-            NavigationTarget {
-                node_type: n.kind,
-                range: n.range,
-                target_mode,
-            }
-        };
-
-        // Parent: nearest recognized ancestor that is:
-        //   • not the same construct class as the focus (avoids jumping between e.g. Assignment wrappers)
-        //   • (we no longer skip containers!)
+        // Parent: nearest recognized ancestor that differs in construct kind from the focus.
         let parent = all.iter().skip(focus_idx + 1)
             .find(|n| {
                 let classified = classify(RawNode::from(**n));
                 !matches!(classified, AtlantisNode::Unrecognised)
                 && !focus_node.same_construct_kind(&classified)
             })
-            .map(|n| to_target(RawNode::from(*n)));
+            .and_then(|n| as_navigation_target(RawNode::from(*n), &classify));
 
         let top_level = all.iter().rev()
             .find(|n| !matches!(classify(RawNode::from(**n)), AtlantisNode::Unrecognised))
-            .map(|n| to_target(RawNode::from(*n)));
+            .and_then(|n| as_navigation_target(RawNode::from(*n), &classify));
 
         let supported_siblings: Vec<NavigationTarget> = node_snapshot.siblings.iter()
-            .filter(|s| {
-                let classified = classify(RawNode::from(*s));
-                match (current_mode, classified) {
-                    (FocusMode::Construct, AtlantisNode::Construct(_)) => true,
-                    (FocusMode::Container, AtlantisNode::Container(_)) => true,
-                    _ => false,
-                }
-            })
-            .map(|s| to_target(RawNode::from(s)))
+            .filter_map(|s| as_navigation_target(RawNode::from(s), &classify))
+            .filter(|t| t.target_mode == current_mode)
             .collect();
 
         let (prev_sibling, next_sibling) = sibling_nav(&supported_siblings, &node_snapshot.node_type, &node_snapshot.range);

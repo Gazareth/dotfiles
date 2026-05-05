@@ -28,6 +28,7 @@ impl NodeAncestry {
         let root = outlines.pop()
             .ok_or_else(|| AtlantisError::Api("empty ancestry".into()))?;
 
+
         if let Some(false) = language.is_file_root(&root.node_type) {
             return Err(AtlantisError::Api(
                 format!("ancestry root '{}' is not a file root node", root.node_type)

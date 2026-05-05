@@ -35,4 +35,4 @@ pub use node::{Node, NodeRange, RawNode, Unknown, Unresolved};
 pub use resolved::{AnyContainerNode, AnyConstructNode};
 pub use atlantis_node::AtlantisNode;
 pub use focus::FocusMode;
-pub use navigation_target::NavigationTarget;
+pub use navigation_target::{NavigationTarget, OutlineItem};

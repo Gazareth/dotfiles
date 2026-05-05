@@ -17,7 +17,8 @@ pub fn snapshot(
     let d = query::call(row, col, target_type, target_start)?;
 
     if d.get("err").is_some() {
-        return Err(AtlantisError::from_lua_err_code(&decode::str(&d, "err")?));
+        let err = decode::str(&d, "err")?;
+        return Err(AtlantisError::from_lua_err_code(&err));
     }
 
     decode::snapshot(&d)

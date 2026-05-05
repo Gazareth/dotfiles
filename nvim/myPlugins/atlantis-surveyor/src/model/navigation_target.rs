@@ -2,6 +2,14 @@ use serde::{Deserialize, Serialize};
 use crate::model::node::{NodeRange, RawNode};
 use crate::model::FocusMode;
 
+/// A labelled navigation destination for container outline display.
+#[derive(Debug, Serialize, Clone)]
+pub struct OutlineItem {
+    pub label:       String,
+    pub range:       NodeRange,
+    pub target_mode: FocusMode,
+}
+
 /// Pointer to a navigation destination — enough to jump to and re-probe if needed.
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub struct NavigationTarget {

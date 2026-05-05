@@ -47,6 +47,7 @@ function M.open(bufnr, focus_mode)
   end
 
   local result = surveyor(scan, focus_mode)
+  result.bufnr = bufnr
 
   if result.kind == "err" then
     vim.notify("[atlantis] " .. result.message, vim.log.levels.WARN)
