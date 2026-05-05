@@ -4,3 +4,10 @@ nvim/nvChad/starter/lazy-lock.json
 
 # Ignore compiled AutoHotkey scripts
 Windows/AutoHotkey/**/*.exe
+
+# Ignore AI and IDE related directories
+**/.claude/**
+**/.vscode/**
+.cursor/**
+**/.agents/**
+**/.cache/**
