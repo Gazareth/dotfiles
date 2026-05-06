@@ -145,6 +145,12 @@ function M.open(spec, opts)
     },
   })
 
+  -- Set on_exit after construction to bypass hydra's setfenv/tbl_deep_extend
+  -- crash that occurs when on_exit captures _G via upvalues.
+  if type(spec.on_exit) == "function" then
+    hydra.config.on_exit = spec.on_exit
+  end
+
   hydra:activate()
 
   if not show_hint then
