@@ -2,6 +2,7 @@ use serde::Serialize;
 
 use crate::model::node::{NodeRange, RawNode};
 use crate::model::{AtlantisNode, FocusMode};
+use crate::probe::language::Language;
 use crate::probe::treesitter::{NodeOutline, NodeSnapshot};
 
 use crate::model::NavigationTarget;
@@ -36,32 +37,32 @@ pub(in crate::survey::focused_node) fn as_navigation_target(
 
 impl NavigationInfo {
     pub fn resolve(
+        lang:          Language,
         all:           &[&NodeOutline],
         focus_idx:     usize,
         node_snapshot: &NodeSnapshot,
-        classify:      impl Fn(RawNode) -> AtlantisNode,
     ) -> Self {
-        let focus_node = classify(RawNode::from(all[focus_idx]));
+        let focus_node = lang.classify(RawNode::from(all[focus_idx]), all.get(focus_idx + 1).copied());
         let current_mode = match focus_node {
             AtlantisNode::Container(_) => FocusMode::Container,
             _                          => FocusMode::Construct,
         };
 
         // Parent: nearest recognized ancestor that differs in construct kind from the focus.
-        let parent = all.iter().skip(focus_idx + 1)
-            .find(|n| {
-                let classified = classify(RawNode::from(**n));
+        let parent = all.iter().enumerate().skip(focus_idx + 1)
+            .find(|(i, _)| {
+                let classified = lang.classify(RawNode::from(all[*i]), all.get(*i + 1).copied());
                 !matches!(classified, AtlantisNode::Unrecognised)
                 && !focus_node.same_construct_kind(&classified)
             })
-            .and_then(|n| as_navigation_target(RawNode::from(*n), &classify));
+            .and_then(|(i, n)| as_navigation_target(RawNode::from(*n), &|raw| lang.classify(raw, all.get(i + 1).copied())));
 
-        let top_level = all.iter().rev()
-            .find(|n| !matches!(classify(RawNode::from(**n)), AtlantisNode::Unrecognised))
-            .and_then(|n| as_navigation_target(RawNode::from(*n), &classify));
+        let top_level = all.iter().enumerate().rev()
+            .find(|(i, _)| !matches!(lang.classify(RawNode::from(all[*i]), all.get(*i + 1).copied()), AtlantisNode::Unrecognised))
+            .and_then(|(i, n)| as_navigation_target(RawNode::from(*n), &|raw| lang.classify(raw, all.get(i + 1).copied())));
 
         let supported_siblings: Vec<NavigationTarget> = node_snapshot.siblings.iter()
-            .filter_map(|s| as_navigation_target(RawNode::from(s), &classify))
+            .filter_map(|s| as_navigation_target(RawNode::from(s), &|raw| lang.classify(raw, all.get(focus_idx + 1).copied())))
             .filter(|t| t.target_mode == current_mode)
             .collect();
 

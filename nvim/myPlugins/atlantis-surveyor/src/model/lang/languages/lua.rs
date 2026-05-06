@@ -60,6 +60,7 @@ crate::impl_language_syntax_map!(Lua, LUA_KINDS, {
         "variable_declaration"   => Assignment,
         "if_statement"         => Conditional,
         "function_call"        => Call,
+        "parameter"            => Parameter,
     },
     container: {
         "chunk"      => FileRoot,

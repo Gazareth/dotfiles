@@ -34,6 +34,7 @@ macro_rules! impl_lang_node_resolver {
             Call($crate::model::node::Node<$Lang, $crate::model::supported_nodes::FunctionCall>),
             Assignment($crate::model::node::Node<$Lang, $crate::model::supported_nodes::Assignment>),
             Conditional($crate::model::node::Node<$Lang, $crate::model::supported_nodes::ConditionalStatement>),
+            Parameter($crate::model::node::Node<$Lang, $crate::model::supported_nodes::Parameter>),
             Unresolved($crate::model::node::Node<$Lang, $crate::model::node::Unresolved>),
         }
 
@@ -53,6 +54,7 @@ macro_rules! impl_lang_node_resolver {
                     $StdEnum::Call(_)        => &["jump_to_params", "rename", "yank"],
                     $StdEnum::Assignment(_)  => &["jump_lhs", "jump_rhs", "rename", "yank"],
                     $StdEnum::Conditional(_) => &["jump_to_consequence", "jump_to_condition", "yank"],
+                    $StdEnum::Parameter(_)   => &["rename", "yank", "delete"],
                     $StdEnum::Unresolved(_)  => &[],
                 }
             }
@@ -65,7 +67,7 @@ macro_rules! impl_lang_node_resolver {
                 use std::marker::PhantomData;
                 use $crate::model::lang::{NodeKind, ResolveOutput, ConstructNode, ContainerNode};
                 let kind = self.raw.kind.clone();
-                match <$Lang as $crate::model::lang::LanguageConfig>::classify(&kind) {
+                match <$Lang as $crate::model::lang::LanguageConfig>::node_kind(&kind) {
                     Some(NodeKind::Construct(ConstructNode::Function)) => ResolveOutput::Construct(
                         $StdEnum::Function($crate::model::node::Node {
                             state: <$Lang as $crate::model::node::Extract<$crate::model::supported_nodes::FunctionDeclaration>>::extract(&self.raw),
@@ -90,6 +92,13 @@ macro_rules! impl_lang_node_resolver {
                     Some(NodeKind::Construct(ConstructNode::Conditional)) => ResolveOutput::Construct(
                         $StdEnum::Conditional($crate::model::node::Node {
                             state: <$Lang as $crate::model::node::Extract<$crate::model::supported_nodes::ConditionalStatement>>::extract(&self.raw),
+                            raw: self.raw,
+                            _lang: PhantomData,
+                        })
+                    ),
+                    Some(NodeKind::Construct(ConstructNode::Parameter)) => ResolveOutput::Construct(
+                        $StdEnum::Parameter($crate::model::node::Node {
+                            state: <$Lang as $crate::model::node::Extract<$crate::model::supported_nodes::Parameter>>::extract(&self.raw),
                             raw: self.raw,
                             _lang: PhantomData,
                         })

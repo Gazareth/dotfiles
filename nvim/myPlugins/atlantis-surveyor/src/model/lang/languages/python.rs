@@ -22,11 +22,17 @@ impl Extract<Assignment> for Python {
 
 crate::impl_language_syntax_map!(Python, PYTHON_KINDS, {
     construct: {
-        "function_definition"  => Function,
-        "assignment"           => Assignment,
-        "augmented_assignment" => Assignment,
-        "if_statement"         => Conditional,
-        "call"                 => Call,
+        "function_definition"       => Function,
+        "assignment"                => Assignment,
+        "augmented_assignment"      => Assignment,
+        "if_statement"              => Conditional,
+        "call"                      => Call,
+        "typed_parameter"           => Parameter,
+        "default_parameter"         => Parameter,
+        "typed_default_parameter"   => Parameter,
+        "list_splat_parameter"      => Parameter,
+        "dictionary_splat_parameter" => Parameter,
+        "parameter"                 => Parameter,
     },
     container: {
         "module"     => FileRoot,

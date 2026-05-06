@@ -8,7 +8,7 @@ use nvim_oxi::Dictionary;
 use crate::error::AtlantisError;
 use crate::model::node::{NodeRange, RawNode};
 use crate::model::{AtlantisNode, FocusMode, OutlineItem};
-use crate::probe::treesitter::{self, NodeOutline};
+use crate::probe::treesitter::{self, NodeOutline, SnapshotChild};
 
 use self::ancestry::NodeAncestry;
 
@@ -60,11 +60,12 @@ impl AnyFocusedNode {
 
     #[must_use]
     pub fn from_ancestry(ancestry: NodeAncestry, focus_mode: FocusMode) -> Result<Option<Self>, AtlantisError> {
+        let lang = ancestry.language();
         let all: Vec<&NodeOutline> = ancestry.all().collect();
 
         // Find the innermost recognised node that matches the requested FocusMode.
-        let first_idx = all.iter().position(|n| {
-            let classified = ancestry.classify(RawNode::from(*n));
+        let first_idx = all.iter().enumerate().position(|(i, n)| {
+            let classified = lang.classify(RawNode::from(*n), all.get(i + 1).copied());
             match (focus_mode, classified) {
                 (FocusMode::Construct, AtlantisNode::Construct(_)) => true,
                 (FocusMode::Container, AtlantisNode::Container(_)) => true,
@@ -74,10 +75,10 @@ impl AnyFocusedNode {
 
         // Walk UP through consecutive ancestors that classify to the same construct kind
         // (e.g. assignment_statement → variable_declaration both resolve to Assignment).
-        let first_kind = ancestry.classify(RawNode::from(all[first_idx]));
+        let first_kind = lang.classify(RawNode::from(all[first_idx]), all.get(first_idx + 1).copied());
         let focus_idx = all[first_idx..].iter()
             .enumerate()
-            .take_while(|(_, n)| first_kind.same_construct_kind(&ancestry.classify(RawNode::from(**n))))
+            .take_while(|(i, n)| first_kind.same_construct_kind(&lang.classify(RawNode::from(**n), all.get(first_idx + i + 1).copied())))
             .last()
             .map(|(i, _)| first_idx + i)
             .unwrap_or(first_idx);
@@ -91,8 +92,8 @@ impl AnyFocusedNode {
             Some((focus_node_outline.range.start_row, focus_node_outline.range.start_col)),
         )?;
 
-        let node       = ancestry.classify(RawNode::from(&node_snapshot));
-        let navigation = NavigationInfo::resolve(&all, focus_idx, &node_snapshot, |raw| ancestry.classify(raw));
+        let node       = lang.classify(RawNode::from(&node_snapshot), all.get(focus_idx + 1).copied());
+        let navigation = NavigationInfo::resolve(lang, &all, focus_idx, &node_snapshot);
         let node_type  = node_snapshot.node_type.clone();
         let range      = node_snapshot.range.clone();
 
@@ -100,7 +101,7 @@ impl AnyFocusedNode {
             FocusMode::Container => {
                 let outline = FocusedNode::<Container>::compute_outline(
                     &node_snapshot.children,
-                    |raw| ancestry.classify(raw),
+                    |child: &SnapshotChild| lang.classify(RawNode::from(child), Some(focus_node_outline)),
                 );
                 AnyFocusedNode::Container(FocusedNode {
                     node_type, range, node, navigation,

@@ -14,6 +14,10 @@ crate::impl_language_syntax_map!(TypeScript, TYPESCRIPT_KINDS, {
         "variable_declarator"   => Assignment,
         "if_statement"          => Conditional,
         "call_expression"       => Call,
+        "required_parameter"    => Parameter,
+        "optional_parameter"    => Parameter,
+        "rest_parameter"        => Parameter,
+        "parameter"             => Parameter,
     },
     container: {
         "program"           => FileRoot,

@@ -9,7 +9,7 @@ use super::{Container, FocusedNode};
 impl FocusedNode<Container> {
     pub(in crate::survey) fn compute_outline(
         children: &[SnapshotChild],
-        classify: impl Fn(RawNode) -> AtlantisNode,
+        classify: impl Fn(&SnapshotChild) -> AtlantisNode,
     ) -> Vec<OutlineItem> {
         let mut sorted_children = children.to_vec();
         sorted_children.sort_by(|a, b| {
@@ -21,8 +21,7 @@ impl FocusedNode<Container> {
 
         sorted_children.into_iter()
             .map(|child| {
-                let raw = RawNode::from(&child);
-                let classified = classify(raw.clone());
+                let classified = classify(&child);
                 let target_mode = match classified {
                     AtlantisNode::Container(_) => FocusMode::Container,
                     _ => FocusMode::Construct,
@@ -35,7 +34,7 @@ impl FocusedNode<Container> {
                         if s.len() > 16 { s[..16].to_string() } else { s.to_string() }
                     })
                     .unwrap_or_else(|| child.node_type.clone());
-                OutlineItem { label, range: raw.range, target_mode }
+                OutlineItem { label, range: child.range.clone(), target_mode }
             })
             .collect()
     }
@@ -70,8 +69,8 @@ mod tests {
             },
         ];
 
-        let outline = FocusedNode::<Container>::compute_outline(&children, |raw: RawNode| {
-            AtlantisNode::from_raw(raw, &Language::Lua)
+        let outline = FocusedNode::<Container>::compute_outline(&children, |child: &SnapshotChild| {
+            AtlantisNode::from_raw(RawNode::from(child), &Language::Lua)
         });
 
         assert_eq!(outline.len(), 3);
@@ -97,8 +96,8 @@ mod tests {
             },
         ];
 
-        let outline = FocusedNode::<Container>::compute_outline(&children, |raw: RawNode| {
-            AtlantisNode::from_raw(raw, &Language::Lua)
+        let outline = FocusedNode::<Container>::compute_outline(&children, |child: &SnapshotChild| {
+            AtlantisNode::from_raw(RawNode::from(child), &Language::Lua)
         });
 
         assert_eq!(outline.len(), 2);

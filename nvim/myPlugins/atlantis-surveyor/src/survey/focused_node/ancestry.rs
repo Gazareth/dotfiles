@@ -1,8 +1,6 @@
 use nvim_oxi::Dictionary;
 
 use crate::error::AtlantisError;
-use crate::model::node::RawNode;
-use crate::model::AtlantisNode;
 use crate::probe::language::{detect, Language};
 use crate::probe::treesitter::{self, NodeOutline};
 
@@ -28,14 +26,13 @@ impl NodeAncestry {
         let root = outlines.pop()
             .ok_or_else(|| AtlantisError::Api("empty ancestry".into()))?;
 
-
         if let Some(false) = language.is_file_root(&root.node_type) {
             return Err(AtlantisError::Api(
                 format!("ancestry root '{}' is not a file root node", root.node_type)
             ));
         }
 
-    Ok(Self { inner: outlines, root, language })
+        Ok(Self { inner: outlines, root, language })
     }
 
     #[cfg(test)]
@@ -43,11 +40,11 @@ impl NodeAncestry {
         Self { inner, root, language }
     }
 
-    pub fn all(&self) -> impl Iterator<Item = &NodeOutline> {
-        self.inner.iter().chain(std::iter::once(&self.root))
+    pub fn language(&self) -> Language {
+        self.language
     }
 
-    pub fn classify(&self, raw: RawNode) -> AtlantisNode {
-        AtlantisNode::from_raw(raw, &self.language)
+    pub fn all(&self) -> impl Iterator<Item = &NodeOutline> {
+        self.inner.iter().chain(std::iter::once(&self.root))
     }
 }

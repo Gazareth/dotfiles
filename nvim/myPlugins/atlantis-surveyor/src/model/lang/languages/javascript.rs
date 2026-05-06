@@ -14,6 +14,8 @@ crate::impl_language_syntax_map!(JavaScript, JAVASCRIPT_KINDS, {
         "variable_declarator"   => Assignment,
         "if_statement"          => Conditional,
         "call_expression"       => Call,
+        "rest_parameter"        => Parameter,
+        "parameter"             => Parameter,
     },
     container: {
         "program"          => FileRoot,

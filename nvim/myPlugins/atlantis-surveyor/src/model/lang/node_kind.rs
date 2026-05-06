@@ -14,6 +14,7 @@ pub enum ConstructNode {
     Call,
     Assignment,
     Conditional,
+    Parameter,
 }
 
 /// The specific kind of Container node — a structural grouping of child nodes.
@@ -28,7 +29,7 @@ pub enum ContainerNode {
 pub trait LanguageConfig {
     fn kinds() -> &'static phf::Map<&'static str, NodeKind>;
 
-    fn classify(kind: &str) -> Option<NodeKind> {
+    fn node_kind(kind: &str) -> Option<NodeKind> {
         Self::kinds().get(kind).copied()
     }
 }
