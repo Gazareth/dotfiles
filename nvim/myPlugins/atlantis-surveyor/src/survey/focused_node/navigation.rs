@@ -15,6 +15,10 @@ pub struct NavigationInfo {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub top_level: Option<NavigationTarget>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub nearest_body: Option<NavigationTarget>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub nearest_function: Option<NavigationTarget>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub prev_sibling: Option<NavigationTarget>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub next_sibling: Option<NavigationTarget>,
@@ -68,12 +72,20 @@ impl NavigationInfo {
 
         let (prev_sibling, next_sibling) = sibling_nav(&supported_siblings, &node_snapshot.node_type, &node_snapshot.range);
 
+        let nearest_body = all.iter().enumerate().skip(focus_idx + 1)
+            .find(|(_, n)| lang.is_body_container(&n.node_type))
+            .and_then(|(i, n)| as_navigation_target(RawNode::from(*n), &|raw| lang.classify(raw, all.get(i + 1).copied())));
+
+        let nearest_function = all.iter().enumerate().skip(focus_idx + 1)
+            .find(|(_, n)| lang.is_function_construct(&n.node_type))
+            .and_then(|(i, n)| as_navigation_target(RawNode::from(*n), &|raw| lang.classify(raw, all.get(i + 1).copied())));
+
         let is_at_top = top_level.as_ref().is_some_and(|tl| {
             tl.range.start_row == node_snapshot.range.start_row &&
             tl.range.start_col == node_snapshot.range.start_col
         });
 
-        Self { parent, top_level, prev_sibling, next_sibling, is_at_top }
+        Self { parent, top_level, nearest_body, nearest_function, prev_sibling, next_sibling, is_at_top }
     }
 }
 

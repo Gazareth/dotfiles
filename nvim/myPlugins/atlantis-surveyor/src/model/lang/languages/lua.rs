@@ -1,5 +1,5 @@
-use crate::model::NavigationTarget;
 use crate::model::supported_nodes::{Assignment, FunctionCall};
+use crate::model::NavigationTarget;
 use crate::model::lang::Common;
 use crate::model::node::{Extract, RawNode};
 
@@ -23,29 +23,29 @@ impl Extract<Assignment> for Lua {
         match raw.kind.as_str() {
             // Modern nvim-treesitter grammar: `local x = y` →
             // variable_declaration( local, assignment_statement( variable_list, =, expression_list ) )
-            // No field names — use the positional inner node's text.
+            // No field names — children are positional: variable_list then expression_list.
             "variable_declaration" => {
                 let inner = raw.children.first();
                 let name = inner
                     .map(|c| c.text.split('=').next().unwrap_or("").trim().to_string())
                     .unwrap_or_default();
-                Assignment {
-                    name,
-                    is_local_binding: true,
-                    value: inner.map(|r| NavigationTarget::construct(r)),
-                }
+                let lhs   = inner.and_then(|c| c.children.first()).map(NavigationTarget::construct);
+                let value = inner.and_then(|c| c.children.get(1)).map(NavigationTarget::construct);
+                Assignment { name, is_local_binding: true, lhs, value }
             }
             // Modern grammar: bare `x = y` → assignment_statement( variable_list, =, expression_list )
             "assignment_statement" => Assignment {
-                name: raw.children.first().map(|c| c.text.clone()).unwrap_or_default(),
+                name:             raw.children.first().map(|c| c.text.clone()).unwrap_or_default(),
                 is_local_binding: false,
-                value: raw.children.get(1).map(|r| NavigationTarget::construct(r)),
+                lhs:              raw.children.first().map(NavigationTarget::construct),
+                value:            raw.children.get(1).map(NavigationTarget::construct),
             },
             // Old nvim-treesitter grammar (field names: "name", "value")
             _ => Assignment {
-                name: raw.field_text("name"),
+                name:             raw.field_text("name"),
                 is_local_binding: raw.kind == "local_declaration",
-                value: raw.field("value").map(|r| NavigationTarget::construct(r)),
+                lhs:              raw.field("name").map(NavigationTarget::construct),
+                value:            raw.field("value").map(NavigationTarget::construct),
             },
         }
     }

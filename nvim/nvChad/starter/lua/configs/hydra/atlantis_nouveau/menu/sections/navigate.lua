@@ -10,6 +10,11 @@ local function jump_and_reopen(bufnr, target)
   end)
 end
 
+local function same_target(a, b)
+  if not a or not b then return false end
+  return a.range.start_row == b.range.start_row and a.range.start_col == b.range.start_col
+end
+
 function M.build(result)
   local nav = result.navigation
   if not nav then return nil end
@@ -42,6 +47,24 @@ function M.build(result)
         icon   = "󰜸",
         label  = "to top level",
         action = function() jump_and_reopen(result.bufnr, nav.top_level) end,
+      })
+    end
+    if nav.nearest_function
+       and not same_target(nav.nearest_function, nav.parent)
+       and not same_target(nav.nearest_function, nav.nearest_body) then
+      table.insert(context_items, {
+        key    = "f",
+        icon   = "󰜷",
+        label  = "to function",
+        action = function() jump_and_reopen(result.bufnr, nav.nearest_function) end,
+      })
+    end
+    if nav.nearest_body and not same_target(nav.nearest_body, nav.parent) then
+      table.insert(context_items, {
+        key    = "b",
+        icon   = "󰜷",
+        label  = "to body",
+        action = function() jump_and_reopen(result.bufnr, nav.nearest_body) end,
       })
     end
     if nav.parent then

@@ -9,7 +9,9 @@ pub struct Assignment {
     pub name: String,
     /// Whether this introduces a new locally-scoped binding (e.g. Lua's `local`).
     pub is_local_binding: bool,
-    /// The right-hand side.
+    /// Navigation target for the left-hand side (variable name / pattern).
+    pub lhs: Option<NavigationTarget>,
+    /// Navigation target for the right-hand side expression.
     pub value: Option<NavigationTarget>,
 }
 
@@ -25,9 +27,10 @@ pub trait HasAssignment {}
 impl<Lang: HasAssignment> Extract<Assignment> for Lang {
     fn extract(raw: &RawNode) -> Assignment {
         Assignment {
-            name: raw.field_text("name"),
+            name:             raw.field_text("name"),
             is_local_binding: false,
-            value: raw.field("value").map(NavigationTarget::construct),
+            lhs:              raw.field("name").map(NavigationTarget::construct),
+            value:            raw.field("value").map(NavigationTarget::construct),
         }
     }
 }

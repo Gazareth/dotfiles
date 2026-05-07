@@ -13,9 +13,10 @@ impl HasFunctionCalls for Python {}
 impl Extract<Assignment> for Python {
     fn extract(raw: &RawNode) -> Assignment {
         Assignment {
-            name: raw.field_text("left"),
+            name:             raw.field_text("left"),
             is_local_binding: false,
-            value: raw.field("right").map(NavigationTarget::construct),
+            lhs:              raw.field("left").map(NavigationTarget::construct),
+            value:            raw.field("right").map(NavigationTarget::construct),
         }
     }
 }
