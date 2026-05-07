@@ -18,6 +18,7 @@ crate::impl_language_syntax_map!(TypeScript, TYPESCRIPT_KINDS, {
         "optional_parameter"    => Parameter,
         "rest_parameter"        => Parameter,
         "parameter"             => Parameter,
+        "return_statement"      => ReturnStatement,
     },
     container: {
         "program"           => FileRoot,

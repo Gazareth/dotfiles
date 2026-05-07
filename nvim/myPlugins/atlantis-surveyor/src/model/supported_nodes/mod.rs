@@ -22,6 +22,7 @@ pub use standard::{
     FunctionDeclaration, HasFunctions,
     FunctionCall, HasFunctionCalls,
     Parameter, HasParameter,
+    ReturnStatement, HasReturnStatement,
     Named,
 };
 pub use container::{

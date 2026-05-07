@@ -35,6 +35,7 @@ macro_rules! impl_lang_node_resolver {
             Assignment($crate::model::node::Node<$Lang, $crate::model::supported_nodes::Assignment>),
             Conditional($crate::model::node::Node<$Lang, $crate::model::supported_nodes::ConditionalStatement>),
             Parameter($crate::model::node::Node<$Lang, $crate::model::supported_nodes::Parameter>),
+            ReturnStatement($crate::model::node::Node<$Lang, $crate::model::supported_nodes::ReturnStatement>),
             Unresolved($crate::model::node::Node<$Lang, $crate::model::node::Unresolved>),
         }
 
@@ -54,8 +55,9 @@ macro_rules! impl_lang_node_resolver {
                     $StdEnum::Call(_)        => &["jump_to_params", "rename", "yank"],
                     $StdEnum::Assignment(_)  => &["jump_lhs", "jump_rhs", "rename", "yank"],
                     $StdEnum::Conditional(_) => &["jump_to_consequence", "jump_to_condition", "yank"],
-                    $StdEnum::Parameter(_)   => &["rename", "yank", "delete"],
-                    $StdEnum::Unresolved(_)  => &[],
+                    $StdEnum::Parameter(_)       => &["rename", "yank", "delete"],
+                    $StdEnum::ReturnStatement(_) => &[],
+                    $StdEnum::Unresolved(_)      => &[],
                 }
             }
         }
@@ -99,6 +101,13 @@ macro_rules! impl_lang_node_resolver {
                     Some(NodeKind::Construct(ConstructNode::Parameter)) => ResolveOutput::Construct(
                         $StdEnum::Parameter($crate::model::node::Node {
                             state: <$Lang as $crate::model::node::Extract<$crate::model::supported_nodes::Parameter>>::extract(&self.raw),
+                            raw: self.raw,
+                            _lang: PhantomData,
+                        })
+                    ),
+                    Some(NodeKind::Construct(ConstructNode::ReturnStatement)) => ResolveOutput::Construct(
+                        $StdEnum::ReturnStatement($crate::model::node::Node {
+                            state: <$Lang as $crate::model::node::Extract<$crate::model::supported_nodes::ReturnStatement>>::extract(&self.raw),
                             raw: self.raw,
                             _lang: PhantomData,
                         })

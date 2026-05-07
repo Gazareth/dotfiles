@@ -33,6 +33,7 @@ crate::impl_language_syntax_map!(Python, PYTHON_KINDS, {
         "list_splat_parameter"      => Parameter,
         "dictionary_splat_parameter" => Parameter,
         "parameter"                 => Parameter,
+        "return_statement"          => ReturnStatement,
     },
     container: {
         "module"     => FileRoot,

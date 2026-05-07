@@ -15,6 +15,7 @@ pub enum ConstructNode {
     Assignment,
     Conditional,
     Parameter,
+    ReturnStatement,
 }
 
 /// The specific kind of Container node — a structural grouping of child nodes.
