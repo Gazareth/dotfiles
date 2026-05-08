@@ -1,7 +1,7 @@
 use crate::model::supported_nodes::{Assignment, FunctionCall};
-use crate::model::NavigationTarget;
+use crate::model::{FocusMode, NavigationTarget};
 use crate::model::lang::Common;
-use crate::model::node::{Extract, RawNode};
+use crate::model::node::{Extract, NodeRange, RawNode};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Lua;
@@ -25,19 +25,44 @@ impl Extract<Assignment> for Lua {
             // variable_declaration( local, assignment_statement( variable_list, =, expression_list ) )
             // No field names — children are positional: variable_list then expression_list.
             "variable_declaration" => {
+                // inner is the child assignment_statement — its range starts at the variable
+                // name (NOT at 'local'), so using it directly gives the correct lhs position.
                 let inner = raw.children.first();
                 let name = inner
                     .map(|c| c.text.split('=').next().unwrap_or("").trim().to_string())
                     .unwrap_or_default();
-                let lhs   = inner.and_then(|c| c.children.first()).map(NavigationTarget::construct);
-                let value = inner.and_then(|c| c.children.get(1)).map(NavigationTarget::construct);
+                // Use "variable_list" as the target type even though we only have the
+                // parent assignment_statement's range — they share the same start position.
+                // This lets the target_hint pin to variable_list rather than walking up
+                // through the same-kind chain to variable_declaration again.
+                let lhs = inner.map(|c| NavigationTarget {
+                    node_type:   "variable_list".to_string(),
+                    range:       c.range.clone(),
+                    target_mode: FocusMode::Container,
+                });
+                // Grandchildren aren't available, so compute the RHS position from the text.
+                let value = inner.and_then(|c| {
+                    let eq_pos = c.text.find('=')?;
+                    let rhs_text = c.text[eq_pos + 1..].trim_start();
+                    let rhs_offset = (c.text.len() - rhs_text.len()) as u32;
+                    Some(NavigationTarget {
+                        node_type: "expression_list".to_string(),
+                        range: NodeRange {
+                            start_row: c.range.start_row,
+                            start_col: c.range.start_col + rhs_offset,
+                            end_row:   c.range.end_row,
+                            end_col:   c.range.end_col,
+                        },
+                        target_mode: FocusMode::Construct,
+                    })
+                });
                 Assignment { name, is_local_binding: true, lhs, value }
             }
             // Modern grammar: bare `x = y` → assignment_statement( variable_list, =, expression_list )
             "assignment_statement" => Assignment {
                 name:             raw.children.first().map(|c| c.text.clone()).unwrap_or_default(),
                 is_local_binding: false,
-                lhs:              raw.children.first().map(NavigationTarget::construct),
+                lhs:              raw.children.first().map(NavigationTarget::container),
                 value:            raw.children.get(1).map(NavigationTarget::construct),
             },
             // Old nvim-treesitter grammar (field names: "name", "value")
@@ -64,9 +89,10 @@ crate::impl_language_syntax_map!(Lua, LUA_KINDS, {
         "return_statement"     => ReturnStatement,
     },
     container: {
-        "chunk"      => FileRoot,
-        "parameters" => ParameterList,
-        "block"      => Body,
+        "chunk"         => FileRoot,
+        "parameters"    => ParameterList,
+        "block"         => Body,
+        "variable_list" => ParameterList,
     },
 });
 

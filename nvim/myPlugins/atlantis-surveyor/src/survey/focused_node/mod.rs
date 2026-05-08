@@ -53,25 +53,35 @@ impl AnyFocusedNode {
     }
 
     #[must_use]
-    pub fn from_raw(raw: &Dictionary, focus_mode: FocusMode) -> Result<Option<Self>, AtlantisError> {
+    pub fn from_raw(raw: &Dictionary, focus_mode: FocusMode, target_hint: Option<(&str, u32, u32)>) -> Result<Option<Self>, AtlantisError> {
         let ancestry = NodeAncestry::parse(raw)?;
-        Self::from_ancestry(ancestry, focus_mode)
+        Self::from_ancestry(ancestry, focus_mode, target_hint)
     }
 
     #[must_use]
-    pub fn from_ancestry(ancestry: NodeAncestry, focus_mode: FocusMode) -> Result<Option<Self>, AtlantisError> {
+    pub fn from_ancestry(ancestry: NodeAncestry, focus_mode: FocusMode, target_hint: Option<(&str, u32, u32)>) -> Result<Option<Self>, AtlantisError> {
         let lang = ancestry.language();
         let all: Vec<&NodeOutline> = ancestry.all().collect();
 
-        // Find the innermost recognised node that matches the requested FocusMode.
-        let first_idx = all.iter().enumerate().position(|(i, n)| {
-            let classified = lang.classify(RawNode::from(*n), all.get(i + 1).copied());
-            match (focus_mode, classified) {
-                (FocusMode::Construct, AtlantisNode::Construct(_)) => true,
-                (FocusMode::Container, AtlantisNode::Container(_)) => true,
-                _ => false,
-            }
-        }).ok_or(AtlantisError::UnsupportedLanguage)?;
+        // Determine first_idx: either pinned by target_hint or found by innermost-match.
+        let first_idx = if let Some((target_type, target_row, target_col)) = target_hint {
+            // Pin to the specific node in ancestry matching type and start position.
+            all.iter().position(|n| {
+                n.node_type == target_type
+                && n.range.start_row == target_row
+                && n.range.start_col == target_col
+            }).ok_or(AtlantisError::UnsupportedLanguage)?
+        } else {
+            // Find the innermost recognised node that matches the requested FocusMode.
+            all.iter().enumerate().position(|(i, n)| {
+                let classified = lang.classify(RawNode::from(*n), all.get(i + 1).copied());
+                match (focus_mode, classified) {
+                    (FocusMode::Construct, AtlantisNode::Construct(_)) => true,
+                    (FocusMode::Container, AtlantisNode::Container(_)) => true,
+                    _ => false,
+                }
+            }).ok_or(AtlantisError::UnsupportedLanguage)?
+        };
 
         // Walk UP through consecutive ancestors that classify to the same construct kind
         // (e.g. assignment_statement → variable_declaration both resolve to Assignment).

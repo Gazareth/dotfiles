@@ -60,7 +60,22 @@ impl SurveyResult {
             _                 => FocusMode::Construct,
         };
 
-        match AnyFocusedNode::from_raw(&raw, focus_mode) {
+        // Optional target hint: pin to a specific node in ancestry by type + position,
+        // bypassing the innermost-match heuristic.
+        use crate::probe::treesitter::decode;
+        use nvim_oxi::conversion::FromObject;
+        let target_type = decode::str(&raw, "target_node_type").ok();
+        let get_u32 = |key: &str| -> Option<u32> {
+            let obj = raw.get(key)?;
+            i64::from_object(obj.clone()).ok().map(|i| i.max(0) as u32)
+        };
+        let target_hint = target_type.as_deref().and_then(|t| {
+            let row = get_u32("target_start_row")?;
+            let col = get_u32("target_start_col")?;
+            Some((t, row, col))
+        });
+
+        match AnyFocusedNode::from_raw(&raw, focus_mode, target_hint) {
             Err(e)      => Self::Err { message: e.user_message() },
             Ok(None)    => Self::Err { message: AtlantisError::UnsupportedLanguage.user_message() },
             Ok(Some(f)) => Self::from(f),

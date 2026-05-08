@@ -34,7 +34,7 @@ local function collect_ancestry(bufnr, row, col)
   return { filetype = ft, ancestry = ancestry }
 end
 
-function M.open(bufnr, focus_mode)
+function M.open(bufnr, focus_mode, target_node_type, target_start_row, target_start_col)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
   local cursor = vim.api.nvim_win_get_cursor(0)
   local row = cursor[1] - 1
@@ -44,6 +44,12 @@ function M.open(bufnr, focus_mode)
   if not scan then
     vim.notify("[atlantis] " .. (err or "failed to scan"), vim.log.levels.WARN)
     return
+  end
+
+  if target_node_type then
+    scan.target_node_type  = target_node_type
+    scan.target_start_row  = target_start_row
+    scan.target_start_col  = target_start_col
   end
 
   local result = surveyor(scan, focus_mode)

@@ -134,14 +134,14 @@ fn focus_mode_filtering_skips_construct_when_in_container_mode() {
 
     // If we ask for Construct, we should get variable_declaration
     snap("variable_declaration").inject();
-    let focus_construct = AnyFocusedNode::from_ancestry(ancestry.clone(), FocusMode::Construct)
+    let focus_construct = AnyFocusedNode::from_ancestry(ancestry.clone(), FocusMode::Construct, None)
         .expect("should run")
         .expect("should find a focus");
     assert_eq!(focus_construct.node_type(), "variable_declaration");
 
     // If we ask for Container, we should skip variable_declaration and get block
     snap("block").inject();
-    let focus_container = AnyFocusedNode::from_ancestry(ancestry, FocusMode::Container)
+    let focus_container = AnyFocusedNode::from_ancestry(ancestry, FocusMode::Container, None)
         .expect("should run")
         .expect("should find a focus");
     assert_eq!(focus_container.node_type(), "block");
@@ -161,7 +161,7 @@ fn from_ancestry_returns_unsupported_language_when_no_node_matches() {
     let ancestry = NodeAncestry::new_test(vec![unknown], root, Language::Lua);
 
     // Lua doesn't classify 'comment' or 'unknown_root' as Container or Construct
-    let result = AnyFocusedNode::from_ancestry(ancestry, FocusMode::Container);
+    let result = AnyFocusedNode::from_ancestry(ancestry, FocusMode::Container, None);
 
     match result {
         Err(AtlantisError::UnsupportedLanguage) => {},

@@ -21,7 +21,10 @@ function M.to_field(field)
         -- It's a NavigationTarget — jump and reopen Atlantis in the correct mode
         jump_to_range(target.range)
         vim.schedule(function()
-          require("configs.hydra.atlantis_nouveau").open(result.bufnr, target.target_mode)
+          require("configs.hydra.atlantis_nouveau").open(
+            result.bufnr, target.target_mode,
+            target.node_type, target.range.start_row, target.range.start_col
+          )
         end)
       else
         jump_to_range(target.range)

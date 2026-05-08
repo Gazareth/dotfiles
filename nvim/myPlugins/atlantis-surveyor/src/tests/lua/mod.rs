@@ -57,7 +57,7 @@ impl AsLuaNode for AtlantisNode {
 
 #[test]
 fn unsupported_lua_kinds_produce_unrecognised() {
-    for kind in ["return_statement", "comment", "string", "do_statement"] {
+    for kind in ["comment", "string", "do_statement"] {
         assert!(lua(kind).classify().is_unrecognised(), "'{kind}' should be Unrecognised");
     }
 }
