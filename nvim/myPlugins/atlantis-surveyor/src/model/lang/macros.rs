@@ -140,6 +140,13 @@ macro_rules! impl_lang_node_resolver {
                             _lang: PhantomData,
                         })
                     ),
+                    Some(NodeKind::Container(ContainerNode::ExpressionList)) => ResolveOutput::Container(
+                        $CtrEnum::Unresolved($crate::model::node::Node {
+                            state: $crate::model::node::Unresolved,
+                            raw: self.raw,
+                            _lang: PhantomData,
+                        })
+                    ),
                     None => ResolveOutput::Unresolved,
                 }
             }

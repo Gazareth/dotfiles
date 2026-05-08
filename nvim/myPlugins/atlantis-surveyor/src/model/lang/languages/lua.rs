@@ -53,7 +53,7 @@ impl Extract<Assignment> for Lua {
                             end_row:   c.range.end_row,
                             end_col:   c.range.end_col,
                         },
-                        target_mode: FocusMode::Construct,
+                        target_mode: FocusMode::Container,
                     })
                 });
                 Assignment { name, is_local_binding: true, lhs, value }
@@ -63,7 +63,7 @@ impl Extract<Assignment> for Lua {
                 name:             raw.children.first().map(|c| c.text.clone()).unwrap_or_default(),
                 is_local_binding: false,
                 lhs:              raw.children.first().map(NavigationTarget::container),
-                value:            raw.children.get(1).map(NavigationTarget::construct),
+                value:            raw.children.get(1).map(NavigationTarget::container),
             },
             // Old nvim-treesitter grammar (field names: "name", "value")
             _ => Assignment {
@@ -89,10 +89,12 @@ crate::impl_language_syntax_map!(Lua, LUA_KINDS, {
         "return_statement"     => ReturnStatement,
     },
     container: {
-        "chunk"         => FileRoot,
-        "parameters"    => ParameterList,
-        "block"         => Body,
-        "variable_list" => ParameterList,
+        "chunk"              => FileRoot,
+        "parameters"         => ParameterList,
+        "block"              => Body,
+        "variable_list"      => ParameterList,
+        "expression_list"    => ExpressionList,
+        "binary_expression"  => ExpressionList,
     },
 });
 
