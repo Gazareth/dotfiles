@@ -29,7 +29,7 @@ fn parent_navigation_can_target_containers_with_correct_mode() {
     };
 
     // Focus is variable_declaration (idx 1)
-    let nav = NavigationInfo::resolve(Language::Lua, &all, 1, &snapshot);
+    let nav = NavigationInfo::from_snapshot(Language::Lua, &all, 1, &snapshot);
 
     // Parent should be the block (idx 2) and it should have target_mode: Container
     let parent = nav.parent.expect("should have a parent");
@@ -56,7 +56,7 @@ fn parent_navigation_skips_same_kind_constructs() {
     };
 
     // Focus is assignment_statement (idx 0)
-    let nav = NavigationInfo::resolve(Language::Lua, &all, 0, &snapshot);
+    let nav = NavigationInfo::from_snapshot(Language::Lua, &all, 0, &snapshot);
 
     // Parent should skip variable_declaration (same class: Assignment) and go to function_declaration
     let parent = nav.parent.expect("should have a parent");
@@ -85,7 +85,7 @@ fn parent_navigation_jumps_across_different_construct_kinds() {
     };
 
     // Focus is function_call (idx 0)
-    let nav = NavigationInfo::resolve(Language::Lua, &all, 0, &snapshot);
+    let nav = NavigationInfo::from_snapshot(Language::Lua, &all, 0, &snapshot);
 
     // Parent should be variable_declaration (different kind: Assignment vs Call)
     let parent = nav.parent.expect("should have a parent");
@@ -112,7 +112,7 @@ fn parent_navigation_jumps_from_assignment_to_conditional() {
         siblings: vec![],
     };
 
-    let nav = NavigationInfo::resolve(Language::Lua, &all, 0, &snapshot);
+    let nav = NavigationInfo::from_snapshot(Language::Lua, &all, 0, &snapshot);
 
     let parent = nav.parent.expect("should have a parent");
     assert_eq!(parent.node_type, "if_statement");

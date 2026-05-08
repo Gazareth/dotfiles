@@ -90,7 +90,7 @@ impl<'a> SoleChildResolution<'a> {
                     children:  vec![],
                     siblings:  vec![],
                 };
-                let nav = NavigationInfo::resolve(self.lang, &nav_refs, 0, &stub);
+                let nav = NavigationInfo::from_snapshot(self.lang, &nav_refs, 0, &stub);
                 ResolutionStep::Resolved(AnyFocusedNode::Construct(FocusedNode {
                     node_type:  child_type,
                     range:      child_range,
@@ -112,7 +112,7 @@ impl<'a> SoleChildResolution<'a> {
                     &child_snap.children,
                     |gc: &SnapshotChild| self.lang.classify(RawNode::from(gc), Some(child_container_ref)),
                 );
-                let child_nav = NavigationInfo::resolve(self.lang, &nav_refs, 0, &child_snap);
+                let child_nav = NavigationInfo::from_snapshot(self.lang, &nav_refs, 0, &child_snap);
 
                 self.best_type  = child_type;
                 self.best_range = child_range;

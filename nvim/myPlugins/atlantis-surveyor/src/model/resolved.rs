@@ -9,7 +9,7 @@ use crate::model::lang::languages::{
 };
 
 /// Any language's resolved Construct node.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 #[serde(tag = "lang", content = "node", rename_all = "snake_case")]
 pub enum AnyConstructNode {
     Lua(LuaNode),
@@ -30,7 +30,7 @@ impl AnyConstructNode {
 }
 
 /// Any language's resolved Container node.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 #[serde(tag = "lang", content = "node", rename_all = "snake_case")]
 pub enum AnyContainerNode {
     Lua(LuaContainerNode),

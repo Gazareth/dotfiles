@@ -141,7 +141,7 @@ impl AnyFocusedNode {
                 raw
             }
         };
-        let nav  = NavigationInfo::resolve(lang, &all, focus_idx, &snapshot);
+        let nav  = NavigationInfo::from_snapshot(lang, &all, focus_idx, &snapshot);
 
         Ok(Some(match focus_mode {
             FocusMode::Construct => FocusedNode::<Construct>::from_snapshot(snapshot, node, nav).into(),

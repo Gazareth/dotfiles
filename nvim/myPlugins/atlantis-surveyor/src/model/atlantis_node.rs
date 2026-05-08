@@ -7,7 +7,7 @@ use crate::model::resolved::{AnyContainerNode, AnyConstructNode};
 use crate::probe::language::Language;
 
 /// Atlantis classification of a node — the resolved output of a `RawNode` against a language.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum AtlantisNode {
     /// A direct language construct — function, assignment, conditional, etc.
@@ -50,6 +50,16 @@ impl AtlantisNode {
             (Self::Container(AnyContainerNode::Python(a)),     Self::Container(AnyContainerNode::Python(b)))     => std::mem::discriminant(a) == std::mem::discriminant(b),
             (Self::Leaf, Self::Leaf) => true,
             _ => false,
+        }
+    }
+
+    /// Returns the `FocusMode` for this node classification.
+    pub fn focus_mode(&self) -> crate::model::FocusMode {
+        use crate::model::FocusMode;
+        match self {
+            AtlantisNode::Container(_) => FocusMode::Container,
+            AtlantisNode::Construct(_) | AtlantisNode::Leaf => FocusMode::Construct,
+            AtlantisNode::Unrecognised => FocusMode::Construct,
         }
     }
 

@@ -27,7 +27,7 @@ macro_rules! impl_language_syntax_map {
 #[macro_export]
 macro_rules! impl_lang_node_resolver {
     ($Lang:ty, $StdEnum:ident, $CtrEnum:ident) => {
-        #[derive(Debug, serde::Serialize)]
+        #[derive(Debug, serde::Serialize, Clone)]
         #[serde(tag = "type", rename_all = "snake_case")]
         pub enum $StdEnum {
             Function($crate::model::node::Node<$Lang, $crate::model::supported_nodes::FunctionDeclaration>),
@@ -39,7 +39,7 @@ macro_rules! impl_lang_node_resolver {
             Unresolved($crate::model::node::Node<$Lang, $crate::model::node::Unresolved>),
         }
 
-        #[derive(Debug, serde::Serialize)]
+        #[derive(Debug, serde::Serialize, Clone)]
         #[serde(tag = "type", rename_all = "snake_case")]
         pub enum $CtrEnum {
             FileRoot($crate::model::node::Node<$Lang, $crate::model::supported_nodes::FileRoot>),
