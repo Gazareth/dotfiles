@@ -1,6 +1,8 @@
 use nvim_oxi::Dictionary;
 
 use crate::error::AtlantisError;
+use crate::model::{AtlantisNode, FocusMode};
+use crate::model::node::RawNode;
 use crate::probe::language::{detect, Language};
 use crate::probe::treesitter::{self, NodeOutline};
 
@@ -46,5 +48,47 @@ impl NodeAncestry {
 
     pub fn all(&self) -> impl Iterator<Item = &NodeOutline> {
         self.inner.iter().chain(std::iter::once(&self.root))
+    }
+
+    /// Returns the index into `all()` of the node that should be focused.
+    /// Applies the target-hint pin (or innermost-match fallback), then walks
+    /// upward through consecutive ancestors of the same construct kind.
+    pub(super) fn find_focus_idx(
+        &self,
+        focus_mode: FocusMode,
+        target_hint: Option<(&str, u32, u32)>,
+    ) -> Result<usize, AtlantisError> {
+        let lang = self.language;
+        let all: Vec<&NodeOutline> = self.all().collect();
+
+        let candidate_idx = if let Some((target_type, target_row, target_col)) = target_hint {
+            all.iter().position(|n| {
+                n.node_type == target_type
+                && n.range.start_row == target_row
+                && n.range.start_col == target_col
+            }).ok_or(AtlantisError::UnsupportedLanguage)?
+        } else {
+            all.iter().enumerate().position(|(i, n)| {
+                let classified = lang.classify(RawNode::from(*n), all.get(i + 1).copied());
+                match (focus_mode, classified) {
+                    (FocusMode::Construct, AtlantisNode::Construct(_)) => true,
+                    (FocusMode::Container, AtlantisNode::Container(_)) => true,
+                    _ => false,
+                }
+            }).ok_or(AtlantisError::UnsupportedLanguage)?
+        };
+
+        // Walk outward through consecutive ancestors of the same construct kind
+        // (e.g. `assignment_statement` → `variable_declaration` both resolve to Assignment)
+        // so the outermost syntactic wrapper is used as the focus, not the innermost.
+        let candidate_kind = lang.classify(RawNode::from(all[candidate_idx]), all.get(candidate_idx + 1).copied());
+        Ok(all[candidate_idx..].iter()
+            .enumerate()
+            .take_while(|(i, n)| candidate_kind.same_construct_kind(
+                &lang.classify(RawNode::from(**n), all.get(candidate_idx + i + 1).copied())
+            ))
+            .last()
+            .map(|(i, _)| candidate_idx + i)
+            .unwrap_or(candidate_idx))
     }
 }

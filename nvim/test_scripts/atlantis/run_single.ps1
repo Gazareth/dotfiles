@@ -36,7 +36,7 @@ if (-not (Test-Path $targetPath)) {
 # Derive the Lua module path and a short display name from the target.
 $rel = $Target.TrimEnd('\').TrimEnd('/')
 if ($rel.EndsWith(".lua")) { $rel = $rel.Substring(0, $rel.Length - 4) }
-$modulePath = "configs.hydra.atlantis.tests." + ($rel -replace '[/\\]', '.')
+$modulePath = "configs.hydra.atlantis-deprecated.tests." + ($rel -replace '[/\\]', '.')
 $suiteName  = ($rel -replace '[/\\]', ' > ').Split(' > ')[-1]
 
 # Build the spec content. If a filter is given, wrap `it` so only matching

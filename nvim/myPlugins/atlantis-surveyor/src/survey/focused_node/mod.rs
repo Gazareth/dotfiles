@@ -1,5 +1,6 @@
 mod actions;
 pub(crate) mod ancestry;
+mod container_skip;
 mod navigation;
 mod outline;
 
@@ -8,7 +9,8 @@ use nvim_oxi::Dictionary;
 use crate::error::AtlantisError;
 use crate::model::node::{NodeRange, RawNode};
 use crate::model::{AtlantisNode, FocusMode, OutlineItem};
-use crate::probe::treesitter::{self, NodeOutline, SnapshotChild};
+use crate::probe::language::Language;
+use crate::probe::treesitter::{self, NodeOutline, NodeSnapshot, SnapshotChild};
 
 use self::ancestry::NodeAncestry;
 
@@ -35,6 +37,56 @@ pub struct FocusedNode<S> {
     pub mode:       S,
 }
 
+impl FocusedNode<Construct> {
+    fn from_snapshot(snapshot: NodeSnapshot, node: AtlantisNode, navigation: NavigationInfo) -> Self {
+        FocusedNode {
+            node_type: snapshot.node_type,
+            range:     snapshot.range,
+            node,
+            navigation,
+            mode: Construct,
+        }
+    }
+}
+
+impl FocusedNode<Container> {
+    fn from_snapshot(
+        lang:      Language,
+        all:       &[&NodeOutline],
+        focus_idx: usize,
+        snapshot:  &NodeSnapshot,
+        node:      AtlantisNode,
+        navigation: NavigationInfo,
+    ) -> Self {
+        let outline = Self::compute_outline(
+            &snapshot.children,
+            |child: &SnapshotChild| lang.classify(RawNode::from(child), all.get(focus_idx).copied()),
+        );
+        FocusedNode {
+            node_type: snapshot.node_type.clone(),
+            range:     snapshot.range.clone(),
+            node,
+            navigation,
+            mode: Container { outline },
+        }
+    }
+
+    /// Consumes the container and, if it holds exactly one recognised child,
+    /// returns the child's result directly. Delegates to `SoleChildResolution` for iteration.
+    fn resolve_sole_child(self, lang: Language, all: &[&NodeOutline], focus_idx: usize, snapshot: NodeSnapshot) -> AnyFocusedNode {
+        use self::container_skip::{SoleChildResolution, ResolutionStep};
+        let mut resolution = SoleChildResolution::new(self, lang, all, focus_idx, snapshot);
+        loop {
+            match resolution.try_descend() {
+                ResolutionStep::Resolved(result) => return result,
+                ResolutionStep::Retain           => break,
+                ResolutionStep::Descend          => {}
+            }
+        }
+        resolution.into_container()
+    }
+}
+
 // ── Runtime wrapper ───────────────────────────────────────────────────────
 
 /// Returned by `from_ancestry` — the mode is a runtime decision so we need
@@ -42,6 +94,10 @@ pub struct FocusedNode<S> {
 pub enum AnyFocusedNode {
     Construct(FocusedNode<Construct>),
     Container(FocusedNode<Container>),
+}
+
+impl From<FocusedNode<Construct>> for AnyFocusedNode {
+    fn from(n: FocusedNode<Construct>) -> Self { AnyFocusedNode::Construct(n) }
 }
 
 impl AnyFocusedNode {
@@ -60,69 +116,24 @@ impl AnyFocusedNode {
 
     #[must_use]
     pub fn from_ancestry(ancestry: NodeAncestry, focus_mode: FocusMode, target_hint: Option<(&str, u32, u32)>) -> Result<Option<Self>, AtlantisError> {
-        let lang = ancestry.language();
+        let lang      = ancestry.language();
         let all: Vec<&NodeOutline> = ancestry.all().collect();
+        let focus_idx = ancestry.find_focus_idx(focus_mode, target_hint)?;
 
-        // Determine first_idx: either pinned by target_hint or found by innermost-match.
-        let first_idx = if let Some((target_type, target_row, target_col)) = target_hint {
-            // Pin to the specific node in ancestry matching type and start position.
-            all.iter().position(|n| {
-                n.node_type == target_type
-                && n.range.start_row == target_row
-                && n.range.start_col == target_col
-            }).ok_or(AtlantisError::UnsupportedLanguage)?
-        } else {
-            // Find the innermost recognised node that matches the requested FocusMode.
-            all.iter().enumerate().position(|(i, n)| {
-                let classified = lang.classify(RawNode::from(*n), all.get(i + 1).copied());
-                match (focus_mode, classified) {
-                    (FocusMode::Construct, AtlantisNode::Construct(_)) => true,
-                    (FocusMode::Container, AtlantisNode::Container(_)) => true,
-                    _ => false,
-                }
-            }).ok_or(AtlantisError::UnsupportedLanguage)?
-        };
-
-        // Walk UP through consecutive ancestors that classify to the same construct kind
-        // (e.g. assignment_statement → variable_declaration both resolve to Assignment).
-        let first_kind = lang.classify(RawNode::from(all[first_idx]), all.get(first_idx + 1).copied());
-        let focus_idx = all[first_idx..].iter()
-            .enumerate()
-            .take_while(|(i, n)| first_kind.same_construct_kind(&lang.classify(RawNode::from(**n), all.get(first_idx + i + 1).copied())))
-            .last()
-            .map(|(i, _)| first_idx + i)
-            .unwrap_or(first_idx);
-
-        let focus_node_outline = all[focus_idx];
-
-        let node_snapshot = treesitter::snapshot(
-            focus_node_outline.range.start_row,
-            focus_node_outline.range.start_col,
-            Some(&focus_node_outline.node_type),
-            Some((focus_node_outline.range.start_row, focus_node_outline.range.start_col)),
+        let snapshot   = treesitter::snapshot(
+            all[focus_idx].range.start_row,
+            all[focus_idx].range.start_col,
+            Some(&all[focus_idx].node_type),
+            Some((all[focus_idx].range.start_row, all[focus_idx].range.start_col)),
         )?;
-
-        let node       = lang.classify(RawNode::from(&node_snapshot), all.get(focus_idx + 1).copied());
-        let navigation = NavigationInfo::resolve(lang, &all, focus_idx, &node_snapshot);
-        let node_type  = node_snapshot.node_type.clone();
-        let range      = node_snapshot.range.clone();
+        let node = lang.classify(RawNode::from(&snapshot), all.get(focus_idx + 1).copied());
+        let nav  = NavigationInfo::resolve(lang, &all, focus_idx, &snapshot);
 
         Ok(Some(match focus_mode {
+            FocusMode::Construct => FocusedNode::<Construct>::from_snapshot(snapshot, node, nav).into(),
             FocusMode::Container => {
-                let outline = FocusedNode::<Container>::compute_outline(
-                    &node_snapshot.children,
-                    |child: &SnapshotChild| lang.classify(RawNode::from(child), Some(focus_node_outline)),
-                );
-                AnyFocusedNode::Container(FocusedNode {
-                    node_type, range, node, navigation,
-                    mode: Container { outline },
-                })
-            }
-            FocusMode::Construct => {
-                AnyFocusedNode::Construct(FocusedNode {
-                    node_type, range, node, navigation,
-                    mode: Construct,
-                })
+                let focused = FocusedNode::<Container>::from_snapshot(lang, &all, focus_idx, &snapshot, node, nav);
+                focused.resolve_sole_child(lang, &all, focus_idx, snapshot)
             }
         }))
     }
