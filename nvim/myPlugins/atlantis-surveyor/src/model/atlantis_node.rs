@@ -14,6 +14,9 @@ pub enum AtlantisNode {
     Construct(AnyConstructNode),
     /// A structural grouping — parameter list, body, argument list, etc.
     Container(AnyContainerNode),
+    /// A recognised navigation endpoint that is a direct child of a recognised Container
+    /// but has no further Atlantis structure (e.g. `nil`, `identifier` inside an expression list).
+    Leaf,
     /// Atlantis has no registered behaviour for this node type.
     Unrecognised,
 }
@@ -41,9 +44,15 @@ impl AtlantisNode {
             (Self::Construct(JavaScript(a)), Self::Construct(JavaScript(b))) => std::mem::discriminant(a) == std::mem::discriminant(b),
             (Self::Construct(TypeScript(a)), Self::Construct(TypeScript(b))) => std::mem::discriminant(a) == std::mem::discriminant(b),
             (Self::Construct(Python(a)),     Self::Construct(Python(b)))     => std::mem::discriminant(a) == std::mem::discriminant(b),
+            (Self::Container(AnyContainerNode::Lua(a)),        Self::Container(AnyContainerNode::Lua(b)))        => std::mem::discriminant(a) == std::mem::discriminant(b),
+            (Self::Container(AnyContainerNode::JavaScript(a)), Self::Container(AnyContainerNode::JavaScript(b))) => std::mem::discriminant(a) == std::mem::discriminant(b),
+            (Self::Container(AnyContainerNode::TypeScript(a)), Self::Container(AnyContainerNode::TypeScript(b))) => std::mem::discriminant(a) == std::mem::discriminant(b),
+            (Self::Container(AnyContainerNode::Python(a)),     Self::Container(AnyContainerNode::Python(b)))     => std::mem::discriminant(a) == std::mem::discriminant(b),
+            (Self::Leaf, Self::Leaf) => true,
             _ => false,
         }
     }
+
 }
 
 fn resolve_output<S, C>(

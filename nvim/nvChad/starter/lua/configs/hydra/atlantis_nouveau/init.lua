@@ -8,6 +8,7 @@ local function node_data(n)
   return {
     node_type = n:type(),
     start_row = sr, start_col = sc,
+    end_row = er, end_col = ec,
   }
 end
 

@@ -83,6 +83,7 @@ impl FocusedNode<Container> {
                 ResolutionStep::Descend          => {}
             }
         }
+        resolution.expand_binary_children();
         resolution.into_container()
     }
 }
@@ -125,8 +126,21 @@ impl AnyFocusedNode {
             all[focus_idx].range.start_col,
             Some(&all[focus_idx].node_type),
             Some((all[focus_idx].range.start_row, all[focus_idx].range.start_col)),
+            Some((all[focus_idx].range.end_row,   all[focus_idx].range.end_col)),
         )?;
-        let node = lang.classify(RawNode::from(&snapshot), all.get(focus_idx + 1).copied());
+        let node = {
+            let raw = lang.classify(RawNode::from(&snapshot), all.get(focus_idx + 1).copied());
+            // Promote to Leaf when the node is unrecognised but its parent is a Container —
+            // this makes it a stable navigation endpoint rather than scanning up to the nearest construct.
+            if matches!(raw, AtlantisNode::Unrecognised) {
+                let parent_is_container = all.get(focus_idx + 1).map_or(false, |p| {
+                    matches!(lang.classify(RawNode::from(*p), all.get(focus_idx + 2).copied()), AtlantisNode::Container(_))
+                });
+                if parent_is_container { AtlantisNode::Leaf } else { raw }
+            } else {
+                raw
+            }
+        };
         let nav  = NavigationInfo::resolve(lang, &all, focus_idx, &snapshot);
 
         Ok(Some(match focus_mode {

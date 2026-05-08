@@ -59,6 +59,7 @@ pub fn snapshot(
     _col:          u32,
     _target_type:  Option<&str>,
     _target_start: Option<(u32, u32)>,
+    _target_end:   Option<(u32, u32)>,
 ) -> Result<NodeSnapshot, AtlantisError> {
     OVERRIDE.with(|s| s.borrow().clone())
         .ok_or(AtlantisError::NoNode)

@@ -8,7 +8,10 @@ local function jump_to_item(bufnr, item)
   vim.api.nvim_win_set_cursor(0, { range.start_row + 1, range.start_col })
   vim.cmd("normal! zz")
   vim.schedule(function()
-    require("configs.hydra.atlantis_nouveau").open(bufnr, item.target_mode)
+    require("configs.hydra.atlantis_nouveau").open(
+      bufnr, item.target_mode,
+      item.node_type, range.start_row, range.start_col
+    )
   end)
 end
 

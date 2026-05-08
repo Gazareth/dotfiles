@@ -34,7 +34,7 @@ impl FocusedNode<Container> {
                         if s.len() > 16 { s[..16].to_string() } else { s.to_string() }
                     })
                     .unwrap_or_else(|| child.node_type.clone());
-                OutlineItem { label, range: child.range.clone(), target_mode }
+                OutlineItem { label, node_type: child.node_type.clone(), range: child.range.clone(), target_mode }
             })
             .collect()
     }

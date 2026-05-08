@@ -1,9 +1,9 @@
 use serde::Serialize;
 
 use crate::model::node::{NodeRange, RawNode};
-use crate::model::{AtlantisNode, FocusMode};
+use crate::model::{AtlantisNode, FocusMode, OutlineItem};
 use crate::probe::language::Language;
-use crate::probe::treesitter::{NodeOutline, NodeSnapshot};
+use crate::probe::treesitter::{self, NodeOutline, NodeSnapshot};
 
 use crate::model::NavigationTarget;
 
@@ -33,7 +33,7 @@ pub(in crate::survey::focused_node) fn as_navigation_target(
 ) -> Option<NavigationTarget> {
     let target_mode = match classify(raw.clone()) {
         AtlantisNode::Container(_) => FocusMode::Container,
-        AtlantisNode::Construct(_) => FocusMode::Construct,
+        AtlantisNode::Construct(_) | AtlantisNode::Leaf => FocusMode::Construct,
         AtlantisNode::Unrecognised => return None,
     };
     Some(NavigationTarget { node_type: raw.kind, range: raw.range, target_mode })
@@ -52,6 +52,12 @@ impl NavigationInfo {
             _                          => FocusMode::Construct,
         };
 
+        // A Leaf focus is an unrecognised node whose immediate ancestor is a Container.
+        let is_leaf_focus = matches!(focus_node, AtlantisNode::Unrecognised)
+            && all.get(focus_idx + 1).map_or(false, |p| {
+                matches!(lang.classify(RawNode::from(*p), all.get(focus_idx + 2).copied()), AtlantisNode::Container(_))
+            });
+
         // Parent: nearest recognized ancestor that differs in construct kind from the focus.
         let parent = all.iter().enumerate().skip(focus_idx + 1)
             .find(|(i, _)| {
@@ -65,12 +71,57 @@ impl NavigationInfo {
             .find(|(i, _)| !matches!(lang.classify(RawNode::from(all[*i]), all.get(*i + 1).copied()), AtlantisNode::Unrecognised))
             .and_then(|(i, n)| as_navigation_target(RawNode::from(*n), &|raw| lang.classify(raw, all.get(i + 1).copied())));
 
-        let supported_siblings: Vec<NavigationTarget> = node_snapshot.siblings.iter()
-            .filter_map(|s| as_navigation_target(RawNode::from(s), &|raw| lang.classify(raw, all.get(focus_idx + 1).copied())))
-            .filter(|t| t.target_mode == current_mode)
-            .collect();
+        // Sibling navigation: when inside a binary_expression chain, snapshot the outermost
+        // binary_expression and flatten all nested ones into a single list of operands.
+        // This gives correct prev/next across the whole expression regardless of tree nesting.
+        // Otherwise fall back to direct siblings with mode filtering.
+        let outermost_binary: Option<(usize, &&NodeOutline)> =
+            all.iter().enumerate().skip(focus_idx + 1)
+                .find(|(i, n)| {
+                    n.node_type == "binary_expression"
+                    && !all.get(i + 1).map_or(false, |p| p.node_type == "binary_expression")
+                });
 
-        let (prev_sibling, next_sibling) = sibling_nav(&supported_siblings, &node_snapshot.node_type, &node_snapshot.range);
+        let (prev_sibling, next_sibling) = if let Some((_, bn)) = outermost_binary {
+            let flat = gather_binary_siblings(lang, bn);
+            sibling_nav(&flat, &node_snapshot.node_type, &node_snapshot.range)
+        } else {
+            // Non-binary context: use direct siblings from the snapshot with mode filter.
+            // For Leaf focus (unrecognised child of a Container), promote unrecognised siblings
+            // to Leaf and inject the focus node when absent (anonymous nodes aren't in the
+            // tree-sitter named sibling list, so sibling_nav would never locate the current position).
+            let parent_ref = all.get(focus_idx + 1).copied();
+            let mut supported_siblings: Vec<NavigationTarget> = node_snapshot.siblings.iter()
+                .filter_map(|s| {
+                    let classify = |raw: RawNode| {
+                        let c = lang.classify(raw, parent_ref);
+                        if is_leaf_focus && matches!(c, AtlantisNode::Unrecognised) { AtlantisNode::Leaf } else { c }
+                    };
+                    as_navigation_target(RawNode::from(s), &classify)
+                })
+                .filter(|t| is_leaf_focus || t.target_mode == current_mode)
+                .collect();
+
+            if is_leaf_focus {
+                let already_present = supported_siblings.iter().any(|t| {
+                    t.range.start_row == node_snapshot.range.start_row
+                    && t.range.start_col == node_snapshot.range.start_col
+                });
+                if !already_present {
+                    supported_siblings.push(NavigationTarget {
+                        node_type:   node_snapshot.node_type.clone(),
+                        range:       node_snapshot.range.clone(),
+                        target_mode: FocusMode::Construct,
+                    });
+                    supported_siblings.sort_by(|a, b| {
+                        a.range.start_row.cmp(&b.range.start_row)
+                            .then(a.range.start_col.cmp(&b.range.start_col))
+                    });
+                }
+            }
+
+            sibling_nav(&supported_siblings, &node_snapshot.node_type, &node_snapshot.range)
+        };
 
         let nearest_body = all.iter().enumerate().skip(focus_idx + 1)
             .find(|(_, n)| lang.is_body_container(&n.node_type))
@@ -86,6 +137,59 @@ impl NavigationInfo {
         });
 
         Self { parent, top_level, nearest_body, nearest_function, prev_sibling, next_sibling, is_at_top }
+    }
+}
+
+/// Snapshots the outermost binary_expression and recursively flattens all nested
+/// binary_expression Containers, returning a flat list of operand NavigationTargets.
+fn gather_binary_siblings(lang: Language, root: &NodeOutline) -> Vec<NavigationTarget> {
+    let Ok(snap) = treesitter::snapshot(
+        root.range.start_row,
+        root.range.start_col,
+        Some("binary_expression"),
+        Some((root.range.start_row, root.range.start_col)),
+        Some((root.range.end_row,   root.range.end_col)),
+    ) else { return vec![]; };
+
+    let root_ref = NodeOutline { node_type: "binary_expression".into(), range: root.range.clone() };
+    let mut outline = super::FocusedNode::<super::Container>::compute_outline(
+        &snap.children,
+        |c| lang.classify(RawNode::from(c), Some(&root_ref)),
+    );
+
+    flatten_binary_outline(lang, &mut outline);
+
+    outline.into_iter()
+        .map(|item| NavigationTarget { node_type: item.node_type, range: item.range, target_mode: item.target_mode })
+        .collect()
+}
+
+/// Recursively expands binary_expression Container entries in an outline until only
+/// non-binary operands remain.
+fn flatten_binary_outline(lang: Language, outline: &mut Vec<OutlineItem>) {
+    loop {
+        let Some(idx) = outline.iter().position(|item| {
+            item.node_type == "binary_expression" && item.target_mode == FocusMode::Container
+        }) else { break; };
+
+        let item = outline.remove(idx);
+        let child_ref = NodeOutline { node_type: item.node_type.clone(), range: item.range.clone() };
+        let Ok(snap) = treesitter::snapshot(
+            item.range.start_row, item.range.start_col,
+            Some("binary_expression"),
+            Some((item.range.start_row, item.range.start_col)),
+            Some((item.range.end_row,   item.range.end_col)),
+        ) else { break; };
+
+        let children = super::FocusedNode::<super::Container>::compute_outline(
+            &snap.children,
+            |c| lang.classify(RawNode::from(c), Some(&child_ref)),
+        );
+        outline.extend(children);
+        outline.sort_by(|a, b| {
+            a.range.start_row.cmp(&b.range.start_row)
+                .then(a.range.start_col.cmp(&b.range.start_col))
+        });
     }
 }
 

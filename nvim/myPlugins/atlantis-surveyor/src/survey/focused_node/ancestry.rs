@@ -62,6 +62,18 @@ impl NodeAncestry {
         let all: Vec<&NodeOutline> = self.all().collect();
 
         let candidate_idx = if let Some((target_type, target_row, target_col)) = target_hint {
+            // For Container targets, pick the outermost match: nested containers of the same type
+            // (e.g. binary_expression inside binary_expression) share the same start position,
+            // and the hint was generated from the outer one. The outward walk is also skipped
+            // for hinted containers — the hint is already authoritative.
+            if focus_mode == FocusMode::Container {
+                let idx = all.iter().enumerate()
+                    .filter(|(_, n)| n.node_type == target_type && n.range.start_row == target_row && n.range.start_col == target_col)
+                    .last()
+                    .map(|(i, _)| i)
+                    .ok_or(AtlantisError::UnsupportedLanguage)?;
+                return Ok(idx);
+            }
             all.iter().position(|n| {
                 n.node_type == target_type
                 && n.range.start_row == target_row
@@ -73,15 +85,27 @@ impl NodeAncestry {
                 match (focus_mode, classified) {
                     (FocusMode::Construct, AtlantisNode::Construct(_)) => true,
                     (FocusMode::Container, AtlantisNode::Container(_)) => true,
+                    // Leaf: unrecognised node whose immediate parent is a Container.
+                    (FocusMode::Construct, AtlantisNode::Unrecognised) => {
+                        all.get(i + 1).map_or(false, |parent| {
+                            matches!(
+                                lang.classify(RawNode::from(*parent), all.get(i + 2).copied()),
+                                AtlantisNode::Container(_)
+                            )
+                        })
+                    }
                     _ => false,
                 }
             }).ok_or(AtlantisError::UnsupportedLanguage)?
         };
 
-        // Walk outward through consecutive ancestors of the same construct kind
-        // (e.g. `assignment_statement` → `variable_declaration` both resolve to Assignment)
-        // so the outermost syntactic wrapper is used as the focus, not the innermost.
+        // Walk upward through consecutive ancestors of the same construct kind
+        // (e.g. `assignment_statement` → `variable_declaration` both resolve to Assignment).
+        // Leaf nodes are never walked upward — they stay at exactly the candidate position.
         let candidate_kind = lang.classify(RawNode::from(all[candidate_idx]), all.get(candidate_idx + 1).copied());
+        if matches!(candidate_kind, AtlantisNode::Unrecognised) {
+            return Ok(candidate_idx); // Leaf candidate — no upward walk
+        }
         Ok(all[candidate_idx..].iter()
             .enumerate()
             .take_while(|(i, n)| candidate_kind.same_construct_kind(

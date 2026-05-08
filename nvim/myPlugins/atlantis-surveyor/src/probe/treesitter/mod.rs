@@ -13,8 +13,9 @@ pub fn snapshot(
     col: u32,
     target_type: Option<&str>,
     target_start: Option<(u32, u32)>,
+    target_end: Option<(u32, u32)>,
 ) -> Result<NodeSnapshot, AtlantisError> {
-    let d = query::call(row, col, target_type, target_start)?;
+    let d = query::call(row, col, target_type, target_start, target_end)?;
 
     if d.get("err").is_some() {
         let err = decode::str(&d, "err")?;

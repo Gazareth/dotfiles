@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 use crate::model::node::{NodeRange, RawNode};
 use crate::model::{AtlantisNode, FocusMode};
 use crate::probe::language::Language;
@@ -77,7 +79,7 @@ impl<'a> SoleChildResolution<'a> {
             .collect();
 
         match child_classified {
-            AtlantisNode::Unrecognised => ResolutionStep::Retain,
+            AtlantisNode::Unrecognised | AtlantisNode::Leaf => ResolutionStep::Retain,
             AtlantisNode::Construct(_) => {
                 // Single child means genuinely no siblings — stub snapshot suffices.
                 let stub = NodeSnapshot {
@@ -102,6 +104,7 @@ impl<'a> SoleChildResolution<'a> {
                     child_range.start_row, child_range.start_col,
                     Some(&child_type),
                     Some((child_range.start_row, child_range.start_col)),
+                    Some((child_range.end_row,   child_range.end_col)),
                 ) else { return ResolutionStep::Retain; };
 
                 let child_container_ref = self.ancestors.first().unwrap();
@@ -132,6 +135,39 @@ impl<'a> SoleChildResolution<'a> {
             navigation: self.best_nav,
             mode: Container { outline: self.cur_outline },
         })
+    }
+
+    /// After the drill loop settles, recursively expands all `binary_expression` Container
+    /// outline items until none remain, producing a flat list of operand nodes.
+    /// Costs one extra snapshot per nesting level; stops when a snapshot fails.
+    pub(super) fn expand_binary_children(&mut self) {
+        loop {
+            let Some(idx) = self.cur_outline.iter()
+                .position(|item| item.node_type == "binary_expression" && item.target_mode == FocusMode::Container)
+            else { break; };
+
+            let item = self.cur_outline.remove(idx);
+            let child_ref = NodeOutline { node_type: item.node_type.clone(), range: item.range.clone() };
+            let Ok(child_snap) = treesitter::snapshot(
+                item.range.start_row, item.range.start_col,
+                Some("binary_expression"),
+                Some((item.range.start_row, item.range.start_col)),
+                Some((item.range.end_row,   item.range.end_col)),
+            ) else { break; };
+
+            let child_items = super::FocusedNode::<super::Container>::compute_outline(
+                &child_snap.children,
+                |gc| self.lang.classify(RawNode::from(gc), Some(&child_ref)),
+            );
+
+            self.cur_outline.extend(child_items);
+            self.cur_outline.sort_by(|a, b| {
+                match a.range.start_row.cmp(&b.range.start_row) {
+                    Ordering::Equal => a.range.start_col.cmp(&b.range.start_col),
+                    other => other,
+                }
+            });
+        }
     }
 
     /// Finds the snapshot child whose position matches the single outline entry,

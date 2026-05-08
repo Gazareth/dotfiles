@@ -6,6 +6,7 @@ use crate::model::FocusMode;
 #[derive(Debug, Serialize, Clone)]
 pub struct OutlineItem {
     pub label:       String,
+    pub node_type:   String,
     pub range:       NodeRange,
     pub target_mode: FocusMode,
 }
