@@ -13,7 +13,10 @@ local function menu_title(result)
 end
 
 function M.open(result)
+  -- Apply a transient highlight over the node that is being hovered over
+  -- Also get an on_exit callback that clears the highlight when the menu is closed
   local on_exit = highlight_node.apply(result.bufnr, result.range)
+
   make_hydra.open({
     title    = menu_title(result),
     sections = standard.sections(result),
