@@ -12,7 +12,7 @@ function M.setup(opts)
     namu.open()
   end, { desc = "Namu Symbols Menu" })
 
-  vim.keymap.set("n", "<leader>tt", function()
+  vim.keymap.set("n", "<leader>h", function()
     vim.cmd("AtlantisNouveau")
   end, { desc = "Atlantis" })
 

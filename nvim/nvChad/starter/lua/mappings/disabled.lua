@@ -9,6 +9,7 @@ M.disabled = {
       ["<leader>fm"] = { "", "lsp formatting" },
       ["<leader>n"] = { "", "toggle line number" },
       ["<leader>rn"] = { "", "toggle relative number" },
+      ["<leader>h"] = { "", "toggle horizontal terminal" },
       ["<C-n>"] = { "", "toggle nvimtree" },
       ["<C-c>"] = { "", "general copy whole file" },
       ["<leader>e"] = { "", "focus nvimtree" },
