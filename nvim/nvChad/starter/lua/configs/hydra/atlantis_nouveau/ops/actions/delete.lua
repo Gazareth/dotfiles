@@ -1,12 +1,22 @@
 return function(result)
-  local range = result.range
-  if not range then return end
-  -- Delete from start_row to end_row (inclusive), 0-based
-  vim.api.nvim_buf_set_lines(
-    result.bufnr,
-    range.start_row,
-    range.end_row + 1,
-    false,
-    {}
-  )
+  if result.range then
+    local r = result.range
+    -- Yank first (to match Vim behavior)
+    local lines = vim.api.nvim_buf_get_text(
+      result.bufnr, r.start_row, r.start_col, r.end_row, r.end_col, {}
+    )
+    local text = table.concat(lines, "\n")
+    vim.fn.setreg('"', text, 'v')
+    vim.fn.setreg('0', text, 'v')
+
+    -- Delete the precise range
+    vim.api.nvim_buf_set_text(
+      result.bufnr,
+      r.start_row,
+      r.start_col,
+      r.end_row,
+      r.end_col,
+      {}
+    )
+  end
 end

@@ -97,6 +97,10 @@ local function build_heads(rendered)
     end
   end
 
+  for _, item in ipairs(rendered.common_actions or {}) do
+    append_action_head_for_item(heads, item)
+  end
+
   heads[#heads + 1] = { "q", nil, { exit = true, desc = false } }
   heads[#heads + 1] = { "<Esc>", nil, { exit = true, desc = false } }
   -- exit = false: stay in hydra; only hide/show the hint window (avoids reopen race / double hint).
@@ -122,6 +126,7 @@ function M.open(spec, opts)
 
   local hint_opts = vim.tbl_extend("force", {
     title = spec.title,
+    common_actions = spec.common_actions,
     footer = {
       left = "[?] toggle hint",
       right = "[q]/[Esc] exit",

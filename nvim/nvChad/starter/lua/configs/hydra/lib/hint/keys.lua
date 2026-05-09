@@ -30,6 +30,15 @@ function hint_keys.normalize_sections(sections, opts)
   local normalized = {}
   local used = { q = true }
 
+  -- Reserve keys for common actions first so they don't get auto-assigned
+  local common_actions = opts.common_actions or {}
+  for _, item in ipairs(common_actions) do
+    if type(item.key) == "string" and item.key ~= "" then
+      used[item.key] = true
+      item._resolved_key = item.key
+    end
+  end
+
   for index = 1, 3 do
     local section = sections[index] or { title = "", items = {} }
     local rows = {}
