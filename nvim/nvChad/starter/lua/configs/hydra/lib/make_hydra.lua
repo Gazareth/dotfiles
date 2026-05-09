@@ -97,8 +97,10 @@ local function build_heads(rendered)
     end
   end
 
-  for _, item in ipairs(rendered.common_actions or {}) do
-    append_action_head_for_item(heads, item)
+  for _, actions in ipairs(rendered.header_actions or {}) do
+    for _, item in ipairs(actions) do
+      append_action_head_for_item(heads, item)
+    end
   end
 
   heads[#heads + 1] = { "q", nil, { exit = true, desc = false } }
@@ -127,6 +129,7 @@ function M.open(spec, opts)
   local hint_opts = vim.tbl_extend("force", {
     title = spec.title,
     common_actions = spec.common_actions,
+    header_actions = spec.header_actions,
     footer = {
       left = "[?] toggle hint",
       right = "[q]/[Esc] exit",

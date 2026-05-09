@@ -94,33 +94,48 @@ function hydra_hint.build(sections, opts)
   local width_for_title = math.max(total_width, inner_max_w)
 
   local title_lines = hint_title.build_title_lines(opts.title, width_for_title, opts)
-  local common_actions = opts.common_actions
-  local header_lines = {}
+  local header_action_lines = {}
+  if opts.header_actions then
+    for _, line in ipairs(opts.header_actions) do
+      table.insert(header_action_lines, line)
+    end
+  end
 
+  if opts.common_actions and #opts.common_actions > 0 then
+    table.insert(header_action_lines, 1, opts.common_actions)
+  end
+
+  local header_lines = {}
   if #title_lines > 0 then
     for _, line in ipairs(title_lines) do
       header_lines[#header_lines + 1] = line
     end
   end
 
-  if common_actions and #common_actions > 0 then
-    local action_parts = {}
-    for _, item in ipairs(common_actions) do
-      table.insert(action_parts, string.format("[%s] %s", item.key, item.label))
-    end
-    local action_line = table.concat(action_parts, " - ")
-    local safe_action_line = hint_util.escape_hint_text(action_line)
-    local aw = hint_util.str_width(safe_action_line)
-
-    -- Ensure we use at least width_for_title
+  if #header_action_lines > 0 then
+    -- Find max width considering title and all action lines
     local current_max_w = width_for_title
     for _, line in ipairs(header_lines) do
       current_max_w = math.max(current_max_w, hint_util.str_width(line))
     end
-    current_max_w = math.max(current_max_w, aw)
 
-    local left = math.max(0, math.floor((current_max_w - aw) / 2))
-    header_lines[#header_lines + 1] = string.rep(" ", left) .. safe_action_line
+    local rendered_action_lines = {}
+    for _, actions in ipairs(header_action_lines) do
+      local action_parts = {}
+      for _, item in ipairs(actions) do
+        table.insert(action_parts, string.format("[%s] %s", item.key, item.label))
+      end
+      local action_line = table.concat(action_parts, " - ")
+      local safe_action_line = hint_util.escape_hint_text(action_line)
+      local aw = hint_util.str_width(safe_action_line)
+      current_max_w = math.max(current_max_w, aw)
+      table.insert(rendered_action_lines, { text = safe_action_line, width = aw })
+    end
+
+    for _, line_data in ipairs(rendered_action_lines) do
+      local left = math.max(0, math.floor((current_max_w - line_data.width) / 2))
+      header_lines[#header_lines + 1] = string.rep(" ", left) .. line_data.text
+    end
     header_lines[#header_lines + 1] = string.rep("=", current_max_w)
   end
 
@@ -149,7 +164,7 @@ function hydra_hint.build(sections, opts)
 
   return {
     sections = normalized,
-    common_actions = common_actions,
+    header_actions = header_action_lines,
     hint = table.concat(output, "\n"),
   }
 end

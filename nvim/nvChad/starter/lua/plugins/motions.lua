@@ -41,7 +41,7 @@ local M = {
 
   {
     "tommcdo/vim-exchange",
-    keys = {"cx", "cxx", "cxc", { "x", "X"}},
+    keys = { "cx", "cxx", "cxc", "x", "X", { "X", mode = "x" } },
   },
 
   {

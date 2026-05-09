@@ -4,7 +4,7 @@ local M = {}
 
 function M.build(result)
   local items = {}
-  local filter = { yank = true, delete = true, change = true }
+  local filter = { yank = true, delete = true, change = true, substitute = true, exchange = true }
   for _, action_key in ipairs(result.available_actions or {}) do
     if not filter[action_key] then
       local entry = registry[action_key]

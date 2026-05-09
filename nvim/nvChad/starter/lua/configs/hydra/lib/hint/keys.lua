@@ -30,12 +30,24 @@ function hint_keys.normalize_sections(sections, opts)
   local normalized = {}
   local used = { q = true }
 
-  -- Reserve keys for common actions first so they don't get auto-assigned
-  local common_actions = opts.common_actions or {}
-  for _, item in ipairs(common_actions) do
-    if type(item.key) == "string" and item.key ~= "" then
-      used[item.key] = true
-      item._resolved_key = item.key
+  -- Reserve keys for all header action lines first so they don't get auto-assigned
+  local header_action_lines = {}
+  if opts.header_actions then
+    for _, line in ipairs(opts.header_actions) do
+      table.insert(header_action_lines, line)
+    end
+  end
+
+  if opts.common_actions and #opts.common_actions > 0 then
+    table.insert(header_action_lines, 1, opts.common_actions)
+  end
+
+  for _, line_actions in ipairs(header_action_lines) do
+    for _, item in ipairs(line_actions) do
+      if type(item.key) == "string" and item.key ~= "" then
+        used[item.key] = true
+        item._resolved_key = item.key
+      end
     end
   end
 
