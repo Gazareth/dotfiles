@@ -18,8 +18,6 @@ const LUA: &str = r#"(function(row, col, target_type, target_start_row, target_s
   local node = vim.treesitter.get_node({ bufnr = bufnr, pos = { row, col } })
   if node then
     local sr, sc = node:range()
-    -- Smart snap: if the cursor is not at the start of the node, it might be on an
-    -- unnamed separator or operator. Try to snap to the next named child on the same line.
     if sr < row or sc < col then
       for child in node:iter_children() do
         if child:named() then

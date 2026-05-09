@@ -5,11 +5,25 @@ local highlight_node = require("configs.hydra.atlantis_nouveau.menu.highlight_no
 local M = {}
 
 local function menu_title(result)
-  local node = result.node and result.node.node
-  if node and node.type and node.name then
-    return node.type .. ": " .. node.name
+  local classification = "Node"
+  local name = ""
+
+  if result.node then
+    classification = result.node.kind:gsub("^%l", string.upper)
+    local inner = result.node.node
+    if inner and inner.type then
+      classification = inner.type:gsub("^%l", string.upper)
+      if inner.name and inner.name ~= "" then
+        name = ' - "' .. inner.name .. '"'
+      end
+    end
   end
-  return result.node_type or "node"
+
+  local ts_type = result.node_type or "unknown"
+  local r = result.range
+  local range_str = string.format("[%s (%d:%d-%d:%d)]", ts_type, r.start_row + 1, r.start_col, r.end_row + 1, r.end_col)
+
+  return "!" .. classification .. name .. " " .. range_str
 end
 
 function M.open(result)

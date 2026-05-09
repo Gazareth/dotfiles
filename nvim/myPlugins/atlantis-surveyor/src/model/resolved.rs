@@ -27,6 +27,15 @@ impl AnyConstructNode {
             AnyConstructNode::Python(n)     => n.available_actions(),
         }
     }
+
+    pub fn node_type_name(&self) -> &'static str {
+        match self {
+            AnyConstructNode::Lua(n)        => n.node_type_name(),
+            AnyConstructNode::JavaScript(n) => n.node_type_name(),
+            AnyConstructNode::TypeScript(n) => n.node_type_name(),
+            AnyConstructNode::Python(n)     => n.node_type_name(),
+        }
+    }
 }
 
 /// Any language's resolved Container node.
@@ -37,4 +46,15 @@ pub enum AnyContainerNode {
     JavaScript(JavaScriptContainerNode),
     TypeScript(TypeScriptContainerNode),
     Python(PythonContainerNode),
+}
+
+impl AnyContainerNode {
+    pub fn node_type_name(&self) -> &'static str {
+        match self {
+            AnyContainerNode::Lua(n)        => n.node_type_name(),
+            AnyContainerNode::JavaScript(n) => n.node_type_name(),
+            AnyContainerNode::TypeScript(n) => n.node_type_name(),
+            AnyContainerNode::Python(n)     => n.node_type_name(),
+        }
+    }
 }

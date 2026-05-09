@@ -63,6 +63,15 @@ impl AtlantisNode {
         }
     }
 
+    /// Returns the human-readable classification name for this node.
+    pub fn classification_name(&self) -> String {
+        match self {
+            AtlantisNode::Construct(c) => c.node_type_name(),
+            AtlantisNode::Container(c) => c.node_type_name(),
+            AtlantisNode::Leaf         => "Leaf",
+            AtlantisNode::Unrecognised => "Unrecognised",
+        }.to_string()
+    }
 }
 
 fn resolve_output<S, C>(

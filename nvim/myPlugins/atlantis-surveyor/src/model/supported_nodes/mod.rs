@@ -23,7 +23,6 @@ pub use standard::{
     FunctionCall, HasFunctionCalls,
     Parameter, HasParameter,
     ReturnStatement, HasReturnStatement,
-    Named,
 };
 pub use container::{
     FileRoot, HasFileRoot,

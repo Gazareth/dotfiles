@@ -15,6 +15,7 @@ pub struct OutlineItem {
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub struct NavigationTarget {
     pub node_type: String,
+    pub classification: String,
     pub range: NodeRange,
     pub target_mode: FocusMode,
 }
@@ -23,6 +24,7 @@ impl NavigationTarget {
     pub fn from_raw(raw: &RawNode, target_mode: FocusMode) -> Self {
         Self {
             node_type: raw.kind.clone(),
+            classification: String::new(),
             range: raw.range.clone(),
             target_mode,
         }

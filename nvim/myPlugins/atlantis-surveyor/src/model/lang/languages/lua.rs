@@ -36,9 +36,10 @@ impl Extract<Assignment> for Lua {
                 // This lets the target_hint pin to variable_list rather than walking up
                 // through the same-kind chain to variable_declaration again.
                 let lhs = inner.map(|c| NavigationTarget {
-                    node_type:   "variable_list".to_string(),
-                    range:       c.range.clone(),
-                    target_mode: FocusMode::Container,
+                    node_type:      "variable_list".to_string(),
+                    classification: String::new(),
+                    range:          c.range.clone(),
+                    target_mode:    FocusMode::Container,
                 });
                 // Grandchildren aren't available, so compute the RHS position from the text.
                 let value = inner.and_then(|c| {
@@ -47,6 +48,7 @@ impl Extract<Assignment> for Lua {
                     let rhs_offset = (c.text.len() - rhs_text.len()) as u32;
                     Some(NavigationTarget {
                         node_type: "expression_list".to_string(),
+                        classification: String::new(),
                         range: NodeRange {
                             start_row: c.range.start_row,
                             start_col: c.range.start_col + rhs_offset,

@@ -36,10 +36,6 @@ local function resolve_probe_id(node_info, semantic)
 	if type(probe_id) == "string" and probe_id ~= "" then
 		return probe_id
 	end
-
-  local function fn()
-  end
-
 	return "generic"
 end
 

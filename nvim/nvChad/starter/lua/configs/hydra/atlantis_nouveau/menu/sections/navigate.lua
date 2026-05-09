@@ -18,6 +18,10 @@ local function same_target(a, b)
   return a.range.start_row == b.range.start_row and a.range.start_col == b.range.start_col
 end
 
+local function format_range(r)
+  return string.format("(%d:%d-%d:%d)", r.start_row + 1, r.start_col, r.end_row + 1, r.end_col)
+end
+
 function M.build(result)
   local nav = result.navigation
   if not nav then return nil end
@@ -71,10 +75,13 @@ function M.build(result)
       })
     end
     if nav.parent then
+      local p = nav.parent
+      local class = p.classification ~= "" and p.classification or "Node"
+      
       table.insert(context_items, {
         key    = "h",
         icon   = "󰜷",
-        label  = "to parent",
+        label  = string.format("to parent [%s %s]", class, format_range(p.range)),
         action = function() jump_and_reopen(result.bufnr, nav.parent) end,
       })
     end

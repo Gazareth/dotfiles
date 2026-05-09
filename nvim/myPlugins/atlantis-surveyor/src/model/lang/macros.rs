@@ -39,6 +39,20 @@ macro_rules! impl_lang_node_resolver {
             Unresolved($crate::model::node::Node<$Lang, $crate::model::node::Unresolved>),
         }
 
+        impl $StdEnum {
+            pub fn node_type_name(&self) -> &'static str {
+                match self {
+                    $StdEnum::Function(_)    => "Function",
+                    $StdEnum::Call(_)        => "Call",
+                    $StdEnum::Assignment(_)  => "Assignment",
+                    $StdEnum::Conditional(_) => "Conditional",
+                    $StdEnum::Parameter(_)   => "Parameter",
+                    $StdEnum::ReturnStatement(_) => "ReturnStatement",
+                    $StdEnum::Unresolved(_)  => "Unresolved",
+                }
+            }
+        }
+
         #[derive(Debug, serde::Serialize, Clone)]
         #[serde(tag = "type", rename_all = "snake_case")]
         pub enum $CtrEnum {
@@ -46,6 +60,17 @@ macro_rules! impl_lang_node_resolver {
             Body($crate::model::node::Node<$Lang, $crate::model::supported_nodes::Body>),
             ParameterList($crate::model::node::Node<$Lang, $crate::model::supported_nodes::ParameterList>),
             Unresolved($crate::model::node::Node<$Lang, $crate::model::node::Unresolved>),
+        }
+
+        impl $CtrEnum {
+            pub fn node_type_name(&self) -> &'static str {
+                match self {
+                    $CtrEnum::FileRoot(_)      => "FileRoot",
+                    $CtrEnum::Body(_)          => "Body",
+                    $CtrEnum::ParameterList(_) => "ParameterList",
+                    $CtrEnum::Unresolved(_)    => "Unresolved",
+                }
+            }
         }
 
         impl $crate::action::ConstructActions for $StdEnum {

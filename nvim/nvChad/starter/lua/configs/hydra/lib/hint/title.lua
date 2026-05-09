@@ -8,6 +8,11 @@ local function format_title(title)
     return title
   end
 
+  -- Skip formatting if the title is explicitly escaped with '!'
+  if title:sub(1, 1) == "!" then
+    return title:sub(2)
+  end
+
   -- Parse title candidate
   local function parse_candidate(candidate)
     local quoted_type, quoted_name = candidate:match('^(.-)%s+"([^"]+)"$')

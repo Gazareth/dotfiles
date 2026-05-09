@@ -24,7 +24,12 @@ pub fn gather_binary_siblings(lang: Language, root: &NodeOutline) -> Vec<Navigat
     flatten_binary_outline(lang, &mut outline);
 
     outline.into_iter()
-        .map(|item| NavigationTarget { node_type: item.node_type, range: item.range, target_mode: item.target_mode })
+        .map(|item| NavigationTarget { 
+            node_type: item.node_type, 
+            classification: String::new(),
+            range: item.range, 
+            target_mode: item.target_mode 
+        })
         .collect()
 }
 

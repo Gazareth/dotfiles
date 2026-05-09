@@ -72,12 +72,19 @@ pub(in crate::survey::focused_node) fn as_navigation_target(
     raw:      RawNode,
     classify: &impl Fn(RawNode) -> AtlantisNode,
 ) -> Option<NavigationTarget> {
-    let target_mode = match classify(raw.clone()) {
+    let classified = classify(raw.clone());
+    let target_mode = match classified {
         AtlantisNode::Container(_) => FocusMode::Container,
         AtlantisNode::Construct(_) | AtlantisNode::Leaf => FocusMode::Construct,
         AtlantisNode::Unrecognised => return None,
     };
-    Some(NavigationTarget { node_type: raw.kind, range: raw.range, target_mode })
+
+    Some(NavigationTarget { 
+        node_type: raw.kind, 
+        classification: classified.classification_name(),
+        range: raw.range, 
+        target_mode 
+    })
 }
 
 /// Checks if a NavigationTarget matches the given node type and range position.
@@ -123,8 +130,10 @@ impl NavigationInfo {
 
     /// Finds the nearest ancestor that differs in construct kind from the focus.
     fn resolve_parent(ctx: &AncestryContext, focus_node: &AtlantisNode) -> Option<NavigationTarget> {
+        let focus_range = &ctx.all[ctx.focus_idx].range;
+
         ctx.all.iter().enumerate().skip(ctx.focus_idx + 1)
-            .find(|(i, _)| {
+            .find(|(i, n)| {
                 let classified = if *i == ctx.focus_idx + 1 {
                     ctx.parent_classification.clone()
                 } else {
@@ -132,7 +141,15 @@ impl NavigationInfo {
                 };
 
                 classified.is_some_and(|c| {
-                    !matches!(c, AtlantisNode::Unrecognised) && !focus_node.same_construct_kind(&c)
+                    if matches!(c, AtlantisNode::Unrecognised) { return false; }
+                    if focus_node.same_construct_kind(&c) { return false; }
+
+                    // Skip grouping containers that don't expand the range (e.g. single-item variable_list).
+                    if matches!(c, AtlantisNode::Container(_)) && n.range == *focus_range {
+                        return false;
+                    }
+
+                    true
                 })
             })
             .and_then(|(i, n)| as_navigation_target(RawNode::from(*n), &|raw| ctx.lang.classify(raw, ctx.parent_at(i))))
@@ -214,9 +231,10 @@ impl NavigationInfo {
         });
         if !already_present {
             supported_siblings.push(NavigationTarget {
-                node_type:   node_snapshot.node_type.clone(),
-                range:       node_snapshot.range.clone(),
-                target_mode: FocusMode::Construct,
+                node_type:      node_snapshot.node_type.clone(),
+                classification: String::new(),
+                range:          node_snapshot.range.clone(),
+                target_mode:    FocusMode::Construct,
             });
             supported_siblings.sort_by(|a, b| {
                 a.range.start_row.cmp(&b.range.start_row)
