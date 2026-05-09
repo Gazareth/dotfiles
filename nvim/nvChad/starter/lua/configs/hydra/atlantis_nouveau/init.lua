@@ -21,6 +21,23 @@ local function collect_ancestry(bufnr, row, col)
   parser:parse()
 
   local node = vim.treesitter.get_node({ bufnr = bufnr, pos = { row, col } })
+
+  -- If get_node returns a parent node (starts before the cursor position),
+  -- try to refine to a more specific child that starts on the same row.
+  if node then
+    local sr, sc = node:range()
+    if sr < row or sc < col then
+      for child in node:iter_children() do
+        local csr, csc = child:range()
+        if csr == row and csc > col then
+          node = child
+          vim.api.nvim_win_set_cursor(0, { csr + 1, csc })
+          break
+        end
+      end
+    end
+  end
+
   if not node then
     return nil, "no node at position"
   end
