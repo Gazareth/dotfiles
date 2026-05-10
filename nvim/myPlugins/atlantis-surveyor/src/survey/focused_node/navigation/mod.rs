@@ -1,7 +1,7 @@
 use serde::Serialize;
 
 use crate::model::node::{NodeRange, RawNode};
-use crate::model::{AtlantisNode, FocusMode};
+use crate::model::AtlantisNode;
 use crate::probe::language::Language;
 use crate::probe::treesitter::NodeOutline;
 use crate::probe::treesitter::NodeSnapshot;
@@ -37,8 +37,8 @@ impl<'a> AncestryContext<'a> {
 /// Pre-computed navigation targets for a resolved node.
 #[derive(Debug, Serialize)]
 pub struct NavigationInfo {
-    /// The immediate semantic parent. This is the nearest ancestor that represents 
-    /// a different construct or container than the focus.
+    /// The immediate semantic parent. This is the nearest ancestor that represents
+    /// a different node kind than the focus.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub parent: Option<NavigationTarget>,
 
@@ -54,11 +54,11 @@ pub struct NavigationInfo {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub nearest_function: Option<NavigationTarget>,
 
-    /// The previous sibling within the current focus mode's semantic group.
+    /// The previous sibling within the current focus's semantic group.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub prev_sibling: Option<NavigationTarget>,
 
-    /// The next sibling within the current focus mode's semantic group.
+    /// The next sibling within the current focus's semantic group.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub next_sibling: Option<NavigationTarget>,
 
@@ -67,23 +67,20 @@ pub struct NavigationInfo {
 }
 
 /// Classify a raw node and build a NavigationTarget. Returns None for Unrecognised nodes.
-/// Shared by the sibling pipeline (NavigationInfo::from_snapshot) and the container outline (outline.rs).
+/// Shared by the sibling pipeline (NavigationInfo::from_snapshot) and the outline builder (outline.rs).
 pub(in crate::survey::focused_node) fn as_navigation_target(
     raw:      RawNode,
     classify: &impl Fn(RawNode) -> AtlantisNode,
 ) -> Option<NavigationTarget> {
     let classified = classify(raw.clone());
-    let target_mode = match classified {
-        AtlantisNode::Container(_) => FocusMode::Container,
-        AtlantisNode::Construct(_) | AtlantisNode::Leaf => FocusMode::Construct,
-        AtlantisNode::Unrecognised => return None,
-    };
+    if matches!(classified, AtlantisNode::Unrecognised) {
+        return None;
+    }
 
     Some(NavigationTarget { 
         node_type: raw.kind, 
         classification: classified.classification_name(),
         range: raw.range, 
-        target_mode 
     })
 }
 
@@ -104,11 +101,10 @@ impl NavigationInfo {
         let ctx = AncestryContext::new(lang, all, focus_idx);
         
         let focus_node = ctx.lang.classify(RawNode::from(all[focus_idx]), ctx.parent_at(focus_idx));
-        let current_mode = focus_node.focus_mode();
         let is_leaf_focus = Self::is_leaf_focus(&focus_node, &ctx);
 
         let top_level = Self::resolve_top_level(&ctx);
-        let (prev_sibling, next_sibling) = Self::resolve_siblings(&ctx, node_snapshot, current_mode, is_leaf_focus);
+        let (prev_sibling, next_sibling) = Self::resolve_siblings(&ctx, node_snapshot, is_leaf_focus);
         let is_at_top = Self::is_at_top(&top_level, node_snapshot);
 
         Self {
@@ -122,10 +118,12 @@ impl NavigationInfo {
         }
     }
 
-    /// Checks if the focus node is a Leaf (unrecognized child of a Container).
+    /// Checks if the focus node is a Leaf (an unrecognised token inside a transparent structural grouping).
     fn is_leaf_focus(focus_node: &AtlantisNode, ctx: &AncestryContext) -> bool {
         matches!(focus_node, AtlantisNode::Unrecognised)
-            && matches!(ctx.parent_classification, Some(AtlantisNode::Container(_)))
+            && ctx.parent_classification.as_ref().is_some_and(|p| {
+                matches!(p, AtlantisNode::Recognised(n) if n.node_type_name() == "ParameterList" || n.node_type_name() == "ExpressionList" || n.node_type_name() == "Body" || n.node_type_name() == "FileRoot")
+            })
     }
 
     /// Finds the nearest ancestor that differs in construct kind from the focus.
@@ -144,8 +142,8 @@ impl NavigationInfo {
                     if matches!(c, AtlantisNode::Unrecognised) { return false; }
                     if focus_node.same_construct_kind(&c) { return false; }
 
-                    // Skip grouping containers that don't expand the range (e.g. single-item variable_list).
-                    if matches!(c, AtlantisNode::Container(_)) && n.range == *focus_range {
+                    // Skip grouping wrappers that don't expand the range
+                    if n.range == *focus_range {
                         return false;
                     }
 
@@ -166,14 +164,13 @@ impl NavigationInfo {
     fn resolve_siblings(
         ctx: &AncestryContext,
         node_snapshot: &NodeSnapshot,
-        current_mode: FocusMode,
         is_leaf_focus: bool,
     ) -> (Option<NavigationTarget>, Option<NavigationTarget>) {
         if let Some((_, bn)) = Self::find_outermost_binary(ctx) {
             let flat = gather_binary_siblings(ctx.lang, bn);
             sibling_nav(&flat, &node_snapshot.node_type, &node_snapshot.range)
         } else {
-            Self::resolve_direct_siblings(ctx, node_snapshot, current_mode, is_leaf_focus)
+            Self::resolve_direct_siblings(ctx, node_snapshot, is_leaf_focus)
         }
     }
 
@@ -191,18 +188,16 @@ impl NavigationInfo {
     fn resolve_direct_siblings(
         ctx: &AncestryContext,
         node_snapshot: &NodeSnapshot,
-        current_mode: FocusMode,
         is_leaf_focus: bool,
     ) -> (Option<NavigationTarget>, Option<NavigationTarget>) {
-        let supported_siblings = Self::build_supported_siblings(ctx, node_snapshot, current_mode, is_leaf_focus);
+        let supported_siblings = Self::build_supported_siblings(ctx, node_snapshot, is_leaf_focus);
         sibling_nav(&supported_siblings, &node_snapshot.node_type, &node_snapshot.range)
     }
 
-    /// Builds the list of supported siblings, filtered by mode and with optional Leaf focus injection.
+    /// Builds the list of supported siblings, filtered by kind and with optional Leaf focus injection.
     fn build_supported_siblings(
         ctx: &AncestryContext,
         node_snapshot: &NodeSnapshot,
-        current_mode: FocusMode,
         is_leaf_focus: bool,
     ) -> Vec<NavigationTarget> {
         let parent_ref = ctx.parent_at(ctx.focus_idx);
@@ -214,7 +209,6 @@ impl NavigationInfo {
                 };
                 as_navigation_target(RawNode::from(s), &classify)
             })
-            .filter(|t| is_leaf_focus || t.target_mode == current_mode)
             .collect();
 
         if is_leaf_focus {
@@ -234,7 +228,6 @@ impl NavigationInfo {
                 node_type:      node_snapshot.node_type.clone(),
                 classification: String::new(),
                 range:          node_snapshot.range.clone(),
-                target_mode:    FocusMode::Construct,
             });
             supported_siblings.sort_by(|a, b| {
                 a.range.start_row.cmp(&b.range.start_row)

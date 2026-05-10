@@ -1,5 +1,5 @@
 use crate::model::AtlantisNode;
-use crate::model::lang::{LanguageConfig, NodeKind, ConstructNode, ContainerNode};
+use crate::model::lang::{LanguageConfig, NodeKind};
 use crate::model::lang::languages::{JavaScript, Lua, Python, TypeScript};
 use crate::model::node::RawNode;
 use crate::probe::treesitter::NodeOutline;
@@ -24,7 +24,7 @@ pub fn detect(filetype: &str) -> Language {
 }
 
 impl Language {
-    fn node_kind_for(&self, node_type: &str) -> Option<NodeKind> {
+    pub(crate) fn node_kind_for(&self, node_type: &str) -> Option<NodeKind> {
         match self {
             Language::Lua        => Lua::node_kind(node_type),
             Language::JavaScript => JavaScript::node_kind(node_type),
@@ -34,20 +34,24 @@ impl Language {
         }
     }
 
+    pub fn is_transparent(&self, node_type: &str) -> bool {
+        self.node_kind_for(node_type).map_or(false, |k| k.is_transparent())
+    }
+
     /// Returns `Some(true)` if the node type is a file root for this language,
     /// `Some(false)` if it is recognised but is not a file root, and
     /// `None` for unknown languages where the check cannot be performed.
     pub fn is_file_root(&self, node_type: &str) -> Option<bool> {
         if matches!(self, Language::Unknown) { return None; }
-        Some(matches!(self.node_kind_for(node_type), Some(NodeKind::Container(ContainerNode::FileRoot))))
+        Some(matches!(self.node_kind_for(node_type), Some(NodeKind::FileRoot)))
     }
 
     pub fn is_function_construct(&self, node_type: &str) -> bool {
-        matches!(self.node_kind_for(node_type), Some(NodeKind::Construct(ConstructNode::Function)))
+        matches!(self.node_kind_for(node_type), Some(NodeKind::Function))
     }
 
     pub fn is_body_container(&self, node_type: &str) -> bool {
-        matches!(self.node_kind_for(node_type), Some(NodeKind::Container(ContainerNode::Body)))
+        matches!(self.node_kind_for(node_type), Some(NodeKind::Body))
     }
 
     /// Classify a raw node in this language, using the optional parent outline
@@ -55,14 +59,11 @@ impl Language {
     pub fn classify(&self, raw: RawNode, parent: Option<&NodeOutline>) -> AtlantisNode {
         let base = AtlantisNode::from_raw(raw.clone(), self);
 
-        // If unrecognised, check if it's a "Leaf" (inner token of a Container)
+        // If unrecognised, check if it's a "Leaf" (inner token of a transparent node).
         if matches!(base, AtlantisNode::Unrecognised) {
             if let Some(p) = parent {
-                let is_container = matches!(self.node_kind_for(&p.node_type), Some(NodeKind::Container(_)));
-                let starts_later = raw.range.start_row > p.range.start_row 
-                                || (raw.range.start_row == p.range.start_row && raw.range.start_col > p.range.start_col);
-                
-                if is_container || starts_later {
+                let is_transparent = self.is_transparent(&p.node_type);
+                if is_transparent {
                     return AtlantisNode::Leaf;
                 }
             }
@@ -74,8 +75,7 @@ impl Language {
             Language::Lua => {
                 if matches!(base, AtlantisNode::Unrecognised) && raw.kind == "identifier" {
                     if let Some(p) = parent {
-                        if matches!(Lua::node_kind(&p.node_type),
-                            Some(NodeKind::Container(ContainerNode::ParameterList))) {
+                        if matches!(Lua::node_kind(&p.node_type), Some(NodeKind::ParameterList)) {
                             let mut refined = raw;
                             refined.kind = "parameter".to_string();
                             return AtlantisNode::from_raw(refined, self);

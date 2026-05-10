@@ -7,7 +7,7 @@ local function jump_and_reopen(bufnr, target)
   vim.cmd("normal! zz")
   vim.schedule(function()
     require("configs.hydra.atlantis_nouveau").open(
-      bufnr, target.target_mode,
+      bufnr, nil,
       target.node_type, range.start_row, range.start_col
     )
   end)

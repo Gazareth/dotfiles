@@ -1,15 +1,15 @@
 use std::cmp::Ordering;
 
-use crate::model::{AtlantisNode, FocusMode, OutlineItem};
-use crate::model::node::RawNode;
+use crate::model::{AtlantisNode, OutlineItem};
+
 use crate::probe::treesitter::SnapshotChild;
 
-use super::{Container, FocusedNode};
+use super::FocusedNode;
 
-impl FocusedNode<Container> {
+impl FocusedNode {
     pub(in crate::survey) fn compute_outline(
         children: &[SnapshotChild],
-        classify: impl Fn(&SnapshotChild) -> AtlantisNode,
+        _classify: impl Fn(&SnapshotChild) -> AtlantisNode,
     ) -> Vec<OutlineItem> {
         let mut sorted_children = children.to_vec();
         sorted_children.sort_by(|a, b| {
@@ -21,11 +21,6 @@ impl FocusedNode<Container> {
 
         sorted_children.into_iter()
             .map(|child| {
-                let classified = classify(&child);
-                let target_mode = match classified {
-                    AtlantisNode::Container(_) => FocusMode::Container,
-                    _ => FocusMode::Construct,
-                };
                 let label = child.text
                     .lines()
                     .find(|l| !l.trim().is_empty())
@@ -34,7 +29,7 @@ impl FocusedNode<Container> {
                         if s.len() > 16 { s[..16].to_string() } else { s.to_string() }
                     })
                     .unwrap_or_else(|| child.node_type.clone());
-                OutlineItem { label, node_type: child.node_type.clone(), range: child.range.clone(), target_mode }
+                OutlineItem { label, node_type: child.node_type.clone(), range: child.range.clone() }
             })
             .collect()
     }
@@ -47,7 +42,7 @@ mod tests {
     use crate::model::node::RawNode;
     use crate::probe::language::Language;
     use crate::probe::treesitter::SnapshotChild;
-    use crate::survey::focused_node::Container;
+
 
     #[test]
     fn compute_outline_preserves_block_child_order() {
@@ -69,7 +64,7 @@ mod tests {
             },
         ];
 
-        let outline = FocusedNode::<Container>::compute_outline(&children, |child: &SnapshotChild| {
+        let outline = FocusedNode::compute_outline(&children, |child: &SnapshotChild| {
             AtlantisNode::from_raw(RawNode::from(child), &Language::Lua)
         });
 
@@ -96,7 +91,7 @@ mod tests {
             },
         ];
 
-        let outline = FocusedNode::<Container>::compute_outline(&children, |child: &SnapshotChild| {
+        let outline = FocusedNode::compute_outline(&children, |child: &SnapshotChild| {
             AtlantisNode::from_raw(RawNode::from(child), &Language::Lua)
         });
 

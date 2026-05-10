@@ -26,7 +26,7 @@ impl<Lang: HasFunctionCalls> Extract<FunctionCall> for Lang {
     fn extract(raw: &RawNode) -> FunctionCall {
         FunctionCall {
             name:       raw.field_text("function"),
-            parameters: raw.field("arguments").map(NavigationTarget::container),
+            parameters: raw.field("arguments").map(|r| NavigationTarget::from_raw(&r)),
         }
     }
 }

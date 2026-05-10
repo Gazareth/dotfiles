@@ -7,8 +7,8 @@ mod navigation;
 
 pub use super::helpers::*;
 pub use crate::model::AtlantisNode;
-pub use crate::model::resolved::{AnyConstructNode, AnyContainerNode};
-pub use crate::model::{LuaNode, LuaContainerNode};
+pub use crate::model::resolved::AnyNode;
+pub use crate::model::LuaNode;
 
 pub trait AsLuaNode: Sized {
     type Function;
@@ -20,7 +20,7 @@ pub trait AsLuaNode: Sized {
     fn as_assignment (self) -> Self::Assignment;
     fn as_conditional(self) -> Self::Conditional;
     fn as_call       (self) -> Self::Call;
-    fn as_container  (self) -> LuaContainerNode;
+    fn as_node       (self) -> LuaNode;
     fn is_unrecognised(self) -> bool;
 }
 
@@ -31,24 +31,24 @@ impl AsLuaNode for AtlantisNode {
     type Call        = crate::model::node::Node<crate::model::lang::languages::lua::Lua, crate::model::supported_nodes::standard::FunctionCall>;
 
     fn as_function(self) -> Self::Function {
-        match self { AtlantisNode::Construct(AnyConstructNode::Lua(LuaNode::Function(n))) => n,
+        match self { AtlantisNode::Recognised(AnyNode::Lua(LuaNode::Function(n))) => n,
             o => panic!("expected Function, got {o:?}") }
     }
     fn as_assignment(self) -> Self::Assignment {
-        match self { AtlantisNode::Construct(AnyConstructNode::Lua(LuaNode::Assignment(n))) => n,
+        match self { AtlantisNode::Recognised(AnyNode::Lua(LuaNode::Assignment(n))) => n,
             o => panic!("expected Assignment, got {o:?}") }
     }
     fn as_conditional(self) -> Self::Conditional {
-        match self { AtlantisNode::Construct(AnyConstructNode::Lua(LuaNode::Conditional(n))) => n,
+        match self { AtlantisNode::Recognised(AnyNode::Lua(LuaNode::Conditional(n))) => n,
             o => panic!("expected Conditional, got {o:?}") }
     }
     fn as_call(self) -> Self::Call {
-        match self { AtlantisNode::Construct(AnyConstructNode::Lua(LuaNode::Call(n))) => n,
+        match self { AtlantisNode::Recognised(AnyNode::Lua(LuaNode::Call(n))) => n,
             o => panic!("expected Call, got {o:?}") }
     }
-    fn as_container(self) -> LuaContainerNode {
-        match self { AtlantisNode::Container(AnyContainerNode::Lua(c)) => c,
-            o => panic!("expected LuaContainerNode, got {o:?}") }
+    fn as_node(self) -> LuaNode {
+        match self { AtlantisNode::Recognised(AnyNode::Lua(c)) => c,
+            o => panic!("expected LuaNode, got {o:?}") }
     }
     fn is_unrecognised(self) -> bool { matches!(self, AtlantisNode::Unrecognised) }
 }

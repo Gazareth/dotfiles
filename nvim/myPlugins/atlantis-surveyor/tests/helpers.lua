@@ -2,22 +2,22 @@
 -- Sourced once by run_all.lua before any test file is loaded.
 --
 -- Fixture row map for lua_sample.lua (0-indexed):
---   row 0   ""                            chunk              → Container  FileRoot
+--   row 0   ""                            chunk              → FileRoot
 --   row 1   "local function add(x, y)"
---           col  0  function_declaration  → Construct        Function
---           col 18  (                     → Container        ParameterList
+--           col  0  function_declaration  → Function
+--           col 18  (                     → ParameterList
 --   row 3   "  local sum = x + y"
---           col  2  variable_declaration  → Construct        Assignment
+--           col  2  variable_declaration  → Assignment
 --   row 4   "  if sum > 0 then"
---           col  0  block                 → Container        Body
---           col  2  if_statement          → Construct        Conditional
+--           col  0  block                 → Body
+--           col  2  if_statement          → Conditional
 --   row 5   "    return sum"
---           col  4  return_statement      → Construct        ReturnStatement
---   row 9   "local a = 1"                → Construct        Assignment
---   row 10  "local b = 2"                → Construct        Assignment
---   row 11  "local c = a + b + 1"        → Construct        Assignment  (binary expr value)
---   row 13  "local function greet(name)" → Construct        Function
---   row 14  "  return ..."               → Construct        ReturnStatement
+--           col  4  return_statement      → ReturnStatement
+--   row 9   "local a = 1"                → Assignment
+--   row 10  "local b = 2"                → Assignment
+--   row 11  "local c = a + b + 1"        → Assignment  (binary expr value)
+--   row 13  "local function greet(name)" → Function
+--   row 14  "  return ..."               → ReturnStatement
 
 local surveyor = require("atlantis_surveyor")
 
@@ -132,7 +132,6 @@ local function collect_ancestry(bufnr, row, col)
 end
 
 -- survey(buf, row, col [, opts])
--- opts.mode: passed as the second argument to the surveyor ("container" | nil)
 -- opts.target_hint: { type = string, row = number, col = number } to pin focus
 function _G.survey(buf, row, col, opts)
   vim.api.nvim_set_current_buf(buf)
@@ -142,6 +141,5 @@ function _G.survey(buf, row, col, opts)
     scan.target_start_row = opts.target_hint.row
     scan.target_start_col = opts.target_hint.col
   end
-  local mode = opts and opts.mode or nil
-  return surveyor(scan, mode)
+  return surveyor(scan, nil)
 end

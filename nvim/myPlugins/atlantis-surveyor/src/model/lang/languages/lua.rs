@@ -1,5 +1,5 @@
 use crate::model::supported_nodes::{Assignment, FunctionCall};
-use crate::model::{FocusMode, NavigationTarget};
+use crate::model::NavigationTarget;
 use crate::model::lang::Common;
 use crate::model::node::{Extract, NodeRange, RawNode};
 
@@ -13,7 +13,7 @@ impl Extract<FunctionCall> for Lua {
         FunctionCall {
             // Lua function_call uses `name`, not `function`, for the callee field.
             name:       raw.field_text("name"),
-            parameters: raw.field("args").map(NavigationTarget::container),
+            parameters: raw.field("args").map(|r| NavigationTarget::from_raw(&r)),
         }
     }
 }
@@ -39,7 +39,6 @@ impl Extract<Assignment> for Lua {
                     node_type:      "variable_list".to_string(),
                     classification: String::new(),
                     range:          c.range.clone(),
-                    target_mode:    FocusMode::Container,
                 });
                 // Grandchildren aren't available, so compute the RHS position from the text.
                 let value = inner.and_then(|c| {
@@ -55,7 +54,6 @@ impl Extract<Assignment> for Lua {
                             end_row:   c.range.end_row,
                             end_col:   c.range.end_col,
                         },
-                        target_mode: FocusMode::Container,
                     })
                 });
                 Assignment { name, is_local_binding: true, lhs, value }
@@ -64,40 +62,37 @@ impl Extract<Assignment> for Lua {
             "assignment_statement" => Assignment {
                 name:             raw.children.first().map(|c| c.text.clone()).unwrap_or_default(),
                 is_local_binding: false,
-                lhs:              raw.children.first().map(NavigationTarget::container),
-                value:            raw.children.get(1).map(NavigationTarget::container),
+                lhs:              raw.children.first().map(|r| NavigationTarget::from_raw(&r)),
+                value:            raw.children.get(1).map(|r| NavigationTarget::from_raw(&r)),
             },
             // Old nvim-treesitter grammar (field names: "name", "value")
             _ => Assignment {
                 name:             raw.field_text("name"),
                 is_local_binding: raw.kind == "local_declaration",
-                lhs:              raw.field("name").map(NavigationTarget::construct),
-                value:            raw.field("value").map(NavigationTarget::construct),
+                lhs:              raw.field("name").map(|r| NavigationTarget::from_raw(&r)),
+                value:            raw.field("value").map(|r| NavigationTarget::from_raw(&r)),
             },
         }
     }
 }
 
 crate::impl_language_syntax_map!(Lua, LUA_KINDS, {
-    construct: {
-        "function_declaration" => Function,
-        "local_function"       => Function,
-        "assignment_statement"    => Assignment,
-        "local_declaration"      => Assignment,
-        "variable_declaration"   => Assignment,
-        "if_statement"         => Conditional,
-        "function_call"        => Call,
-        "parameter"            => Parameter,
-        "return_statement"          => ReturnStatement,
-    },
-    container: {
-        "chunk"              => FileRoot,
-        "parameters"         => ParameterList,
-        "block"              => Body,
-        "variable_list"      => ParameterList,
-        "expression_list"    => ExpressionList,
-        "binary_expression"  => ExpressionList,
-    },
+    "function_declaration" => Function,
+    "local_function"       => Function,
+    "assignment_statement"    => Assignment,
+    "local_declaration"      => Assignment,
+    "variable_declaration"   => Assignment,
+    "if_statement"         => Conditional,
+    "function_call"        => Call,
+    "parameter"            => Parameter,
+    "return_statement"          => ReturnStatement,
+    "chunk"              => FileRoot,
+    "parameters"         => ParameterList,
+    "block"              => Body,
+    "variable_list"      => ParameterList,
+    "expression_list"    => ExpressionList,
+    "binary_expression"  => ExpressionList,
+    "arguments"          => ExpressionList,
 });
 
-crate::impl_lang_node_resolver!(Lua, LuaNode, LuaContainerNode);
+crate::impl_lang_node_resolver!(Lua, LuaNode);

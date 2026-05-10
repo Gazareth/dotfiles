@@ -27,8 +27,8 @@ pub trait HasFunctions {}
 
 impl<Lang: HasFunctions> Extract<FunctionDeclaration> for Lang {
     fn extract(raw: &RawNode) -> FunctionDeclaration {
-        let params = raw.field("parameters").map(NavigationTarget::container);
-        let body   = raw.field("body").map(NavigationTarget::container);
+        let params = raw.field("parameters").map(|r| NavigationTarget::from_raw(&r));
+        let body   = raw.field("body").map(|r| NavigationTarget::from_raw(&r));
 
         FunctionDeclaration {
             name: raw.field_text("name"),

@@ -3,26 +3,21 @@
 -- Run headlessly:                tests/run.ps1  (Windows) / tests/run.sh  (Unix)
 --
 -- Fixture row map (0-indexed, see tests/fixtures/lua_sample.lua):
---   row 0  ""                           chunk              → Container  FileRoot
+--   row 0  ""                           chunk              → FileRoot (transparent)
 --   row 1  "local function add(x, y)"
---          col  0  function_declaration → Construct        Function
---          col 18  (                    → Container        ParameterList
+--          col  0  function_declaration → Function
+--          col 18  (                    → ParameterList (transparent, resolves to Function)
 --   row 3  "  local sum = x + y"
---          col  2  variable_declaration → Construct        Assignment
+--          col  2  variable_declaration → Assignment
 --   row 4  "  if sum > 0 then"
---          col  0  block                → Container        Body
---          col  2  if_statement         → Construct        Conditional
+--          col  0  block                → Body (transparent, resolves to Function)
+--          col  2  if_statement         → Conditional
 --   row 5  "    return sum"
---          col  4  return_statement     → Unrecognised
---
--- NOTE: Construct::Call (function_call) is unreachable via cursor position in
--- Lua because tree-sitter's named children cover every byte of a call
--- expression, leaving no position where function_call itself is innermost.
+--          col  4  return_statement     → ReturnStatement
 --
 -- NOTE: row 2 (blank line at top of function body) maps to function_declaration
 -- in the current nvim-treesitter Lua grammar because the block node begins at
--- the first statement (row 3). The Body container is therefore tested at
--- row 4 col 0 where the block node is innermost (before the if keyword).
+-- the first statement (row 3).
 
 local surveyor = require("atlantis_surveyor")
 
@@ -57,7 +52,7 @@ vim.api.nvim_set_current_buf(buf)
 vim.api.nvim_buf_set_lines(buf, 0, -1, false, fixture_lines)
 vim.bo[buf].filetype = "lua"
 
--- ── collect_ancestry helper (mirrors atlantis_nouveau/init.lua) ──────────────────
+-- ── collect_ancestry helper (mirrors atlantis_nouveau/init.lua) ───────────────
 
 local function node_data(bufnr, n)
   local sr, sc, er, ec = n:range()
@@ -106,83 +101,62 @@ end
 
 local function survey(row, col)
   local scan = collect_ancestry(buf, row, col)
-  return surveyor(scan)
+  return surveyor(scan, nil)
 end
 
--- ── Constructs ────────────────────────────────────────────────────────────────
+-- ── Semantic nodes ────────────────────────────────────────────────────────────
 
-print("\n── Constructs ──")
+print("\n── Semantic nodes ──")
 
 do -- Function  (row 1, col 0 → function_declaration)
   local r = survey(1, 0)
   eq("function: node_type",         r.node_type,                    "function_declaration")
-  eq("function: node.kind",         r.node.kind,                 "construct")
-  eq("function: node.lang",         r.node.lang,                 "lua")
-  eq("function: node.node.type",    r.node.node.type,            "function")
-  eq("function: state.name",        r.node.node.state.name,      "add")
-  eq("function: state.is_async",    r.node.node.state.is_async,  false)
-  eq("function: available_actions", r.available_actions,
-    { "jump_to_body", "jump_to_params", "rename" })
+  eq("function: node.node.type",    r.node.node.type,               "function")
+  eq("function: state.name",        r.node.node.state.name,         "add")
+  eq("function: state.is_async",    r.node.node.state.is_async,     false)
+  eq("function: available_actions", r.available_actions,            { "rename" })
 end
 
 do -- Assignment  (row 3, col 2 → variable_declaration)
   local r = survey(3, 2)
-  eq("assignment: node_type",               r.node_type,                             "variable_declaration")
-  eq("assignment: variant.kind",            r.node.kind,                          "construct")
-  eq("assignment: node.type",               r.node.node.type,                     "assignment")
-  eq("assignment: state.name",              r.node.node.state.name,               "sum")
-  eq("assignment: state.is_local_binding",  r.node.node.state.is_local_binding,   true)
-  eq("assignment: available_actions",       r.available_actions,
-    { "jump_lhs", "jump_rhs", "rename" })
+  eq("assignment: node_type",               r.node_type,                           "variable_declaration")
+  eq("assignment: node.type",               r.node.node.type,                      "assignment")
+  eq("assignment: state.name",              r.node.node.state.name,                "sum")
+  eq("assignment: state.is_local_binding",  r.node.node.state.is_local_binding,    true)
+  eq("assignment: available_actions",       r.available_actions,                   { "rename" })
 end
 
 do -- Conditional  (row 4, col 2 → if_statement)
   local r = survey(4, 2)
   eq("conditional: node_type",         r.node_type,         "if_statement")
-  eq("conditional: variant.kind",      r.node.kind,      "construct")
-  eq("conditional: node.type",         r.node.node.type, "conditional")
-  eq("conditional: available_actions", r.available_actions,
-    { "jump_to_consequence", "jump_to_condition" })
+  eq("conditional: node.type",         r.node.node.type,    "conditional")
+  eq("conditional: available_actions", r.available_actions, nil)
 end
 
--- ── Containers ────────────────────────────────────────────────────────────────
-
-print("\n── Containers ──")
-
-do -- FileRoot  (row 0 → chunk; blank line before any code)
-  local r = surveyor(collect_ancestry(buf, 0, 0), "container")
-  eq("file_root: node_type",    r.node_type,         "chunk")
-  eq("file_root: variant.kind", r.node.kind,      "container")
-  eq("file_root: node.type",    r.node.node.type, "file_root")
-  eq("file_root: no actions",   r.available_actions, nil)
-end
-
-do -- ParameterList  (row 1, col 18 → `(` of `add(x, y)`)
-  local r = surveyor(collect_ancestry(buf, 1, 18), "container")
-  eq("param_list: node_type",    r.node_type,         "parameters")
-  eq("param_list: variant.kind", r.node.kind,      "container")
-  eq("param_list: node.type",    r.node.node.type, "parameter_list")
-  eq("param_list: no actions",   r.available_actions, nil)
-end
-
-do -- Body  (row 4, col 0 → block node is innermost before the `if` keyword)
-  local r = surveyor(collect_ancestry(buf, 4, 0), "container")
-  eq("body: node_type",    r.node_type,         "block")
-  eq("body: variant.kind", r.node.kind,      "container")
-  eq("body: node.type",    r.node.node.type, "body")
-  eq("body: no actions",   r.available_actions, nil)
-end
-
--- ── ReturnStatement ───────────────────────────────────────────────────────────
-
-print("\n── ReturnStatement ──")
-
-do -- return statement  (row 5, col 4)
-  -- return_statement is now in the Lua map (added in commit 5663ab6)
+do -- ReturnStatement  (row 5, col 4)
   local r = survey(5, 4)
   eq("return: node_type",    r.node_type,       "return_statement")
-  eq("return: node.kind",    r.node.kind,       "construct")
   eq("return: node.type",    r.node.node.type,  "return_statement")
+end
+
+-- ── Transparent structural nodes ──────────────────────────────────────────────
+
+print("\n── Transparent nodes ──")
+
+do -- FileRoot/chunk (row 0): transparent, resolves to first top-level semantic node
+  local r = survey(0, 0)
+  -- chunk is transparent; result is a recognised semantic node, not chunk itself
+  eq("file_root: no actions", r.available_actions, nil)
+end
+
+do -- ParameterList (row 1, col 18 → `(` of `add(x, y)`): resolves to Function
+  local r = survey(1, 18)
+  eq("param_list resolves to function: node.node.type", r.node.node.type, "function")
+end
+
+do -- Body/block (row 4, col 0): resolves to enclosing Function
+  local r = survey(4, 0)
+  eq("body resolves to function: node.node.type", r.node.node.type, "function")
 end
 
 -- ── Summary ───────────────────────────────────────────────────────────────────

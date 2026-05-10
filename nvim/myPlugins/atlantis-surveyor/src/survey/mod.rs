@@ -8,10 +8,10 @@ use crate::error::AtlantisError;
 use crate::model::node::NodeRange;
 use crate::model::OutlineItem;
 
-pub use crate::model::{AtlantisNode, FocusMode};
+pub use crate::model::AtlantisNode;
 pub use self::focused_node::NavigationInfo;
 
-use self::focused_node::AnyFocusedNode;
+use self::focused_node::FocusedNode;
 
 /// Lua-serialised response. The `kind` field discriminates success from failure:
 ///   ok  — full survey result with node classification and navigation targets
@@ -32,33 +32,18 @@ pub enum SurveyResult {
     Err { message: String },
 }
 
-impl From<AnyFocusedNode> for SurveyResult {
-    fn from(f: AnyFocusedNode) -> Self {
-        match f {
-            AnyFocusedNode::Construct(n) => {
-                let available_actions = n.available_actions();
-                Self::Ok {
-                    node_type: n.node_type, range: n.range, node: n.node,
-                    available_actions, navigation: n.navigation, outline: vec![],
-                }
-            }
-            AnyFocusedNode::Container(n) => {
-                let available_actions = n.available_actions();
-                Self::Ok {
-                    node_type: n.node_type, range: n.range, node: n.node,
-                    available_actions, navigation: n.navigation, outline: n.mode.outline,
-                }
-            }
+impl From<FocusedNode> for SurveyResult {
+    fn from(n: FocusedNode) -> Self {
+        let available_actions = n.available_actions();
+        Self::Ok {
+            node_type: n.node_type, range: n.range, node: n.node,
+            available_actions, navigation: n.navigation, outline: n.outline,
         }
     }
 }
 
 impl SurveyResult {
-    pub fn generate(raw: Dictionary, mode: Option<String>) -> Self {
-        let focus_mode = match mode.as_deref() {
-            Some("container") => FocusMode::Container,
-            _                 => FocusMode::Construct,
-        };
+    pub fn generate(raw: Dictionary, _mode: Option<String>) -> Self {
 
         // Optional target hint: pin to a specific node in ancestry by type + position,
         // bypassing the innermost-match heuristic.
@@ -75,7 +60,7 @@ impl SurveyResult {
             Some((t, row, col))
         });
 
-        match AnyFocusedNode::from_raw(&raw, focus_mode, target_hint) {
+        match FocusedNode::from_raw(&raw, target_hint) {
             Err(e)      => Self::Err { message: e.user_message() },
             Ok(None)    => Self::Err { message: AtlantisError::UnsupportedLanguage.user_message() },
             Ok(Some(f)) => Self::from(f),

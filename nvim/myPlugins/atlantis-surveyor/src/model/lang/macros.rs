@@ -5,12 +5,10 @@
 #[macro_export]
 macro_rules! impl_language_syntax_map {
     ($Lang:ty, $map_name:ident, {
-        construct:  { $($std_kind:literal => $std_node:ident),* $(,)? },
-        container: { $($ctr_kind:literal => $ctr_node:ident),* $(,)? } $(,)?
+        $($kind:literal => $node:ident),* $(,)?
     }) => {
         static $map_name: phf::Map<&'static str, $crate::model::lang::NodeKind> = phf::phf_map! {
-            $($std_kind => $crate::model::lang::NodeKind::Construct($crate::model::lang::ConstructNode::$std_node),)*
-            $($ctr_kind => $crate::model::lang::NodeKind::Container($crate::model::lang::ContainerNode::$ctr_node),)*
+            $($kind => $crate::model::lang::NodeKind::$node,)*
         };
 
         impl $crate::model::lang::LanguageConfig for $Lang {
@@ -21,41 +19,21 @@ macro_rules! impl_language_syntax_map {
     };
 }
 
-// Generates two language-specific node enums (Standard + Container) and a
+// Generates a language-specific node enum and a
 // Resolve impl that dispatches to the correct enum based on NodeKind.
 #[doc(hidden)]
 #[macro_export]
 macro_rules! impl_lang_node_resolver {
-    ($Lang:ty, $StdEnum:ident, $CtrEnum:ident) => {
+    ($Lang:ty, $Enum:ident) => {
         #[derive(Debug, serde::Serialize, Clone)]
         #[serde(tag = "type", rename_all = "snake_case")]
-        pub enum $StdEnum {
+        pub enum $Enum {
             Function($crate::model::node::Node<$Lang, $crate::model::supported_nodes::FunctionDeclaration>),
             Call($crate::model::node::Node<$Lang, $crate::model::supported_nodes::FunctionCall>),
             Assignment($crate::model::node::Node<$Lang, $crate::model::supported_nodes::Assignment>),
             Conditional($crate::model::node::Node<$Lang, $crate::model::supported_nodes::ConditionalStatement>),
             Parameter($crate::model::node::Node<$Lang, $crate::model::supported_nodes::Parameter>),
             ReturnStatement($crate::model::node::Node<$Lang, $crate::model::supported_nodes::ReturnStatement>),
-            Unresolved($crate::model::node::Node<$Lang, $crate::model::node::Unresolved>),
-        }
-
-        impl $StdEnum {
-            pub fn node_type_name(&self) -> &'static str {
-                match self {
-                    $StdEnum::Function(_)    => "Function",
-                    $StdEnum::Call(_)        => "Call",
-                    $StdEnum::Assignment(_)  => "Assignment",
-                    $StdEnum::Conditional(_) => "Conditional",
-                    $StdEnum::Parameter(_)   => "Parameter",
-                    $StdEnum::ReturnStatement(_) => "ReturnStatement",
-                    $StdEnum::Unresolved(_)  => "Unresolved",
-                }
-            }
-        }
-
-        #[derive(Debug, serde::Serialize, Clone)]
-        #[serde(tag = "type", rename_all = "snake_case")]
-        pub enum $CtrEnum {
             FileRoot($crate::model::node::Node<$Lang, $crate::model::supported_nodes::FileRoot>),
             Body($crate::model::node::Node<$Lang, $crate::model::supported_nodes::Body>),
             ParameterList($crate::model::node::Node<$Lang, $crate::model::supported_nodes::ParameterList>),
@@ -63,118 +41,122 @@ macro_rules! impl_lang_node_resolver {
             Unresolved($crate::model::node::Node<$Lang, $crate::model::node::Unresolved>),
         }
 
-        impl $CtrEnum {
+        impl $Enum {
             pub fn node_type_name(&self) -> &'static str {
                 match self {
-                    $CtrEnum::FileRoot(_)      => "FileRoot",
-                    $CtrEnum::Body(_)          => "Body",
-                    $CtrEnum::ParameterList(_) => "ParameterList",
-                    $CtrEnum::ExpressionList(_) => "ExpressionList",
-                    $CtrEnum::Unresolved(_)    => "Unresolved",
+                    $Enum::Function(_)    => "Function",
+                    $Enum::Call(_)        => "Call",
+                    $Enum::Assignment(_)  => "Assignment",
+                    $Enum::Conditional(_) => "Conditional",
+                    $Enum::Parameter(_)   => "Parameter",
+                    $Enum::ReturnStatement(_) => "ReturnStatement",
+                    $Enum::FileRoot(_)      => "FileRoot",
+                    $Enum::Body(_)          => "Body",
+                    $Enum::ParameterList(_) => "ParameterList",
+                    $Enum::ExpressionList(_) => "ExpressionList",
+                    $Enum::Unresolved(_)  => "Unresolved",
                 }
             }
         }
 
-        impl $crate::action::ConstructActions for $StdEnum {
+        impl $crate::action::ConstructActions for $Enum {
             fn available_actions(&self) -> &'static [&'static str] {
                 match self {
-                    $StdEnum::Function(_)        => &["jump_to_body", "jump_to_params", "rename"],
-                    $StdEnum::Call(_)            => &["jump_to_params", "rename"],
-                    $StdEnum::Assignment(_)      => &["jump_lhs", "jump_rhs", "rename"],
-                    $StdEnum::Conditional(_)     => &["jump_to_consequence", "jump_to_condition"],
-                    $StdEnum::Parameter(_)       => &["rename"],
-                    $StdEnum::ReturnStatement(_) => &[],
-                    $StdEnum::Unresolved(_)      => &[],
+                    $Enum::Function(_)        => &["rename"],
+                    $Enum::Call(_)            => &["rename"],
+                    $Enum::Assignment(_)      => &["rename"],
+                    $Enum::Conditional(_)     => &[],
+                    $Enum::Parameter(_)       => &["rename"],
+                    $Enum::ReturnStatement(_) => &[],
+                    $Enum::FileRoot(_)      => &[],
+                    $Enum::Body(_)          => &[],
+                    $Enum::ParameterList(_) => &[],
+                    $Enum::ExpressionList(_) => &[],
+                    $Enum::Unresolved(_)      => &[],
                 }
             }
         }
 
         impl $crate::model::lang::Resolve for $crate::model::node::Node<$Lang, $crate::model::node::Unknown> {
-            type Output = $crate::model::lang::ResolveOutput<$StdEnum, $CtrEnum>;
+            type Output = $Enum;
 
             fn resolve(self) -> Self::Output {
                 use std::marker::PhantomData;
-                use $crate::model::lang::{NodeKind, ResolveOutput, ConstructNode, ContainerNode};
+                use $crate::model::lang::NodeKind;
                 let kind = self.raw.kind.clone();
                 match <$Lang as $crate::model::lang::LanguageConfig>::node_kind(&kind) {
-                    Some(NodeKind::Construct(ConstructNode::Function)) => ResolveOutput::Construct(
-                        $StdEnum::Function($crate::model::node::Node {
+                    Some(NodeKind::Function) =>
+                        $Enum::Function($crate::model::node::Node {
                             state: <$Lang as $crate::model::node::Extract<$crate::model::supported_nodes::FunctionDeclaration>>::extract(&self.raw),
                             raw: self.raw,
                             _lang: PhantomData,
-                        })
-                    ),
-                    Some(NodeKind::Construct(ConstructNode::Call)) => ResolveOutput::Construct(
-                        $StdEnum::Call($crate::model::node::Node {
+                        }),
+                    Some(NodeKind::Call) =>
+                        $Enum::Call($crate::model::node::Node {
                             state: <$Lang as $crate::model::node::Extract<$crate::model::supported_nodes::FunctionCall>>::extract(&self.raw),
                             raw: self.raw,
                             _lang: PhantomData,
-                        })
-                    ),
-                    Some(NodeKind::Construct(ConstructNode::Assignment)) => ResolveOutput::Construct(
-                        $StdEnum::Assignment($crate::model::node::Node {
+                        }),
+                    Some(NodeKind::Assignment) =>
+                        $Enum::Assignment($crate::model::node::Node {
                             state: <$Lang as $crate::model::node::Extract<$crate::model::supported_nodes::Assignment>>::extract(&self.raw),
                             raw: self.raw,
                             _lang: PhantomData,
-                        })
-                    ),
-                    Some(NodeKind::Construct(ConstructNode::Conditional)) => ResolveOutput::Construct(
-                        $StdEnum::Conditional($crate::model::node::Node {
+                        }),
+                    Some(NodeKind::Conditional) =>
+                        $Enum::Conditional($crate::model::node::Node {
                             state: <$Lang as $crate::model::node::Extract<$crate::model::supported_nodes::ConditionalStatement>>::extract(&self.raw),
                             raw: self.raw,
                             _lang: PhantomData,
-                        })
-                    ),
-                    Some(NodeKind::Construct(ConstructNode::Parameter)) => ResolveOutput::Construct(
-                        $StdEnum::Parameter($crate::model::node::Node {
+                        }),
+                    Some(NodeKind::Parameter) =>
+                        $Enum::Parameter($crate::model::node::Node {
                             state: <$Lang as $crate::model::node::Extract<$crate::model::supported_nodes::Parameter>>::extract(&self.raw),
                             raw: self.raw,
                             _lang: PhantomData,
-                        })
-                    ),
-                    Some(NodeKind::Construct(ConstructNode::ReturnStatement)) => ResolveOutput::Construct(
-                        $StdEnum::ReturnStatement($crate::model::node::Node {
+                        }),
+                    Some(NodeKind::ReturnStatement) =>
+                        $Enum::ReturnStatement($crate::model::node::Node {
                             state: <$Lang as $crate::model::node::Extract<$crate::model::supported_nodes::ReturnStatement>>::extract(&self.raw),
                             raw: self.raw,
                             _lang: PhantomData,
-                        })
-                    ),
-                    Some(NodeKind::Container(ContainerNode::FileRoot)) => ResolveOutput::Container(
-                        $CtrEnum::FileRoot($crate::model::node::Node {
+                        }),
+                    Some(NodeKind::FileRoot) =>
+                        $Enum::FileRoot($crate::model::node::Node {
                             state: <$Lang as $crate::model::node::Extract<$crate::model::supported_nodes::FileRoot>>::extract(&self.raw),
                             raw: self.raw,
                             _lang: PhantomData,
-                        })
-                    ),
-                    Some(NodeKind::Container(ContainerNode::Body)) => ResolveOutput::Container(
-                        $CtrEnum::Body($crate::model::node::Node {
+                        }),
+                    Some(NodeKind::Body) =>
+                        $Enum::Body($crate::model::node::Node {
                             state: <$Lang as $crate::model::node::Extract<$crate::model::supported_nodes::Body>>::extract(&self.raw),
                             raw: self.raw,
                             _lang: PhantomData,
-                        })
-                    ),
-                    Some(NodeKind::Container(ContainerNode::ParameterList)) => ResolveOutput::Container(
-                        $CtrEnum::ParameterList($crate::model::node::Node {
+                        }),
+                    Some(NodeKind::ParameterList) =>
+                        $Enum::ParameterList($crate::model::node::Node {
                             state: <$Lang as $crate::model::node::Extract<$crate::model::supported_nodes::ParameterList>>::extract(&self.raw),
                             raw: self.raw,
                             _lang: PhantomData,
-                        })
-                    ),
-                    Some(NodeKind::Container(ContainerNode::ArgumentList)) => ResolveOutput::Container(
-                        $CtrEnum::Unresolved($crate::model::node::Node {
+                        }),
+                    Some(NodeKind::ArgumentList) =>
+                        $Enum::Unresolved($crate::model::node::Node {
                             state: $crate::model::node::Unresolved,
                             raw: self.raw,
                             _lang: PhantomData,
-                        })
-                    ),
-                    Some(NodeKind::Container(ContainerNode::ExpressionList)) => ResolveOutput::Container(
-                        $CtrEnum::ExpressionList($crate::model::node::Node {
+                        }),
+                    Some(NodeKind::ExpressionList) =>
+                        $Enum::ExpressionList($crate::model::node::Node {
                             state: <$Lang as $crate::model::node::Extract<$crate::model::supported_nodes::ExpressionList>>::extract(&self.raw),
                             raw: self.raw,
                             _lang: PhantomData,
-                        })
-                    ),
-                    None => ResolveOutput::Unresolved,
+                        }),
+                    None =>
+                        $Enum::Unresolved($crate::model::node::Node {
+                            state: $crate::model::node::Unresolved,
+                            raw: self.raw,
+                            _lang: PhantomData,
+                        }),
                 }
             }
         }

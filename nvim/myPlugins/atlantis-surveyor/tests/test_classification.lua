@@ -1,12 +1,11 @@
 -- Classification tests: each recognised node type resolves to the correct
--- node.node.type and state fields.
+-- node_type and state fields.
 -- Requires helpers.lua to have been sourced.
 
 local buf = load_fixture("lua_sample.lua")
 local function s(r, c) return survey(buf, r, c) end
-local function sc(r, c) return survey(buf, r, c, { mode = "container" }) end
 
--- ── Construct nodes ───────────────────────────────────────────────────────
+-- ── Semantic nodes ────────────────────────────────────────────────────────
 
 do -- Function  (row 1, col 0 → function_declaration)
   local r = s(1, 0)
@@ -34,8 +33,8 @@ end
 
 do -- Conditional  (row 4, col 2 → if_statement)
   local r = s(4, 2)
-  eq("conditional: node_type",    r.node_type,       "if_statement")
-  eq("conditional: node.node.type", r.node.node.type, "conditional")
+  eq("conditional: node_type",      r.node_type,       "if_statement")
+  eq("conditional: node.node.type", r.node.node.type,  "conditional")
   is_not_nil("conditional: state.condition",   r.node.node.state.condition)
   is_not_nil("conditional: state.consequence", r.node.node.state.consequence)
 end
@@ -46,7 +45,7 @@ do -- ReturnStatement  (row 5, col 4 → return_statement)
   eq("return: node.node.type",   r.node.node.type,  "return_statement")
 end
 
-do -- Function: second function with a single parameter  (row 13, col 0)
+do -- Function: second function  (row 13, col 0)
   local r = s(13, 0)
   eq("greet: node_type",      r.node_type,              "function_declaration")
   eq("greet: node.node.type", r.node.node.type,         "function")
@@ -55,31 +54,29 @@ do -- Function: second function with a single parameter  (row 13, col 0)
   is_not_nil("greet: state.body",       r.node.node.state.body)
 end
 
-do -- Assignment: top-level, no local binding  (row 9, col 0 → "local a = 1")
-  -- local declarations ARE local bindings; this checks the extended fixture
+do -- Assignment: top-level local (row 9)
   local r = s(9, 0)
   eq("a=1: node.node.type",         r.node.node.type,                   "assignment")
   eq("a=1: state.name",             r.node.node.state.name,             "a")
   eq("a=1: state.is_local_binding", r.node.node.state.is_local_binding, true)
 end
 
--- ── Container nodes ───────────────────────────────────────────────────────
--- Containers must be requested explicitly via mode="container".
+-- ── Transparent structural nodes ──────────────────────────────────────────
+-- These nodes are transparent during ancestry traversal — the surveyor
+-- passes through them and anchors on the nearest semantic ancestor.
 
-do -- FileRoot  (row 0, col 0 → chunk)
-  local r = sc(0, 0)
-  eq("file_root: node_type",      r.node_type,       "chunk")
-  eq("file_root: node.node.type", r.node.node.type,  "file_root")
+do -- Cursor on ParameterList (row 1, col 18) → resolves to enclosing Function
+  local r = s(1, 18)
+  eq("param_list resolves to function: node.node.type", r.node.node.type, "function")
 end
 
-do -- ParameterList  (row 1, col 18 → `(` of `add(x, y)`)
-  local r = sc(1, 18)
-  eq("param_list: node_type",      r.node_type,       "parameters")
-  eq("param_list: node.node.type", r.node.node.type,  "parameter_list")
+do -- Cursor on Body/block (row 4, col 0) → resolves to enclosing Function
+  local r = s(4, 0)
+  eq("body resolves to function: node.node.type", r.node.node.type, "function")
 end
 
-do -- Body  (row 4, col 0 → block, before the `if` keyword at col 2)
-  local r = sc(4, 0)
-  eq("body: node_type",      r.node_type,       "block")
-  eq("body: node.node.type", r.node.node.type,  "body")
+do -- FileRoot/chunk (row 0) — resolves to the first top-level function
+  -- (chunk is transparent; the surveyor anchors on the nearest recognised child)
+  local r = s(0, 0)
+  is_not_nil("chunk resolves to something", r.node)
 end

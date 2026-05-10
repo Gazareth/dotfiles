@@ -1,5 +1,5 @@
 use crate::tests::lua::*;
-use crate::model::FocusMode;
+
 
 #[test]
 fn extracts_condition_and_consequence() {
@@ -13,7 +13,6 @@ fn extracts_condition_and_consequence() {
 
     let consequence = c.state.consequence.as_ref().expect("consequence should be Some");
     assert_eq!(consequence.node_type, "consequence");
-    assert_eq!(consequence.target_mode, FocusMode::Container);
 
     assert!(c.state.alternate.is_none());
 }
@@ -29,5 +28,4 @@ fn if_else_extracts_alternate() {
 
     let alternate = c.state.alternate.as_ref().expect("alternate should be Some");
     assert_eq!(alternate.node_type, "alternative");
-    assert_eq!(alternate.target_mode, FocusMode::Container);
 }

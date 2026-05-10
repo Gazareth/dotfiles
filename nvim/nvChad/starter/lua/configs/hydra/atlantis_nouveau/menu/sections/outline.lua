@@ -9,7 +9,7 @@ local function jump_to_item(bufnr, item)
   vim.cmd("normal! zz")
   vim.schedule(function()
     require("configs.hydra.atlantis_nouveau").open(
-      bufnr, item.target_mode,
+      bufnr, nil,
       item.node_type, range.start_row, range.start_col
     )
   end)

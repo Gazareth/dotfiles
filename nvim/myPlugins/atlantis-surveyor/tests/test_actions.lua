@@ -4,62 +4,47 @@
 
 local buf = load_fixture("lua_sample.lua")
 local function s(r, c) return survey(buf, r, c) end
-local function sc(r, c) return survey(buf, r, c, { mode = "container" }) end
 
--- ── Construct nodes ───────────────────────────────────────────────────────
+-- ── Semantic nodes ────────────────────────────────────────────────────────
 
-do -- Function
+do -- Function: only rename remains now that jump actions are gone
   local r = s(1, 0)
-  eq("function: available_actions", r.available_actions,
-    { "jump_to_body", "jump_to_params", "rename" })
+  eq("function: available_actions", r.available_actions, { "rename" })
 end
 
-do -- Assignment
+do -- Assignment: only rename
   local r = s(3, 2)
-  eq("assignment: available_actions", r.available_actions,
-    { "jump_lhs", "jump_rhs", "rename" })
+  eq("assignment: available_actions", r.available_actions, { "rename" })
 end
 
-do -- Conditional
+do -- Conditional: no actions
   local r = s(4, 2)
-  eq("conditional: available_actions", r.available_actions,
-    { "jump_to_consequence", "jump_to_condition" })
+  is_nil("conditional: available_actions", r.available_actions)
 end
 
-do -- ReturnStatement — no node-specific actions
+do -- ReturnStatement: no actions
   local r = s(5, 4)
-  -- available_actions is omitted from serialisation when empty
   is_nil("return: available_actions", r.available_actions)
 end
 
--- ── Container nodes ───────────────────────────────────────────────────────
+-- ── Structural groupings (transparent during traversal) ───────────────────
+-- The surveyor anchors on the nearest recognised semantic node when the
+-- cursor lands on a transparent grouping, so these resolve outward.
 
-do -- FileRoot — no actions
-  local r = sc(0, 0)
-  is_nil("file_root: available_actions", r.available_actions)
+do -- Cursor on ParameterList → resolves to the enclosing Function
+  local r = s(1, 18)
+  eq("param_list resolves to function: available_actions", r.available_actions, { "rename" })
 end
 
-do -- ParameterList — no actions
-  local r = sc(1, 18)
-  is_nil("param_list: available_actions", r.available_actions)
+do -- Cursor on block (Body) → resolves to the enclosing Function
+  local r = s(4, 0)
+  eq("body resolves to function: available_actions", r.available_actions, { "rename" })
 end
 
-do -- Body — no actions
-  local r = sc(4, 0)
-  is_nil("body: available_actions", r.available_actions)
-end
+-- ── Top-level node ────────────────────────────────────────────────────────
 
--- ── Scenario: top-level node (no parent above FileRoot) ───────────────────
-
-do -- Function at top level still has its full action set
+do -- Function at top level: is_at_top is false (FileRoot is above it)
   local r = s(1, 0)
-  eq("top-level function: actions", r.available_actions,
-    { "jump_to_body", "jump_to_params", "rename" })
   eq("top-level function: is_at_top", r.navigation.is_at_top, false)
-end
-
-do -- FileRoot in container mode: is_at_top is true, no actions
-  local r = sc(0, 0)
-  eq("file_root: is_at_top", r.navigation.is_at_top, true)
-  is_nil("file_root: available_actions", r.available_actions)
+  eq("top-level function: actions", r.available_actions, { "rename" })
 end

@@ -1,31 +1,38 @@
 /// How Atlantis classifies a Tree-sitter node — mutually exclusive.
-/// A node is either a direct language construct (Standard) or a structural
-/// grouping (Container); never both.
+/// A node is a unified construct that may have actions and navigable children.
 #[derive(Debug, Clone, Copy)]
 pub enum NodeKind {
-    Construct(ConstructNode),
-    Container(ContainerNode),
-}
-
-/// The specific kind of Standard node — a direct language building block.
-#[derive(Debug, Clone, Copy)]
-pub enum ConstructNode {
     Function,
     Call,
     Assignment,
     Conditional,
     Parameter,
     ReturnStatement,
-}
-
-/// The specific kind of Container node — a structural grouping of child nodes.
-#[derive(Debug, Clone, Copy)]
-pub enum ContainerNode {
     FileRoot,
     Body,
     ParameterList,
     ArgumentList,
     ExpressionList,
+}
+
+impl NodeKind {
+    /// Returns true if this node kind should be skipped during ancestry traversal
+    /// when it is the sole child of a container, effectively making it transparent.
+    pub fn is_transparent(&self) -> bool {
+        match self {
+            NodeKind::FileRoot => true,
+            NodeKind::Body => true,
+            NodeKind::ParameterList => true,
+            NodeKind::ExpressionList => true,
+            NodeKind::ArgumentList => true,
+            NodeKind::Function => false,
+            NodeKind::Call => false,
+            NodeKind::Assignment => false,
+            NodeKind::Conditional => false,
+            NodeKind::Parameter => false,
+            NodeKind::ReturnStatement => false,
+        }
+    }
 }
 
 pub trait LanguageConfig {

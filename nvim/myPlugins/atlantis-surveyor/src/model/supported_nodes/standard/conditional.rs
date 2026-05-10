@@ -19,8 +19,8 @@ impl<Lang: HasConditionals> Extract<ConditionalStatement> for Lang {
     fn extract(raw: &RawNode) -> ConditionalStatement {
         ConditionalStatement {
             condition:   raw.field("condition").cloned().unwrap_or_else(|| raw.placeholder("condition")),
-            consequence: raw.field("consequence").map(NavigationTarget::container),
-            alternate:   raw.field("alternative").map(NavigationTarget::container),
+            consequence: raw.field("consequence").map(|r| NavigationTarget::from_raw(&r)),
+            alternate:   raw.field("alternative").map(|r| NavigationTarget::from_raw(&r)),
         }
     }
 }

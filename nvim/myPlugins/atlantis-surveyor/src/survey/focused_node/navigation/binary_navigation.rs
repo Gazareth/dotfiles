@@ -1,11 +1,11 @@
-use crate::model::{AtlantisNode, FocusMode, OutlineItem};
+use crate::model::{AtlantisNode, OutlineItem};
 use crate::model::node::RawNode;
 use crate::probe::language::Language;
 use crate::probe::treesitter::{self, NodeOutline};
 use crate::model::NavigationTarget;
 
 /// Snapshots the outermost binary_expression and recursively flattens all nested
-/// binary_expression Containers, returning a flat list of operand NavigationTargets.
+/// binary_expression nodes, returning a flat list of operand NavigationTargets.
 pub fn gather_binary_siblings(lang: Language, root: &NodeOutline) -> Vec<NavigationTarget> {
     let Ok(snap) = treesitter::snapshot(
         root.range.start_row,
@@ -16,7 +16,7 @@ pub fn gather_binary_siblings(lang: Language, root: &NodeOutline) -> Vec<Navigat
     ) else { return vec![]; };
 
     let root_ref = NodeOutline { node_type: "binary_expression".into(), range: root.range.clone() };
-    let mut outline = super::super::FocusedNode::<super::super::Container>::compute_outline(
+    let mut outline = super::super::FocusedNode::compute_outline(
         &snap.children,
         |c| lang.classify(RawNode::from(c), Some(&root_ref)),
     );
@@ -28,17 +28,16 @@ pub fn gather_binary_siblings(lang: Language, root: &NodeOutline) -> Vec<Navigat
             node_type: item.node_type, 
             classification: String::new(),
             range: item.range, 
-            target_mode: item.target_mode 
         })
         .collect()
 }
 
-/// Recursively expands binary_expression Container entries in an outline until only
+/// Recursively expands binary_expression entries in an outline until only
 /// non-binary operands remain.
 fn flatten_binary_outline(lang: Language, outline: &mut Vec<OutlineItem>) {
     loop {
         let Some(idx) = outline.iter().position(|item| {
-            item.node_type == "binary_expression" && item.target_mode == FocusMode::Container
+            item.node_type == "binary_expression"
         }) else { break; };
 
         let item = outline.remove(idx);
@@ -50,7 +49,7 @@ fn flatten_binary_outline(lang: Language, outline: &mut Vec<OutlineItem>) {
             Some((item.range.end_row,   item.range.end_col)),
         ) else { break; };
 
-        let children = super::super::FocusedNode::<super::super::Container>::compute_outline(
+        let children = super::super::FocusedNode::compute_outline(
             &snap.children,
             |c| lang.classify(RawNode::from(c), Some(&child_ref)),
         );

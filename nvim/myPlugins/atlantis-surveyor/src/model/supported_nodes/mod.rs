@@ -7,9 +7,9 @@
 //   3. A blanket `Extract` impl: `impl<Lang: HasFunctions> Extract<...> for Lang`.
 //      Languages with divergent field names skip the marker and write a custom impl.
 //
-// Standard nodes live under `standard/` — direct language constructs with an
-// identity (name, condition, value). Container nodes live under `container/` —
-// structural groupings whose children are the navigable content.
+// Structural grouping nodes (Body, ParameterList, ExpressionList, FileRoot) live
+// under `container/` and are transparent during ancestry traversal.
+// Semantic constructs (Function, Assignment, etc.) live under `standard/`.
 
 pub mod container;
 pub mod standard;
