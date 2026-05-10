@@ -54,6 +54,20 @@ impl Language {
     /// to resolve ambiguous nodes.
     pub fn classify(&self, raw: RawNode, parent: Option<&NodeOutline>) -> AtlantisNode {
         let base = AtlantisNode::from_raw(raw.clone(), self);
+
+        // If unrecognised, check if it's a "Leaf" (inner token of a Container)
+        if matches!(base, AtlantisNode::Unrecognised) {
+            if let Some(p) = parent {
+                let is_container = matches!(self.node_kind_for(&p.node_type), Some(NodeKind::Container(_)));
+                let starts_later = raw.range.start_row > p.range.start_row 
+                                || (raw.range.start_row == p.range.start_row && raw.range.start_col > p.range.start_col);
+                
+                if is_container || starts_later {
+                    return AtlantisNode::Leaf;
+                }
+            }
+        }
+
         match self {
             // Lua: a bare identifier inside a parameter list is a parameter.
             // Other languages have distinct node kinds for their parameters.

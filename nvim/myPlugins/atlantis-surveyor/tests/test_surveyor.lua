@@ -122,7 +122,7 @@ do -- Function  (row 1, col 0 → function_declaration)
   eq("function: state.name",        r.node.node.state.name,      "add")
   eq("function: state.is_async",    r.node.node.state.is_async,  false)
   eq("function: available_actions", r.available_actions,
-    { "jump_to_body", "jump_to_params", "rename", "yank", "delete" })
+    { "jump_to_body", "jump_to_params", "rename" })
 end
 
 do -- Assignment  (row 3, col 2 → variable_declaration)
@@ -133,7 +133,7 @@ do -- Assignment  (row 3, col 2 → variable_declaration)
   eq("assignment: state.name",              r.node.node.state.name,               "sum")
   eq("assignment: state.is_local_binding",  r.node.node.state.is_local_binding,   true)
   eq("assignment: available_actions",       r.available_actions,
-    { "jump_lhs", "jump_rhs", "rename", "yank" })
+    { "jump_lhs", "jump_rhs", "rename" })
 end
 
 do -- Conditional  (row 4, col 2 → if_statement)
@@ -142,7 +142,7 @@ do -- Conditional  (row 4, col 2 → if_statement)
   eq("conditional: variant.kind",      r.node.kind,      "construct")
   eq("conditional: node.type",         r.node.node.type, "conditional")
   eq("conditional: available_actions", r.available_actions,
-    { "jump_to_consequence", "jump_to_condition", "yank" })
+    { "jump_to_consequence", "jump_to_condition" })
 end
 
 -- ── Containers ────────────────────────────────────────────────────────────────
@@ -150,7 +150,7 @@ end
 print("\n── Containers ──")
 
 do -- FileRoot  (row 0 → chunk; blank line before any code)
-  local r = survey(0, 0)
+  local r = surveyor(collect_ancestry(buf, 0, 0), "container")
   eq("file_root: node_type",    r.node_type,         "chunk")
   eq("file_root: variant.kind", r.node.kind,      "container")
   eq("file_root: node.type",    r.node.node.type, "file_root")
@@ -158,7 +158,7 @@ do -- FileRoot  (row 0 → chunk; blank line before any code)
 end
 
 do -- ParameterList  (row 1, col 18 → `(` of `add(x, y)`)
-  local r = survey(1, 18)
+  local r = surveyor(collect_ancestry(buf, 1, 18), "container")
   eq("param_list: node_type",    r.node_type,         "parameters")
   eq("param_list: variant.kind", r.node.kind,      "container")
   eq("param_list: node.type",    r.node.node.type, "parameter_list")
@@ -166,23 +166,23 @@ do -- ParameterList  (row 1, col 18 → `(` of `add(x, y)`)
 end
 
 do -- Body  (row 4, col 0 → block node is innermost before the `if` keyword)
-  local r = survey(4, 0)
+  local r = surveyor(collect_ancestry(buf, 4, 0), "container")
   eq("body: node_type",    r.node_type,         "block")
   eq("body: variant.kind", r.node.kind,      "container")
   eq("body: node.type",    r.node.node.type, "body")
   eq("body: no actions",   r.available_actions, nil)
 end
 
--- ── Unrecognised ──────────────────────────────────────────────────────────────
+-- ── ReturnStatement ───────────────────────────────────────────────────────────
 
-print("\n── Unrecognised ──")
+print("\n── ReturnStatement ──")
 
 do -- return statement  (row 5, col 4)
-  -- return_statement is not in the map → ancestry walk climbs to block → Body (container)
+  -- return_statement is now in the Lua map (added in commit 5663ab6)
   local r = survey(5, 4)
-  eq("return→ancestor: node_type",    r.node_type,         "block")
-  eq("return→ancestor: variant.kind", r.node.kind,      "container")
-  eq("return→ancestor: node.type",    r.node.node.type, "body")
+  eq("return: node_type",    r.node_type,       "return_statement")
+  eq("return: node.kind",    r.node.kind,       "construct")
+  eq("return: node.type",    r.node.node.type,  "return_statement")
 end
 
 -- ── Summary ───────────────────────────────────────────────────────────────────

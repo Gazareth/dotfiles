@@ -59,6 +59,7 @@ macro_rules! impl_lang_node_resolver {
             FileRoot($crate::model::node::Node<$Lang, $crate::model::supported_nodes::FileRoot>),
             Body($crate::model::node::Node<$Lang, $crate::model::supported_nodes::Body>),
             ParameterList($crate::model::node::Node<$Lang, $crate::model::supported_nodes::ParameterList>),
+            ExpressionList($crate::model::node::Node<$Lang, $crate::model::supported_nodes::ExpressionList>),
             Unresolved($crate::model::node::Node<$Lang, $crate::model::node::Unresolved>),
         }
 
@@ -68,6 +69,7 @@ macro_rules! impl_lang_node_resolver {
                     $CtrEnum::FileRoot(_)      => "FileRoot",
                     $CtrEnum::Body(_)          => "Body",
                     $CtrEnum::ParameterList(_) => "ParameterList",
+                    $CtrEnum::ExpressionList(_) => "ExpressionList",
                     $CtrEnum::Unresolved(_)    => "Unresolved",
                 }
             }
@@ -76,11 +78,11 @@ macro_rules! impl_lang_node_resolver {
         impl $crate::action::ConstructActions for $StdEnum {
             fn available_actions(&self) -> &'static [&'static str] {
                 match self {
-                    $StdEnum::Function(_)    => &["jump_to_body", "jump_to_params", "rename", "yank", "delete"],
-                    $StdEnum::Call(_)        => &["jump_to_params", "rename", "yank"],
-                    $StdEnum::Assignment(_)  => &["jump_lhs", "jump_rhs", "rename", "yank"],
-                    $StdEnum::Conditional(_) => &["jump_to_consequence", "jump_to_condition", "yank"],
-                    $StdEnum::Parameter(_)       => &["rename", "yank", "delete"],
+                    $StdEnum::Function(_)        => &["jump_to_body", "jump_to_params", "rename"],
+                    $StdEnum::Call(_)            => &["jump_to_params", "rename"],
+                    $StdEnum::Assignment(_)      => &["jump_lhs", "jump_rhs", "rename"],
+                    $StdEnum::Conditional(_)     => &["jump_to_consequence", "jump_to_condition"],
+                    $StdEnum::Parameter(_)       => &["rename"],
                     $StdEnum::ReturnStatement(_) => &[],
                     $StdEnum::Unresolved(_)      => &[],
                 }
@@ -166,8 +168,8 @@ macro_rules! impl_lang_node_resolver {
                         })
                     ),
                     Some(NodeKind::Container(ContainerNode::ExpressionList)) => ResolveOutput::Container(
-                        $CtrEnum::Unresolved($crate::model::node::Node {
-                            state: $crate::model::node::Unresolved,
+                        $CtrEnum::ExpressionList($crate::model::node::Node {
+                            state: <$Lang as $crate::model::node::Extract<$crate::model::supported_nodes::ExpressionList>>::extract(&self.raw),
                             raw: self.raw,
                             _lang: PhantomData,
                         })

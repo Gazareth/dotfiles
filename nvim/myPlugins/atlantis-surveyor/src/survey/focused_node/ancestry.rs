@@ -80,18 +80,32 @@ impl NodeAncestry {
                 && n.range.start_col == target_col
             }).ok_or(AtlantisError::UnsupportedLanguage)?
         } else {
+            // Find the innermost node that matches our focus mode's criteria.
             all.iter().enumerate().position(|(i, n)| {
-                let classified = lang.classify(RawNode::from(*n), all.get(i + 1).copied());
+                let parent = all.get(i + 1);
+                let classified = lang.classify(RawNode::from(*n), parent.copied());
+                
                 match (focus_mode, classified) {
-                    (FocusMode::Construct, AtlantisNode::Construct(_)) => true,
+                    // In Container mode, we ONLY stop at containers.
                     (FocusMode::Container, AtlantisNode::Container(_)) => true,
-                    // Leaf: unrecognised node whose immediate parent is a Container.
-                    (FocusMode::Construct, AtlantisNode::Unrecognised) => {
-                        all.get(i + 1).map_or(false, |parent| {
-                            matches!(
-                                lang.classify(RawNode::from(*parent), all.get(i + 2).copied()),
-                                AtlantisNode::Container(_)
-                            )
+                    
+                    // In Construct mode (standard), we stop at Constructs or Leaf tokens.
+                    (FocusMode::Construct, AtlantisNode::Construct(_)) => true,
+                    (FocusMode::Construct, AtlantisNode::Leaf)         => true,
+                    
+                    // Fallback for index 0 (Unrecognised literals/operands).
+                    // We only apply this in Construct mode; in Container mode, we always
+                    // want to climb to the structural parent.
+                    _ if i == 0 && focus_mode == FocusMode::Construct => {
+                        parent.map_or(true, |p| {
+                            // Only climb if the parent is a Construct and we start at the same position.
+                            // This allows staying at an operand that starts a Container (like nil in local x = nil).
+                            let parent_node = lang.classify(RawNode::from(*p), None);
+                            let is_parent_construct = matches!(parent_node, AtlantisNode::Construct(_));
+                            let starts_later = n.range.start_row > p.range.start_row 
+                                            || (n.range.start_row == p.range.start_row && n.range.start_col > p.range.start_col);
+                            
+                            !is_parent_construct || starts_later
                         })
                     }
                     _ => false,
@@ -103,8 +117,8 @@ impl NodeAncestry {
         // (e.g. `assignment_statement` → `variable_declaration` both resolve to Assignment).
         // Leaf nodes are never walked upward — they stay at exactly the candidate position.
         let candidate_kind = lang.classify(RawNode::from(all[candidate_idx]), all.get(candidate_idx + 1).copied());
-        if matches!(candidate_kind, AtlantisNode::Unrecognised) {
-            return Ok(candidate_idx); // Leaf candidate — no upward walk
+        if matches!(candidate_kind, AtlantisNode::Leaf | AtlantisNode::Unrecognised) {
+            return Ok(candidate_idx); // Leaf/Unrecognised candidate — no upward walk
         }
         Ok(all[candidate_idx..].iter()
             .enumerate()

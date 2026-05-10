@@ -67,7 +67,8 @@ impl<'a> SoleChildResolution<'a> {
         else { return ResolutionStep::Retain; };
 
         let child_node_outline = NodeOutline { node_type: child_type.clone(), range: child_range.clone() };
-        let parent = self.ancestors.first().map(|x| x as &NodeOutline);
+        let parent_outline = self.ancestors.first().cloned();
+        let parent = parent_outline.as_ref();
         let child_classified = self.lang.classify(RawNode::from(&child_node_outline), parent);
         self.ancestors.insert(0, child_node_outline);
 
@@ -81,16 +82,16 @@ impl<'a> SoleChildResolution<'a> {
         match child_classified {
             AtlantisNode::Unrecognised | AtlantisNode::Leaf => ResolutionStep::Retain,
             AtlantisNode::Construct(_) => {
-                // Single child means genuinely no siblings — stub snapshot suffices.
-                let stub = NodeSnapshot {
-                    node_type: child_type.clone(),
-                    range:     child_range.clone(),
-                    text:      child_text,
-                    fields:    Default::default(),
-                    children:  vec![],
-                    siblings:  vec![],
-                };
-                let nav = NavigationInfo::from_snapshot(self.lang, &nav_refs, 0, &stub);
+                let Ok(child_snap) = treesitter::snapshot(
+                    child_range.start_row, child_range.start_col,
+                    Some(&child_type),
+                    Some((child_range.start_row, child_range.start_col)),
+                    Some((child_range.end_row,   child_range.end_col)),
+                ) else { return ResolutionStep::Retain; };
+
+                let child_classified = self.lang.classify(RawNode::from(&child_snap), parent);
+                let nav = NavigationInfo::from_snapshot(self.lang, &nav_refs, 0, &child_snap);
+
                 ResolutionStep::Resolved(AnyFocusedNode::Construct(FocusedNode {
                     node_type:  child_type,
                     range:      child_range,

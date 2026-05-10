@@ -1,6 +1,5 @@
 mod actions;
 pub(crate) mod ancestry;
-mod container_skip;
 mod navigation;
 mod outline;
 
@@ -9,12 +8,14 @@ use nvim_oxi::Dictionary;
 use crate::error::AtlantisError;
 use crate::model::node::{NodeRange, RawNode};
 use crate::model::{AtlantisNode, FocusMode, OutlineItem};
-use crate::probe::language::Language;
-use crate::probe::treesitter::{self, NodeOutline, NodeSnapshot, SnapshotChild};
+use crate::probe::treesitter::{self, NodeOutline};
 
 use self::ancestry::NodeAncestry;
+use self::container_skip::{ResolutionStep, SoleChildResolution};
 
 pub use self::navigation::NavigationInfo;
+
+mod container_skip;
 
 // ── Mode typestates ───────────────────────────────────────────────────────
 
@@ -37,57 +38,6 @@ pub struct FocusedNode<S> {
     pub mode:       S,
 }
 
-impl FocusedNode<Construct> {
-    fn from_snapshot(snapshot: NodeSnapshot, node: AtlantisNode, navigation: NavigationInfo) -> Self {
-        FocusedNode {
-            node_type: snapshot.node_type,
-            range:     snapshot.range,
-            node,
-            navigation,
-            mode: Construct,
-        }
-    }
-}
-
-impl FocusedNode<Container> {
-    fn from_snapshot(
-        lang:      Language,
-        all:       &[&NodeOutline],
-        focus_idx: usize,
-        snapshot:  &NodeSnapshot,
-        node:      AtlantisNode,
-        navigation: NavigationInfo,
-    ) -> Self {
-        let outline = Self::compute_outline(
-            &snapshot.children,
-            |child: &SnapshotChild| lang.classify(RawNode::from(child), all.get(focus_idx).copied()),
-        );
-        FocusedNode {
-            node_type: snapshot.node_type.clone(),
-            range:     snapshot.range.clone(),
-            node,
-            navigation,
-            mode: Container { outline },
-        }
-    }
-
-    /// Consumes the container and, if it holds exactly one recognised child,
-    /// returns the child's result directly. Delegates to `SoleChildResolution` for iteration.
-    fn resolve_sole_child(self, lang: Language, all: &[&NodeOutline], focus_idx: usize, snapshot: NodeSnapshot) -> AnyFocusedNode {
-        use self::container_skip::{SoleChildResolution, ResolutionStep};
-        let mut resolution = SoleChildResolution::new(self, lang, all, focus_idx, snapshot);
-        loop {
-            match resolution.try_descend() {
-                ResolutionStep::Resolved(result) => return result,
-                ResolutionStep::Retain           => break,
-                ResolutionStep::Descend          => {}
-            }
-        }
-        resolution.expand_binary_children();
-        resolution.into_container()
-    }
-}
-
 // ── Runtime wrapper ───────────────────────────────────────────────────────
 
 /// Returned by `from_ancestry` — the mode is a runtime decision so we need
@@ -95,10 +45,6 @@ impl FocusedNode<Container> {
 pub enum AnyFocusedNode {
     Construct(FocusedNode<Construct>),
     Container(FocusedNode<Container>),
-}
-
-impl From<FocusedNode<Construct>> for AnyFocusedNode {
-    fn from(n: FocusedNode<Construct>) -> Self { AnyFocusedNode::Construct(n) }
 }
 
 impl AnyFocusedNode {
@@ -110,44 +56,76 @@ impl AnyFocusedNode {
     }
 
     #[must_use]
-    pub fn from_raw(raw: &Dictionary, focus_mode: FocusMode, target_hint: Option<(&str, u32, u32)>) -> Result<Option<Self>, AtlantisError> {
+    pub fn from_raw(
+        raw:         &Dictionary,
+        focus_mode:  FocusMode,
+        target_hint: Option<(&str, u32, u32)>,
+    ) -> Result<Option<Self>, AtlantisError> {
         let ancestry = NodeAncestry::parse(raw)?;
         Self::from_ancestry(ancestry, focus_mode, target_hint)
     }
 
     #[must_use]
-    pub fn from_ancestry(ancestry: NodeAncestry, focus_mode: FocusMode, target_hint: Option<(&str, u32, u32)>) -> Result<Option<Self>, AtlantisError> {
-        let lang      = ancestry.language();
+    pub fn from_ancestry(
+        ancestry:    NodeAncestry,
+        focus_mode:  FocusMode,
+        target_hint: Option<(&str, u32, u32)>,
+    ) -> Result<Option<Self>, AtlantisError> {
+        let lang = ancestry.language();
         let all: Vec<&NodeOutline> = ancestry.all().collect();
-        let focus_idx = ancestry.find_focus_idx(focus_mode, target_hint)?;
 
-        let snapshot   = treesitter::snapshot(
-            all[focus_idx].range.start_row,
-            all[focus_idx].range.start_col,
-            Some(&all[focus_idx].node_type),
-            Some((all[focus_idx].range.start_row, all[focus_idx].range.start_col)),
-            Some((all[focus_idx].range.end_row,   all[focus_idx].range.end_col)),
-        )?;
-        let node = {
-            let raw = lang.classify(RawNode::from(&snapshot), all.get(focus_idx + 1).copied());
-            // Promote to Leaf when the node is unrecognised but its parent is a Container —
-            // this makes it a stable navigation endpoint rather than scanning up to the nearest construct.
-            if matches!(raw, AtlantisNode::Unrecognised) {
-                let parent_is_container = all.get(focus_idx + 1).map_or(false, |p| {
-                    matches!(lang.classify(RawNode::from(*p), all.get(focus_idx + 2).copied()), AtlantisNode::Container(_))
-                });
-                if parent_is_container { AtlantisNode::Leaf } else { raw }
-            } else {
-                raw
-            }
+        let focus_idx = match ancestry.find_focus_idx(focus_mode, target_hint) {
+            Ok(idx) => idx,
+            Err(_)  => return Ok(None),
         };
-        let nav  = NavigationInfo::from_snapshot(lang, &all, focus_idx, &snapshot);
+
+        let focus_node_outline = all[focus_idx];
+        let parent_ref = all.get(focus_idx + 1).copied();
+
+        let node_snapshot = treesitter::snapshot(
+            focus_node_outline.range.start_row,
+            focus_node_outline.range.start_col,
+            Some(&focus_node_outline.node_type),
+            Some((focus_node_outline.range.start_row, focus_node_outline.range.start_col)),
+            Some((focus_node_outline.range.end_row,   focus_node_outline.range.end_col)),
+        )?;
+
+        let node       = lang.classify(RawNode::from(&node_snapshot), parent_ref);
+        let navigation = NavigationInfo::from_snapshot(lang, &all, focus_idx, &node_snapshot);
+        let node_type  = node_snapshot.node_type.clone();
+        let range      = node_snapshot.range.clone();
 
         Ok(Some(match focus_mode {
-            FocusMode::Construct => FocusedNode::<Construct>::from_snapshot(snapshot, node, nav).into(),
             FocusMode::Container => {
-                let focused = FocusedNode::<Container>::from_snapshot(lang, &all, focus_idx, &snapshot, node, nav);
-                focused.resolve_sole_child(lang, &all, focus_idx, snapshot)
+                let outline = FocusedNode::<Container>::compute_outline(
+                    &node_snapshot.children,
+                    |raw| lang.classify(raw.into(), parent_ref),
+                );
+                let focused = FocusedNode {
+                    node_type, range, node, navigation,
+                    mode: Container { outline },
+                };
+
+                // Auto-drill: if the container has exactly one recognised child,
+                // descend into it (iterating for nested transparent containers).
+                let mut resolver = SoleChildResolution::new(focused, lang, &all, focus_idx, node_snapshot);
+                loop {
+                    match resolver.try_descend() {
+                        ResolutionStep::Resolved(n) => return Ok(Some(n)),
+                        ResolutionStep::Retain      => break,
+                        ResolutionStep::Descend     => {
+                            resolver.expand_binary_children();
+                        }
+                    }
+                }
+                resolver.expand_binary_children();
+                resolver.into_container()
+            }
+            FocusMode::Construct => {
+                AnyFocusedNode::Construct(FocusedNode {
+                    node_type, range, node, navigation,
+                    mode: Construct,
+                })
             }
         }))
     }

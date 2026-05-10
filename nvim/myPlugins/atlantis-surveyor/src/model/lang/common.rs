@@ -1,4 +1,4 @@
-use crate::model::supported_nodes::{HasAssignment, HasFunctionBody, HasConditionals, HasFileRoot, HasFunctions, HasFunctionCalls, HasParameter, HasParameterList, HasReturnStatement};
+use crate::model::supported_nodes::{HasAssignment, HasFunctionBody, HasConditionals, HasFileRoot, HasFunctions, HasFunctionCalls, HasParameter, HasParameterList, HasReturnStatement, HasExpressionList};
 
 // ── Convenience bundles ───────────────────────────────────────────────────
 //
@@ -12,7 +12,7 @@ pub trait Common:
     HasFileRoot
     + HasFunctions + HasConditionals
     + HasFunctionBody + HasParameter + HasParameterList
-    + HasReturnStatement
+    + HasReturnStatement + HasExpressionList
 {}
 
 impl<Lang: Common> HasConditionals for Lang {}
@@ -22,6 +22,7 @@ impl<Lang: Common> HasFunctionBody for Lang {}
 impl<Lang: Common> HasParameter for Lang {}
 impl<Lang: Common> HasParameterList for Lang {}
 impl<Lang: Common> HasReturnStatement for Lang {}
+impl<Lang: Common> HasExpressionList for Lang {}
 
 pub trait CLike: Common + HasFunctionCalls + HasAssignment {}
 

@@ -10,5 +10,5 @@ echo "Running tests..."
 nvim --headless \
      -u NONE \
      -c "set runtimepath+=$ROOT" \
-     -c "luafile $ROOT/tests/test_surveyor.lua" \
+     -c "luafile $ROOT/tests/run_all.lua" \
      -c "qall!"

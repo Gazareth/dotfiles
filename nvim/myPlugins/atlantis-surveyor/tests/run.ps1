@@ -24,7 +24,7 @@ Write-Host "Running tests..."
        -u NONE `
        -c "set runtimepath+=$RootFwd" `
        -c "luafile $SetupFile" `
-       -c "luafile $RootFwd/tests/test_surveyor.lua" `
+       -c "luafile $RootFwd/tests/run_all.lua" `
        -c "qall!"
 
 Remove-Item $SetupFile -ErrorAction SilentlyContinue

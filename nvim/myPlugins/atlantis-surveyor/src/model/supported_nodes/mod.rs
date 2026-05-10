@@ -28,4 +28,5 @@ pub use container::{
     FileRoot, HasFileRoot,
     Body, HasFunctionBody,
     ParameterList, HasParameterList,
+    ExpressionList, HasExpressionList,
 };
