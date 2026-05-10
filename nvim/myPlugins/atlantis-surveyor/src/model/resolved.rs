@@ -28,6 +28,15 @@ impl AnyNode {
         }
     }
 
+    pub fn keyed_outline_hints(&self) -> Vec<(crate::model::node::NodeRange, &'static str)> {
+        match self {
+            AnyNode::Lua(n)        => n.keyed_outline_hints(),
+            AnyNode::JavaScript(n) => n.keyed_outline_hints(),
+            AnyNode::TypeScript(n) => n.keyed_outline_hints(),
+            AnyNode::Python(n)     => n.keyed_outline_hints(),
+        }
+    }
+
     pub fn node_type_name(&self) -> &'static str {
         match self {
             AnyNode::Lua(n)        => n.node_type_name(),

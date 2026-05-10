@@ -34,26 +34,36 @@ pub mod decode {
     pub fn str(_d: &Dictionary, _key: &str) -> Result<String, AtlantisError> { unreachable!() }
 }
 
-// ── Thread-local snapshot override ───────────────────────────────────────
+// ── Thread-local snapshot queue ─────────────────────────────────────────
 
 use std::cell::RefCell;
+use std::collections::VecDeque;
 use crate::error::AtlantisError;
 
 thread_local! {
-    static OVERRIDE: RefCell<Option<NodeSnapshot>> = RefCell::new(None);
+    static QUEUE: RefCell<VecDeque<NodeSnapshot>> = RefCell::new(VecDeque::new());
 }
 
-/// Pre-load a `NodeSnapshot` to be returned by the next call to `snapshot()`.
+/// Replace the snapshot queue with a single snapshot (backward-compatible with existing tests).
 pub fn set_snapshot(snap: NodeSnapshot) {
-    OVERRIDE.with(|s| *s.borrow_mut() = Some(snap));
+    QUEUE.with(|q| {
+        let mut q = q.borrow_mut();
+        q.clear();
+        q.push_back(snap);
+    });
 }
 
-/// Clear any pre-loaded snapshot override.
+/// Append a snapshot to the queue. Calls to `snapshot()` consume from the front.
+pub fn push_snapshot(snap: NodeSnapshot) {
+    QUEUE.with(|q| q.borrow_mut().push_back(snap));
+}
+
+/// Clear all queued snapshots.
 pub fn clear_snapshot() {
-    OVERRIDE.with(|s| *s.borrow_mut() = None);
+    QUEUE.with(|q| q.borrow_mut().clear());
 }
 
-/// Returns the pre-loaded snapshot, or `Err(NoNode)` if none has been set.
+/// Pop and return the next queued snapshot, or `Err(NoNode)` if the queue is empty.
 pub fn snapshot(
     _row:          u32,
     _col:          u32,
@@ -61,6 +71,6 @@ pub fn snapshot(
     _target_start: Option<(u32, u32)>,
     _target_end:   Option<(u32, u32)>,
 ) -> Result<NodeSnapshot, AtlantisError> {
-    OVERRIDE.with(|s| s.borrow().clone())
+    QUEUE.with(|q| q.borrow_mut().pop_front())
         .ok_or(AtlantisError::NoNode)
 }

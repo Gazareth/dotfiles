@@ -29,8 +29,8 @@ impl<Lang: HasAssignment> Extract<Assignment> for Lang {
         Assignment {
             name:             raw.field_text("name"),
             is_local_binding: false,
-            lhs:              raw.field("name").map(|r| NavigationTarget::from_raw(&r)),
-            value:            raw.field("value").map(|r| NavigationTarget::from_raw(&r)),
+            lhs:              raw.field("name").map(|r| NavigationTarget::with_key(&r, "n")),
+            value:            raw.field("value").map(|r| NavigationTarget::with_key(&r, "v")),
         }
     }
 }

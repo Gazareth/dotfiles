@@ -77,10 +77,11 @@ pub(in crate::survey::focused_node) fn as_navigation_target(
         return None;
     }
 
-    Some(NavigationTarget { 
-        node_type: raw.kind, 
+    Some(NavigationTarget {
+        node_type: raw.kind,
         classification: classified.classification_name(),
-        range: raw.range, 
+        range: raw.range,
+        key: None,
     })
 }
 
@@ -228,6 +229,7 @@ impl NavigationInfo {
                 node_type:      node_snapshot.node_type.clone(),
                 classification: String::new(),
                 range:          node_snapshot.range.clone(),
+                key:            None,
             });
             supported_siblings.sort_by(|a, b| {
                 a.range.start_row.cmp(&b.range.start_row)

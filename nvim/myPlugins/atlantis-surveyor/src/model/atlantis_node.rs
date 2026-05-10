@@ -54,6 +54,15 @@ impl AtlantisNode {
         }
     }
 
+    /// Returns (range, hint_key) pairs from the node's keyed NavigationTarget fields.
+    /// Used to stamp matching OutlineItems with their preferred UI hotkey.
+    pub fn keyed_outline_hints(&self) -> Vec<(crate::model::node::NodeRange, &'static str)> {
+        match self {
+            AtlantisNode::Recognised(n) => n.keyed_outline_hints(),
+            _ => vec![],
+        }
+    }
+
 
 
     /// Returns the human-readable classification name for this node.

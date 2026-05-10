@@ -75,6 +75,31 @@ macro_rules! impl_lang_node_resolver {
                     $Enum::Unresolved(_)      => &[],
                 }
             }
+
+            fn keyed_outline_hints(&self) -> Vec<($crate::model::node::NodeRange, &'static str)> {
+                let mut hints = vec![];
+                let collect = |target: &Option<$crate::model::NavigationTarget>| -> Option<($crate::model::node::NodeRange, &'static str)> {
+                    let t = target.as_ref()?;
+                    let k = t.key?;
+                    Some((t.range.clone(), k))
+                };
+                match self {
+                    $Enum::Function(n) => {
+                        if let Some(h) = collect(&n.state.parameters) { hints.push(h); }
+                        if let Some(h) = collect(&n.state.body)        { hints.push(h); }
+                    }
+                    $Enum::Assignment(n) => {
+                        if let Some(h) = collect(&n.state.lhs)   { hints.push(h); }
+                        if let Some(h) = collect(&n.state.value) { hints.push(h); }
+                    }
+                    $Enum::Conditional(n) => {
+                        if let Some(h) = collect(&n.state.consequence) { hints.push(h); }
+                        if let Some(h) = collect(&n.state.alternate)   { hints.push(h); }
+                    }
+                    _ => {}
+                }
+                hints
+            }
         }
 
         impl $crate::model::lang::Resolve for $crate::model::node::Node<$Lang, $crate::model::node::Unknown> {

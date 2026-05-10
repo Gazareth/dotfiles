@@ -4,6 +4,7 @@ mod container;
 mod function;
 mod snapshot;
 mod navigation;
+mod outline_hints;
 
 pub use super::helpers::*;
 pub use crate::model::AtlantisNode;

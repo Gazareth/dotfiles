@@ -39,6 +39,7 @@ impl Extract<Assignment> for Lua {
                     node_type:      "variable_list".to_string(),
                     classification: String::new(),
                     range:          c.range.clone(),
+                    key:            Some("n"),
                 });
                 // Grandchildren aren't available, so compute the RHS position from the text.
                 let value = inner.and_then(|c| {
@@ -54,6 +55,7 @@ impl Extract<Assignment> for Lua {
                             end_row:   c.range.end_row,
                             end_col:   c.range.end_col,
                         },
+                        key: Some("v"),
                     })
                 });
                 Assignment { name, is_local_binding: true, lhs, value }
@@ -62,8 +64,8 @@ impl Extract<Assignment> for Lua {
             "assignment_statement" => Assignment {
                 name:             raw.children.first().map(|c| c.text.clone()).unwrap_or_default(),
                 is_local_binding: false,
-                lhs:              raw.children.first().map(|r| NavigationTarget::from_raw(&r)),
-                value:            raw.children.get(1).map(|r| NavigationTarget::from_raw(&r)),
+                lhs:              raw.children.first().map(|r| NavigationTarget::with_key(&r, "n")),
+                value:            raw.children.get(1).map(|r| NavigationTarget::with_key(&r, "v")),
             },
             // Old nvim-treesitter grammar (field names: "name", "value")
             _ => Assignment {
