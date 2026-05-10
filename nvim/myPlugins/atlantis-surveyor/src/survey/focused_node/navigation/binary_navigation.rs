@@ -35,7 +35,7 @@ pub fn gather_binary_siblings(lang: Language, root: &NodeOutline) -> Vec<Navigat
 
 /// Recursively expands binary_expression entries in an outline until only
 /// non-binary operands remain.
-fn flatten_binary_outline(lang: Language, outline: &mut Vec<OutlineItem>) {
+pub(in crate::survey::focused_node) fn flatten_binary_outline(lang: Language, outline: &mut Vec<OutlineItem>) {
     loop {
         let Some(idx) = outline.iter().position(|item| {
             item.node_type == "binary_expression"

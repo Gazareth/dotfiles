@@ -65,10 +65,17 @@ impl FocusedNode {
         let node_type  = node_snapshot.node_type.clone();
         let range      = node_snapshot.range.clone();
 
-        let outline = Self::compute_outline(
+        let mut outline = Self::compute_outline(
             &node_snapshot.children,
             |raw| lang.classify(raw.into(), parent_ref),
         );
+
+        // Recursively flatten any binary_expression children into their leaf operands.
+        // flatten_binary_outline is a no-op when no binary_expression items are present,
+        // so it is safe to call unconditionally. This covers:
+        //   - binary_expression focused directly (flattens itself)
+        //   - expression_list / arguments with a binary_expression child
+        navigation::binary_navigation::flatten_binary_outline(lang, &mut outline);
 
         // Stamp hint_key on any outline item whose range matches a keyed NavigationTarget.
         //

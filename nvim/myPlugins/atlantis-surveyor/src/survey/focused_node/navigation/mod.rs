@@ -7,7 +7,7 @@ use crate::probe::treesitter::NodeOutline;
 use crate::probe::treesitter::NodeSnapshot;
 use crate::model::NavigationTarget;
 
-mod binary_navigation;
+pub(super) mod binary_navigation;
 use binary_navigation::gather_binary_siblings;
 
 /// Context bundling ancestry state to reduce parameter threading and redundant classifications.

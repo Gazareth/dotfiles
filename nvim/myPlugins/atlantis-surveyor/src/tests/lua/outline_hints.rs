@@ -141,3 +141,84 @@ fn variable_declaration_wrapper_is_expanded_and_hints_stamped() {
         .expect("expression_list outline item missing after expansion");
     assert_eq!(val_item.hint_key, Some("v"), "expression_list should get hint_key 'v'");
 }
+// ── binary expression flattening ──────────────────────────────────────────
+
+#[test]
+fn binary_expression_outline_is_flattened_when_focused_directly() {
+    // Focusing on a `binary_expression` node should produce a flat outline of
+    // its operands, not a single nested binary_expression child.
+    //
+    // AST for `a and b`:
+    //   binary_expression
+    //     identifier: a  (col 0)
+    //     identifier: b  (col 6)
+    let be_range = range(0, 0, 0, 11);
+    let a_range  = range(0, 0, 0, 1);
+    let b_range  = range(0, 6, 0, 11);
+
+    let focus = NodeOutline { node_type: "binary_expression".into(), range: be_range.clone() };
+    let root  = NodeOutline { node_type: "chunk".into(), range: be_range.clone() };
+    let ancestry = NodeAncestry::new_test(vec![focus], root, Language::Lua);
+
+    // Snapshot 1: the binary_expression focus node — children are the two operands.
+    snap("binary_expression")
+        .child_ranged("identifier", "a", a_range.start_row, a_range.start_col, a_range.end_row, a_range.end_col)
+        .child_ranged("identifier", "b", b_range.start_row, b_range.start_col, b_range.end_row, b_range.end_col)
+        .inject();
+
+    let result = FocusedNode::from_ancestry(ancestry, None).unwrap().unwrap();
+    let outline = &result.outline;
+
+    assert_eq!(outline.len(), 2,
+        "binary_expression outline should contain the two flat operands, not a nested wrapper");
+    assert_eq!(outline[0].node_type, "identifier");
+    assert_eq!(outline[0].range.start_col, 0);
+    assert_eq!(outline[1].node_type, "identifier");
+    assert_eq!(outline[1].range.start_col, 6);
+}
+
+#[test]
+fn expression_list_with_binary_child_is_flattened() {
+    // This is the regression case: an `expression_list` whose sole child is a
+    // `binary_expression`. Before the fix, Atlantis showed [binary_expression]
+    // as a single dead-end outline item instead of flattening to operands.
+    //
+    // AST for `a and b` assigned as a value:
+    //   expression_list
+    //     binary_expression
+    //       identifier: a  (col 0)
+    //       identifier: b  (col 6)
+    let el_range = range(0, 0, 0, 11);
+    let be_range = range(0, 0, 0, 11);  // same span as expression_list
+    let a_range  = range(0, 0, 0, 1);
+    let b_range  = range(0, 6, 0, 11);
+
+    let focus = NodeOutline { node_type: "expression_list".into(), range: el_range.clone() };
+    let root  = NodeOutline { node_type: "chunk".into(), range: el_range.clone() };
+    let ancestry = NodeAncestry::new_test(vec![focus], root, Language::Lua);
+
+    // Snapshot 1: expression_list — one child: binary_expression.
+    snap("expression_list")
+        .child_ranged("binary_expression", "a and b",
+            be_range.start_row, be_range.start_col, be_range.end_row, be_range.end_col)
+        .queue();
+
+    // Snapshot 2: binary_expression — its two operands.
+    // flatten_binary_outline will request this snapshot when expanding the child.
+    snap("binary_expression")
+        .child_ranged("identifier", "a", a_range.start_row, a_range.start_col, a_range.end_row, a_range.end_col)
+        .child_ranged("identifier", "b", b_range.start_row, b_range.start_col, b_range.end_row, b_range.end_col)
+        .queue();
+
+    let result = FocusedNode::from_ancestry(ancestry, None).unwrap().unwrap();
+    let outline = &result.outline;
+
+    assert_eq!(outline.len(), 2,
+        "expression_list outline should flatten through binary_expression to show the two operands");
+    assert!(outline.iter().all(|i| i.node_type != "binary_expression"),
+        "no binary_expression items should remain in the flattened outline");
+    assert_eq!(outline[0].node_type, "identifier");
+    assert_eq!(outline[0].range.start_col, 0, "first operand 'a'");
+    assert_eq!(outline[1].node_type, "identifier");
+    assert_eq!(outline[1].range.start_col, 6, "second operand 'b'");
+}
