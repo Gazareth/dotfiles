@@ -1,12 +1,9 @@
-local treesitter_config = require("configs.hydra.atlantis-deprecated.prepare.anchor_point.probe.treesitter.config")
-local atlantis = require("configs.hydra.atlantis-deprecated")
 local namu = require("configs.hydra.hydras.namu")
 
 local M = {}
 
 function M.setup(opts)
   opts = opts or {}
-  treesitter_config.setup(opts.treesitter or {})
 
   vim.keymap.set("n", "<leader>nn", function()
     namu.open()
@@ -15,10 +12,6 @@ function M.setup(opts)
   vim.keymap.set("n", "<leader>h", function()
     vim.cmd("AtlantisNouveau")
   end, { desc = "Atlantis" })
-
-  vim.keymap.set("n", "<leader>tn", function()
-    atlantis.open()
-  end, { desc = "Atlantis (Deep)" })
 end
 
 return M
