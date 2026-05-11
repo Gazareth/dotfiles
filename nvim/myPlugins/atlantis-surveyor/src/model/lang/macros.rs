@@ -100,6 +100,22 @@ macro_rules! impl_lang_node_resolver {
                 }
                 hints
             }
+
+
+
+            fn outline_exceptions(&self) -> Vec<$crate::model::node::NodeRange> {
+                let mut exceptions = vec![];
+                match self {
+                    $Enum::Function(n) => {
+                        if let Some(ref r) = n.state.name_range { exceptions.push(r.clone()); }
+                    }
+                    $Enum::Call(n) => {
+                        if let Some(ref r) = n.state.name_range { exceptions.push(r.clone()); }
+                    }
+                    _ => {}
+                }
+                exceptions
+            }
         }
 
         impl $crate::model::lang::Resolve for $crate::model::node::Node<$Lang, $crate::model::node::Unknown> {

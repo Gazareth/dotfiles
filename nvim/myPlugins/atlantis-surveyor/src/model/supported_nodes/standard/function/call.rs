@@ -7,6 +7,8 @@ use crate::model::NavigationTarget;
 pub struct FunctionCall {
     /// The name of the function being called — needed for display.
     pub name: String,
+    /// The range of the function being called — used for outline suppression.
+    pub name_range: Option<crate::model::node::NodeRange>,
     /// The argument list.
     pub parameters: Option<NavigationTarget>,
 }
@@ -26,6 +28,7 @@ impl<Lang: HasFunctionCalls> Extract<FunctionCall> for Lang {
     fn extract(raw: &RawNode) -> FunctionCall {
         FunctionCall {
             name:       raw.field_text("function"),
+            name_range: raw.field("function").map(|r| r.range.clone()),
             parameters: raw.field("arguments").map(|r| NavigationTarget::from_raw(&r)),
         }
     }

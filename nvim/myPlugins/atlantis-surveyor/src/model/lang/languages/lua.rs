@@ -1,4 +1,4 @@
-use crate::model::supported_nodes::{Assignment, FunctionCall};
+use crate::model::supported_nodes::{Assignment, FunctionCall, FunctionDeclaration};
 use crate::model::NavigationTarget;
 use crate::model::lang::Common;
 use crate::model::node::{Extract, NodeRange, RawNode};
@@ -10,10 +10,40 @@ impl Common for Lua {}
 
 impl Extract<FunctionCall> for Lua {
     fn extract(raw: &RawNode) -> FunctionCall {
+        let name_node = raw.field("name").or_else(|| {
+            raw.children.iter().find(|c| {
+                c.kind == "identifier" || c.kind == "dot_index_expression" || c.kind == "method_index_expression"
+            })
+        });
+
         FunctionCall {
             // Lua function_call uses `name`, not `function`, for the callee field.
             name:       raw.field_text("name"),
+            name_range: name_node.map(|r| r.range.clone()),
             parameters: raw.field("args").map(|r| NavigationTarget::from_raw(&r)),
+        }
+    }
+}
+
+impl Extract<FunctionDeclaration> for Lua {
+    fn extract(raw: &RawNode) -> FunctionDeclaration {
+        let name_node = raw.field("name").or_else(|| {
+            raw.children.iter().find(|c| {
+                let k = c.kind.to_lowercase();
+                k.contains("identifier") || k.contains("name") || k.contains("index_expression")
+            })
+        });
+
+        let body_node = raw.field("block")
+            .or_else(|| raw.field("body"))
+            .or_else(|| raw.children.iter().find(|c| c.kind == "block"));
+
+        FunctionDeclaration {
+            name:       raw.field_text("name"),
+            name_range: name_node.map(|r| r.range.clone()),
+            is_async:   raw.has_field("async"),
+            parameters: raw.field("parameters").map(|r| NavigationTarget::with_key(&r, "p")),
+            body:       body_node.map(|r| NavigationTarget::with_key(&r, "b")),
         }
     }
 }

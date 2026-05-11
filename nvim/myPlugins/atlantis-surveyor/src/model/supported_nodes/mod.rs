@@ -19,7 +19,7 @@ pub mod standard;
 pub use standard::{
     Assignment, HasAssignment,
     ConditionalStatement, HasConditionals,
-    FunctionDeclaration, HasFunctions,
+    FunctionDeclaration, HasStandardFunctions,
     FunctionCall, HasFunctionCalls,
     Parameter, HasParameter,
     ReturnStatement, HasReturnStatement,

@@ -87,6 +87,16 @@ function M.build(result)
     end
   end
 
+  if result.outline and #result.outline > 0 then
+    local child = result.outline[1]
+    table.insert(context_items, {
+      key    = "l",
+      icon   = "󰜴",
+      label  = string.format("to child [%s]", child.label),
+      action = function() jump_and_reopen(result.bufnr, child) end,
+    })
+  end
+
   if #context_items > 0 then
     table.insert(items, { heading = "Context" })
     for _, item in ipairs(context_items) do

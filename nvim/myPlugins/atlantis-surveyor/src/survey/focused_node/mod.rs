@@ -70,76 +70,26 @@ impl FocusedNode {
             |raw| lang.classify(raw.into(), parent_ref),
         );
 
-        // Recursively flatten any binary_expression children into their leaf operands.
-        // flatten_binary_outline is a no-op when no binary_expression items are present,
-        // so it is safe to call unconditionally. This covers:
-        //   - binary_expression focused directly (flattens itself)
-        //   - expression_list / arguments with a binary_expression child
+        // Suppress identifiers/names by matching their start position against exceptions.
+        let exceptions = node.outline_exceptions();
+        outline.retain(|item| {
+            !exceptions.iter().any(|ex| {
+                ex.start_row == item.range.start_row && ex.start_col == item.range.start_col
+            })
+        });
+
+        // Flatten binary expressions (e.g. x + y -> [x, y]).
         navigation::binary_navigation::flatten_binary_outline(lang, &mut outline);
 
-        // Stamp hint_key on any outline item whose range matches a keyed NavigationTarget.
-        //
-        // A "transparent wrapper" item is one where fewer hints match at its exact start
-        // position than exist in total, but ALL hints are contained within its range.
-        // In that case we expand the item one level and stamp the grandchildren instead.
-        // Example: variable_declaration → outline has [assignment_statement]; lhs hint
-        // shares the same start as assignment_statement (both start at col 6), but value
-        // hint is deeper. Without expansion only [n] would appear; expansion yields
-        // [variable_list → n] and [expression_list → v].
+        // Stamp hotkey hints (e.g. [p] for parameters, [b] for body).
         let hints = node.keyed_outline_hints();
-        let outline = if hints.is_empty() {
-            outline
-        } else {
-            let mut result: Vec<OutlineItem> = Vec::with_capacity(outline.len());
-            for mut item in outline {
-                let direct_count = hints.iter().filter(|(r, _)| {
-                    r.start_row == item.range.start_row && r.start_col == item.range.start_col
-                }).count();
-
-                let all_contained = hints.iter().all(|(r, _)| {
-                    (r.start_row > item.range.start_row
-                        || (r.start_row == item.range.start_row && r.start_col >= item.range.start_col))
-                    && (r.end_row < item.range.end_row
-                        || (r.end_row == item.range.end_row && r.end_col <= item.range.end_col))
-                });
-
-                // Wrapper: at least one hint is deeper than this item's start, yet all
-                // hints live inside it. Expand one level and stamp the grandchildren.
-                let is_wrapper = direct_count < hints.len() && all_contained;
-
-                if is_wrapper {
-                    if let Ok(inner_snap) = treesitter::snapshot(
-                        item.range.start_row, item.range.start_col,
-                        Some(&item.node_type),
-                        Some((item.range.start_row, item.range.start_col)),
-                        Some((item.range.end_row,   item.range.end_col)),
-                    ) {
-                        let mut expanded = Self::compute_outline(
-                            &inner_snap.children,
-                            |raw| lang.classify(raw.into(), parent_ref),
-                        );
-                        for gc in &mut expanded {
-                            if let Some((_, key)) = hints.iter().find(|(r, _)| {
-                                r.start_row == gc.range.start_row && r.start_col == gc.range.start_col
-                            }) {
-                                gc.hint_key = Some(key);
-                            }
-                        }
-                        result.extend(expanded);
-                        continue;
-                    }
-                }
-
-                // Direct match for non-wrapper items.
-                if let Some((_, key)) = hints.iter().find(|(r, _)| {
-                    r.start_row == item.range.start_row && r.start_col == item.range.start_col
-                }) {
-                    item.hint_key = Some(key);
-                }
-                result.push(item);
+        for item in &mut outline {
+            if let Some((_, key)) = hints.iter().find(|(r, _)| {
+                r.start_row == item.range.start_row && r.start_col == item.range.start_col
+            }) {
+                item.hint_key = Some(key);
             }
-            result
-        };
+        }
 
         let focused = FocusedNode {
             node_type, range, node, navigation, outline,

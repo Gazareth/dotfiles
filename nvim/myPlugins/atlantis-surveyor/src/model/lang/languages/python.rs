@@ -1,5 +1,5 @@
 use crate::model::NavigationTarget;
-use crate::model::supported_nodes::{Assignment, HasFunctionCalls};
+use crate::model::supported_nodes::{Assignment, HasFunctionCalls, HasStandardFunctions};
 use crate::model::lang::Common;
 use crate::model::node::{Extract, RawNode};
 
@@ -8,6 +8,7 @@ pub struct Python;
 
 impl Common for Python {}
 impl HasFunctionCalls for Python {}
+impl HasStandardFunctions for Python {}
 
 // Python assignments use `left`/`right` fields, not `name`/`value`.
 impl Extract<Assignment> for Python {

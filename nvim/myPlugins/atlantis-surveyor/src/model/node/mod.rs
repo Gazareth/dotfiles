@@ -15,6 +15,8 @@ pub struct NodeRange {
     pub end_col: u32,
 }
 
+
+
 // ── Raw data from Tree-sitter (populated via Lua API) ─────────────────────
 //
 // RawNode is an opaque handle into the Tree-sitter tree. It carries just

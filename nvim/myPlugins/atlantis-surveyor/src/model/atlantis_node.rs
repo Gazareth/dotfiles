@@ -65,6 +65,16 @@ impl AtlantisNode {
 
 
 
+    /// Returns the ranges of any children that should be suppressed from the outline.
+    pub fn outline_exceptions(&self) -> Vec<crate::model::node::NodeRange> {
+        match self {
+            AtlantisNode::Recognised(n) => n.outline_exceptions(),
+            _ => vec![],
+        }
+    }
+
+
+
     /// Returns the human-readable classification name for this node.
     pub fn classification_name(&self) -> String {
         match self {

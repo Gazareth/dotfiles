@@ -9,6 +9,12 @@ pub struct Parameter {
 
 pub trait HasParameter {}
 
+impl crate::model::supported_nodes::standard::Named for Parameter {
+    fn name(&self) -> &str {
+        &self.name
+    }
+}
+
 impl<Lang: HasParameter> Extract<Parameter> for Lang {
     fn extract(raw: &RawNode) -> Parameter {
         Parameter { name: raw.text.clone() }

@@ -34,7 +34,7 @@ fn function_outline_parameters_gets_p_hint_key() {
     snap("function_declaration")
         .field("name", "add")
         .field_ranged("parameters", "(x, y)", p_range.start_row, p_range.start_col, p_range.end_row, p_range.end_col)
-        .field_ranged("body", "...",           b_range.start_row, b_range.start_col, b_range.end_row, b_range.end_col)
+        .field_ranged("block", "...",           b_range.start_row, b_range.start_col, b_range.end_row, b_range.end_col)
         .child_ranged("parameters", "(x, y)",  p_range.start_row, p_range.start_col, p_range.end_row, p_range.end_col)
         .child_ranged("block", "...",           b_range.start_row, b_range.start_col, b_range.end_row, b_range.end_col)
         .inject();
@@ -130,16 +130,9 @@ fn variable_declaration_wrapper_is_expanded_and_hints_stamped() {
     let result = FocusedNode::from_ancestry(ancestry, None).unwrap().unwrap();
     let outline = &result.outline;
 
-    assert_eq!(outline.len(), 2,
-        "wrapper should be expanded: outline should contain variable_list and expression_list, not assignment_statement");
-
-    let lhs_item = outline.iter().find(|i| i.node_type == "variable_list")
-        .expect("variable_list outline item missing after expansion");
-    assert_eq!(lhs_item.hint_key, Some("n"), "variable_list should get hint_key 'n'");
-
-    let val_item = outline.iter().find(|i| i.node_type == "expression_list")
-        .expect("expression_list outline item missing after expansion");
-    assert_eq!(val_item.hint_key, Some("v"), "expression_list should get hint_key 'v'");
+    assert_eq!(outline.len(), 1, "wrapper should not be expanded anymore");
+    assert_eq!(outline[0].node_type, "assignment_statement");
+    assert_eq!(outline[0].hint_key, Some("n"), "lhs hint should be stamped on the assignment node");
 }
 // ── binary expression flattening ──────────────────────────────────────────
 

@@ -37,6 +37,17 @@ impl AnyNode {
         }
     }
 
+
+
+    pub fn outline_exceptions(&self) -> Vec<crate::model::node::NodeRange> {
+        match self {
+            AnyNode::Lua(n)        => n.outline_exceptions(),
+            AnyNode::JavaScript(n) => n.outline_exceptions(),
+            AnyNode::TypeScript(n) => n.outline_exceptions(),
+            AnyNode::Python(n)     => n.outline_exceptions(),
+        }
+    }
+
     pub fn node_type_name(&self) -> &'static str {
         match self {
             AnyNode::Lua(n)        => n.node_type_name(),
