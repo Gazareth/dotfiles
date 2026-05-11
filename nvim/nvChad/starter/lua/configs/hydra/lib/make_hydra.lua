@@ -147,7 +147,7 @@ function M.open(spec, opts)
       color = "red",
       invoke_on_body = false,
       hint = {
-        position = "middle",
+        position = "bottom",
         border = "rounded",
       },
     },
