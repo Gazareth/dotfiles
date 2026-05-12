@@ -65,10 +65,7 @@ impl FocusedNode {
         let node_type  = node_snapshot.node_type.clone();
         let range      = node_snapshot.range.clone();
 
-        let mut outline = Self::compute_outline(
-            &node_snapshot.children,
-            |raw| lang.classify(raw.into(), parent_ref),
-        );
+        let mut outline = Self::compute_outline(&node_snapshot.children);
 
         // Suppress identifiers/names by matching their start position against exceptions.
         let exceptions = node.outline_exceptions();
@@ -86,17 +83,13 @@ impl FocusedNode {
             && outline[0].node_type == "assignment_statement"
         {
             let wrapper = outline.remove(0);
-            let wrapper_ref = NodeOutline::new(wrapper.node_type.clone(), wrapper.range.clone());
             if let Ok(snap) = treesitter::snapshot(
                 wrapper.range.start_row, wrapper.range.start_col,
                 Some("assignment_statement"),
                 Some((wrapper.range.start_row, wrapper.range.start_col)),
                 Some((wrapper.range.end_row,   wrapper.range.end_col)),
             ) {
-                let mut expanded = Self::compute_outline(
-                    &snap.children,
-                    |c| lang.classify(RawNode::from(c), Some(&wrapper_ref)),
-                );
+                let mut expanded = Self::compute_outline(&snap.children);
                 expanded.sort_by(|a, b| {
                     a.range.start_row.cmp(&b.range.start_row)
                         .then(a.range.start_col.cmp(&b.range.start_col))

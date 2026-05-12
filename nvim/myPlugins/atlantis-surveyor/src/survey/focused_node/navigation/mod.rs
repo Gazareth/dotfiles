@@ -102,7 +102,7 @@ impl NavigationInfo {
         let ctx = AncestryContext::new(lang, all, focus_idx);
         
         let focus_node = ctx.lang.classify(RawNode::from(all[focus_idx]), ctx.parent_at(focus_idx));
-        let is_leaf_focus = Self::is_leaf_focus(&focus_node, &ctx);
+        let is_leaf_focus = matches!(focus_node, AtlantisNode::Leaf);
 
         let top_level = Self::resolve_top_level(&ctx);
         let (prev_sibling, next_sibling) = Self::resolve_siblings(&ctx, node_snapshot, is_leaf_focus);
@@ -117,14 +117,6 @@ impl NavigationInfo {
             next_sibling,
             is_at_top,
         }
-    }
-
-    /// Checks if the focus node is a Leaf (an unrecognised token inside a transparent structural grouping).
-    fn is_leaf_focus(focus_node: &AtlantisNode, ctx: &AncestryContext) -> bool {
-        matches!(focus_node, AtlantisNode::Unrecognised)
-            && ctx.parent_classification.as_ref().is_some_and(|p| {
-                matches!(p, AtlantisNode::Recognised(n) if n.node_type_name() == "ParameterList" || n.node_type_name() == "ExpressionList" || n.node_type_name() == "Body" || n.node_type_name() == "FileRoot")
-            })
     }
 
     /// Finds the nearest ancestor that differs in construct kind from the focus.

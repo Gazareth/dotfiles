@@ -261,3 +261,35 @@ fn multi_variable_assignment_identifier_is_leaf() {
     assert_eq!(result.node_type, "identifier",
         "one of multiple variables should remain as a Leaf focus target");
 }
+
+// ── Hint navigation ───────────────────────────────────────────────────────
+
+#[test]
+fn hint_for_multi_child_expression_list_focuses_it_directly() {
+    use crate::survey::focused_node::FocusedNode;
+    use crate::survey::focused_node::ancestry::NodeAncestry;
+
+    // expression_list with 2 children is a valid selection target — hint should focus it
+    // directly, not climb.  Mirrors cursor navigation: Guard B does not fire.
+    let r_assign = NodeRange { start_row: 0, start_col: 0, end_row: 0, end_col: 9 };
+    let r_el     = NodeRange { start_row: 0, start_col: 4, end_row: 0, end_col: 9 };
+
+    let el     = NodeOutline { node_type: "expression_list".into(), range: r_el.clone(), child_count: 2 };
+    let assign = NodeOutline::new("assignment_statement", r_assign.clone());
+    let root   = NodeOutline::new("chunk",                r_assign.clone());
+
+    let ancestry = NodeAncestry::new_test(vec![el, assign], root, Language::Lua);
+
+    snap("expression_list")
+        .child_ranged("identifier", "a", 0, 4, 0, 5)
+        .child_ranged("identifier", "b", 0, 7, 0, 8)
+        .inject();
+
+    let result = FocusedNode::from_ancestry(
+        ancestry,
+        Some(("expression_list", 0, 4)),
+    ).unwrap().unwrap();
+
+    assert_eq!(result.node_type, "expression_list",
+        "hint to multi-child expression_list should focus it directly");
+}

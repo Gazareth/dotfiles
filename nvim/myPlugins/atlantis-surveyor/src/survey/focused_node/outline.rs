@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 
-use crate::model::{AtlantisNode, OutlineItem};
+use crate::model::OutlineItem;
 
 use crate::probe::treesitter::SnapshotChild;
 
@@ -9,7 +9,6 @@ use super::FocusedNode;
 impl FocusedNode {
     pub(in crate::survey) fn compute_outline(
         children: &[SnapshotChild],
-        _classify: impl Fn(&SnapshotChild) -> AtlantisNode,
     ) -> Vec<OutlineItem> {
         let mut sorted_children = children.to_vec();
         sorted_children.sort_by(|a, b| {
@@ -38,9 +37,7 @@ impl FocusedNode {
 #[cfg(test)]
 mod tests {
     use super::FocusedNode;
-    use crate::model::{AtlantisNode, node::NodeRange};
-    use crate::model::node::RawNode;
-    use crate::probe::language::Language;
+    use crate::model::node::NodeRange;
     use crate::probe::treesitter::SnapshotChild;
 
 
@@ -64,9 +61,7 @@ mod tests {
             },
         ];
 
-        let outline = FocusedNode::compute_outline(&children, |child: &SnapshotChild| {
-            AtlantisNode::from_raw(RawNode::from(child), &Language::Lua)
-        });
+        let outline = FocusedNode::compute_outline(&children);
 
         assert_eq!(outline.len(), 3);
         assert_eq!(outline[0].label, "local a = 1");
@@ -91,9 +86,7 @@ mod tests {
             },
         ];
 
-        let outline = FocusedNode::compute_outline(&children, |child: &SnapshotChild| {
-            AtlantisNode::from_raw(RawNode::from(child), &Language::Lua)
-        });
+        let outline = FocusedNode::compute_outline(&children);
 
         assert_eq!(outline.len(), 2);
         assert_eq!(outline[0].label, "(a, b)");

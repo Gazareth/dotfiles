@@ -61,18 +61,6 @@ impl NodeAncestry {
         let all: Vec<&NodeOutline> = self.all().collect();
 
         let candidate_idx = if let Some((target_type, target_row, target_col)) = target_hint {
-            // For transparent targets, pick the outermost match: nested containers of the same type
-            // (e.g. binary_expression inside binary_expression) share the same start position,
-            // and the hint was generated from the outer one. The outward walk is also skipped
-            // for hinted containers — the hint is already authoritative.
-            if lang.is_transparent(target_type) {
-                let idx = all.iter().enumerate()
-                    .filter(|(_, n)| n.node_type == target_type && n.range.start_row == target_row && n.range.start_col == target_col)
-                    .last()
-                    .map(|(i, _)| i)
-                    .ok_or(AtlantisError::UnsupportedLanguage)?;
-                return Ok(idx);
-            }
             all.iter().position(|n| {
                 n.node_type == target_type
                 && n.range.start_row == target_row
@@ -98,7 +86,7 @@ impl NodeAncestry {
         // Leaf nodes are never walked upward — they stay at exactly the candidate position.
         let candidate_kind = lang.classify(RawNode::from(all[candidate_idx]), all.get(candidate_idx + 1).copied());
         if matches!(candidate_kind, AtlantisNode::Leaf | AtlantisNode::Unrecognised) {
-            return Ok(candidate_idx); // Leaf/Unrecognised candidate — no upward walk
+            return Ok(candidate_idx);
         }
         Ok(all[candidate_idx..].iter()
             .enumerate()

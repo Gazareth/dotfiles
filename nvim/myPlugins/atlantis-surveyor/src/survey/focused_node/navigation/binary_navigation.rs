@@ -1,5 +1,4 @@
-use crate::model::{AtlantisNode, OutlineItem};
-use crate::model::node::RawNode;
+use crate::model::OutlineItem;
 use crate::probe::language::Language;
 use crate::probe::treesitter::{self, NodeOutline};
 use crate::model::NavigationTarget;
@@ -15,11 +14,7 @@ pub fn gather_binary_siblings(lang: Language, root: &NodeOutline) -> Vec<Navigat
         Some((root.range.end_row,   root.range.end_col)),
     ) else { return vec![]; };
 
-    let root_ref = NodeOutline::new("binary_expression", root.range.clone());
-    let mut outline = super::super::FocusedNode::compute_outline(
-        &snap.children,
-        |c| lang.classify(RawNode::from(c), Some(&root_ref)),
-    );
+    let mut outline = super::super::FocusedNode::compute_outline(&snap.children);
 
     flatten_binary_outline(lang, &mut outline);
 
@@ -42,7 +37,6 @@ pub(in crate::survey::focused_node) fn flatten_binary_outline(lang: Language, ou
         }) else { break; };
 
         let item = outline.remove(idx);
-        let child_ref = NodeOutline::new(item.node_type.clone(), item.range.clone());
         let Ok(snap) = treesitter::snapshot(
             item.range.start_row, item.range.start_col,
             Some("binary_expression"),
@@ -50,10 +44,7 @@ pub(in crate::survey::focused_node) fn flatten_binary_outline(lang: Language, ou
             Some((item.range.end_row,   item.range.end_col)),
         ) else { break; };
 
-        let children = super::super::FocusedNode::compute_outline(
-            &snap.children,
-            |c| lang.classify(RawNode::from(c), Some(&child_ref)),
-        );
+        let children = super::super::FocusedNode::compute_outline(&snap.children);
         outline.extend(children);
         outline.sort_by(|a, b| {
             a.range.start_row.cmp(&b.range.start_row)
