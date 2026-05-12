@@ -44,8 +44,8 @@ fn variable_declaration_trims_whitespace_after_split() {
 #[test]
 fn local_declaration_uses_name_field() {
     let a = lua("local_declaration")
-        .field("name", "x")
-        .field("value", "42")
+        .field_text("name", "x")
+        .field_text("value", "42")
         .classify()
         .as_assignment();
 

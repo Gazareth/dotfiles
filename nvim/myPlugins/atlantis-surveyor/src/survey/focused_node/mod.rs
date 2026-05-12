@@ -78,6 +78,33 @@ impl FocusedNode {
             })
         });
 
+        // Expand variable_declaration: its single assignment_statement child is a transparent
+        // wrapper — replace it with the assignment_statement's own children so that the
+        // name (variable_list) and value (expression_list) appear directly in the outline.
+        if node_snapshot.node_type == "variable_declaration"
+            && outline.len() == 1
+            && outline[0].node_type == "assignment_statement"
+        {
+            let wrapper = outline.remove(0);
+            let wrapper_ref = NodeOutline::new(wrapper.node_type.clone(), wrapper.range.clone());
+            if let Ok(snap) = treesitter::snapshot(
+                wrapper.range.start_row, wrapper.range.start_col,
+                Some("assignment_statement"),
+                Some((wrapper.range.start_row, wrapper.range.start_col)),
+                Some((wrapper.range.end_row,   wrapper.range.end_col)),
+            ) {
+                let mut expanded = Self::compute_outline(
+                    &snap.children,
+                    |c| lang.classify(RawNode::from(c), Some(&wrapper_ref)),
+                );
+                expanded.sort_by(|a, b| {
+                    a.range.start_row.cmp(&b.range.start_row)
+                        .then(a.range.start_col.cmp(&b.range.start_col))
+                });
+                outline.extend(expanded);
+            }
+        }
+
         // Flatten binary expressions (e.g. x + y -> [x, y]).
         navigation::binary_navigation::flatten_binary_outline(lang, &mut outline);
 

@@ -4,8 +4,8 @@ use crate::tests::lua::*;
 #[test]
 fn extracts_condition_and_consequence() {
     let c = lua("if_statement")
-        .field("condition",   "sum > 0")
-        .field("consequence", "return sum")
+        .field_text("condition",   "sum > 0")
+        .field_text("consequence", "return sum")
         .classify()
         .as_conditional();
 
@@ -20,9 +20,9 @@ fn extracts_condition_and_consequence() {
 #[test]
 fn if_else_extracts_alternate() {
     let c = lua("if_statement")
-        .field("condition",   "x > 0")
-        .field("consequence", "return x")
-        .field("alternative", "return 0")
+        .field_text("condition",   "x > 0")
+        .field_text("consequence", "return x")
+        .field_text("alternative", "return 0")
         .classify()
         .as_conditional();
 

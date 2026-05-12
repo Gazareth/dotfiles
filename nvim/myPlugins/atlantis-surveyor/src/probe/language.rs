@@ -59,12 +59,25 @@ impl Language {
     pub fn classify(&self, raw: RawNode, parent: Option<&NodeOutline>) -> AtlantisNode {
         let base = AtlantisNode::from_raw(raw.clone(), self);
 
-        // If unrecognised, check if it's a "Leaf" (inner token of a transparent node).
+        // Guard A — unrecognised child of a transparent parent.
         if matches!(base, AtlantisNode::Unrecognised) {
             if let Some(p) = parent {
-                let is_transparent = self.is_transparent(&p.node_type);
-                if is_transparent {
-                    return AtlantisNode::Leaf;
+                if let Some(pk) = self.node_kind_for(&p.node_type) {
+                    if pk.is_transparent() {
+                        if p.child_count <= 1 {
+                            return AtlantisNode::Unrecognised;
+                        }
+                        return AtlantisNode::Leaf;
+                    }
+                }
+            }
+        }
+
+        // Guard B — transparent node itself with ≤ 1 child: no selection possible.
+        if raw.child_count <= 1 {
+            if let Some(k) = self.node_kind_for(&raw.kind) {
+                if k.is_transparent() {
+                    return AtlantisNode::Unrecognised;
                 }
             }
         }

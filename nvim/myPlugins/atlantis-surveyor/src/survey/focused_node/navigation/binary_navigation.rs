@@ -15,7 +15,7 @@ pub fn gather_binary_siblings(lang: Language, root: &NodeOutline) -> Vec<Navigat
         Some((root.range.end_row,   root.range.end_col)),
     ) else { return vec![]; };
 
-    let root_ref = NodeOutline { node_type: "binary_expression".into(), range: root.range.clone() };
+    let root_ref = NodeOutline::new("binary_expression", root.range.clone());
     let mut outline = super::super::FocusedNode::compute_outline(
         &snap.children,
         |c| lang.classify(RawNode::from(c), Some(&root_ref)),
@@ -42,7 +42,7 @@ pub(in crate::survey::focused_node) fn flatten_binary_outline(lang: Language, ou
         }) else { break; };
 
         let item = outline.remove(idx);
-        let child_ref = NodeOutline { node_type: item.node_type.clone(), range: item.range.clone() };
+        let child_ref = NodeOutline::new(item.node_type.clone(), item.range.clone());
         let Ok(snap) = treesitter::snapshot(
             item.range.start_row, item.range.start_col,
             Some("binary_expression"),

@@ -1,4 +1,5 @@
 mod assignment;
+mod classification_spec;
 mod conditional;
 mod container;
 mod function;

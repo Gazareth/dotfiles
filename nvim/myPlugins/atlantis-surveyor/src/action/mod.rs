@@ -5,7 +5,7 @@ pub trait ConstructActions: std::fmt::Debug + Send + Sync {
     fn classification_name(&self) -> String;
 
     /// The specific node type as reported by Tree-sitter.
-    fn node_type_name(&self) -> &str;
+    fn node_type_name(&self) -> &'static str;
 
     /// List of semantic actions available for this node.
     fn available_actions(&self) -> &'static [&'static str];

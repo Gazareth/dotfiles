@@ -5,8 +5,8 @@ use crate::tests::lua::*;
 #[test]
 fn lua_uses_name_field_for_callee() {
     let k = lua("function_call")
-        .field("name", "print")
-        .field("args", "(\"hello\")")
+        .field_text("name", "print")
+        .field_text("args", "(\"hello\")")
         .classify()
         .as_call();
 

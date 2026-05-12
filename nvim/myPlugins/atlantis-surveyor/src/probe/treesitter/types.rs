@@ -14,8 +14,20 @@ pub struct SnapshotChild {
 /// Sparse position-only ancestry entry from Lua — just enough to identify and locate a node.
 #[derive(Debug, Clone)]
 pub struct NodeOutline {
-    pub node_type: String,
-    pub range:     NodeRange,
+    pub node_type:   String,
+    pub range:       NodeRange,
+    /// Named child count as reported by Tree-sitter. Used to distinguish a sole
+    /// variable in an assignment (`local x = 1`) from multiple variables
+    /// (`local x, y = …`), which changes whether the cursor stops here or climbs.
+    pub child_count: usize,
+}
+
+impl NodeOutline {
+    /// Construct with `child_count = 0` (the common case for nodes that do not
+    /// use the child-count to influence classification).
+    pub fn new(node_type: impl Into<String>, range: NodeRange) -> Self {
+        Self { node_type: node_type.into(), range, child_count: 0 }
+    }
 }
 
 /// Full Tree-sitter node snapshot — rich with fields, children, siblings, and text.
@@ -36,13 +48,14 @@ pub struct NodeSnapshot {
 impl From<&NodeSnapshot> for RawNode {
     fn from(snapshot: &NodeSnapshot) -> Self {
         RawNode {
-            kind:     snapshot.node_type.clone(),
-            text:     snapshot.text.clone(),
-            range:    snapshot.range.clone(),
-            fields:   snapshot.fields.iter()
-                        .map(|(k, f)| (k.clone(), RawNode::from(f)))
-                        .collect(),
-            children: snapshot.children.iter().map(RawNode::from).collect(),
+            kind:        snapshot.node_type.clone(),
+            text:        snapshot.text.clone(),
+            range:       snapshot.range.clone(),
+            fields:      snapshot.fields.iter()
+                            .map(|(k, f)| (k.clone(), RawNode::from(f)))
+                            .collect(),
+            children:    snapshot.children.iter().map(RawNode::from).collect(),
+            child_count: snapshot.children.len(),
         }
     }
 }
@@ -55,6 +68,7 @@ impl From<&SnapshotChild> for RawNode {
             range:    f.range.clone(),
             fields:   HashMap::new(),
             children: vec![],
+            child_count: 0,
         }
     }
 }
@@ -64,11 +78,12 @@ impl From<&SnapshotChild> for RawNode {
 impl From<&NodeOutline> for RawNode {
     fn from(n: &NodeOutline) -> Self {
         RawNode {
-            kind:     n.node_type.clone(),
-            text:     String::new(),
-            range:    n.range.clone(),
-            fields:   HashMap::new(),
-            children: vec![],
+            kind:        n.node_type.clone(),
+            text:        String::new(),
+            range:       n.range.clone(),
+            fields:      HashMap::new(),
+            children:    vec![],
+            child_count: n.child_count,
         }
     }
 }

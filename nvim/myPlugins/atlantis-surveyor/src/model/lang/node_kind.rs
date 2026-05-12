@@ -16,22 +16,18 @@ pub enum NodeKind {
 }
 
 impl NodeKind {
-    /// Returns true if this node kind should be skipped during ancestry traversal
-    /// when it is the sole child of a container, effectively making it transparent.
+    /// Homogeneous selection container.
+    /// With ≤ 1 named child the node and its unrecognised children are Unrecognised
+    /// (nothing to select — walker climbs). With ≥ 2 named children the node is
+    /// Recognised and each unrecognised child inside is a Leaf (individually focusable).
+    /// Also used by the hint-navigation outermost-match path in find_focus_idx.
     pub fn is_transparent(&self) -> bool {
-        match self {
-            NodeKind::FileRoot => true,
-            NodeKind::Body => true,
-            NodeKind::ParameterList => true,
-            NodeKind::ExpressionList => true,
-            NodeKind::ArgumentList => true,
-            NodeKind::Function => false,
-            NodeKind::Call => false,
-            NodeKind::Assignment => false,
-            NodeKind::Conditional => false,
-            NodeKind::Parameter => false,
-            NodeKind::ReturnStatement => false,
-        }
+        matches!(self,
+            NodeKind::ParameterList  |
+            NodeKind::ArgumentList   |
+            NodeKind::ExpressionList |
+            NodeKind::Body
+        )
     }
 }
 

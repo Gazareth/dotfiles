@@ -5,8 +5,8 @@ use crate::tests::lua::*;
 #[test]
 fn extracts_name() {
     let f = lua("function_declaration")
-        .field("name", "add")
-        .field("parameters", "(x, y)")
+        .field_text("name", "add")
+        .field_text("parameters", "(x, y)")
         .classify()
         .as_function();
 
@@ -18,8 +18,8 @@ fn extracts_name() {
 fn async_field_presence_sets_is_async() {
     // is_async is driven by `raw.has_field("async")` — presence, not value.
     let f = lua("function_declaration")
-        .field("name", "fetch")
-        .field("async", "async")
+        .field_text("name", "fetch")
+        .field_text("async", "async")
         .classify()
         .as_function();
 
@@ -32,7 +32,7 @@ fn async_field_presence_sets_is_async() {
 #[test]
 fn local_function_extracts_name() {
     let f = lua("local_function")
-        .field("name", "helper")
+        .field_text("name", "helper")
         .classify()
         .as_function();
 

@@ -33,8 +33,9 @@ pub fn decode(d: &Dictionary) -> Result<(String, Vec<NodeOutline>), AtlantisErro
         .filter_map(|val| {
             let entry = Dictionary::from_object(val).ok()?;
             Some(NodeOutline {
-                node_type: str(&entry, "node_type").ok()?,
-                range:     light_range(&entry).ok()?,
+                node_type:   str(&entry, "node_type").ok()?,
+                range:       light_range(&entry).ok()?,
+                child_count: u32(&entry, "child_count").ok().map(|n| n as usize).unwrap_or(0),
             })
         })
         .collect();

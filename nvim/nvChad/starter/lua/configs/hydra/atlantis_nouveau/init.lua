@@ -9,6 +9,7 @@ local function node_data(n)
     node_type = n:type(),
     start_row = sr, start_col = sc,
     end_row = er, end_col = ec,
+    child_count = n:named_child_count(),
   }
 end
 

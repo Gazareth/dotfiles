@@ -41,8 +41,12 @@ macro_rules! impl_lang_node_resolver {
             Unresolved($crate::model::node::Node<$Lang, $crate::model::node::Unresolved>),
         }
 
-        impl $Enum {
-            pub fn node_type_name(&self) -> &'static str {
+        impl $crate::action::ConstructActions for $Enum {
+            fn classification_name(&self) -> String {
+                self.node_type_name().to_string()
+            }
+
+            fn node_type_name(&self) -> &'static str {
                 match self {
                     $Enum::Function(_)    => "Function",
                     $Enum::Call(_)        => "Call",
@@ -57,9 +61,7 @@ macro_rules! impl_lang_node_resolver {
                     $Enum::Unresolved(_)  => "Unresolved",
                 }
             }
-        }
 
-        impl $crate::action::ConstructActions for $Enum {
             fn available_actions(&self) -> &'static [&'static str] {
                 match self {
                     $Enum::Function(_)        => &["rename"],

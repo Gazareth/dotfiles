@@ -32,6 +32,9 @@ pub struct RawNode {
     pub fields: HashMap<String, RawNode>,
     /// All named children in source order (e.g. parameters, statements).
     pub children: Vec<RawNode>,
+    /// Named child count from Tree-sitter (populated from NodeOutline; 0 for snapshot-derived nodes).
+    #[serde(default)]
+    pub child_count: usize,
 }
 
 impl RawNode {
@@ -61,6 +64,7 @@ impl RawNode {
             range: self.range.clone(),
             fields: HashMap::new(),
             children: vec![],
+            child_count: 0,
         }
     }
 }
