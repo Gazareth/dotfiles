@@ -1,6 +1,6 @@
 use crate::tests::lua::*;
 use crate::survey::NavigationInfo;
-use crate::probe::treesitter::{NodeOutline, NodeSnapshot};
+use crate::probe::treesitter::{NodeOutline, NodeSnapshot, SnapshotChild};
 use crate::probe::language::Language;
 
 use crate::model::node::NodeRange;
@@ -292,4 +292,213 @@ fn hint_for_multi_child_expression_list_focuses_it_directly() {
 
     assert_eq!(result.node_type, "expression_list",
         "hint to multi-child expression_list should focus it directly");
+}
+
+// ── Function component sibling navigation ─────────────────────────────────
+
+#[test]
+fn parameters_siblings_include_return_statement() {
+    // When focused on a multi-param parameters node inside a function, the sibling
+    // set should be [parameters, block, return_statement] — cycling between function parts.
+    let fn_range  = NodeRange { start_row: 0, start_col: 0, end_row: 5, end_col: 3 };
+    let p_range   = NodeRange { start_row: 0, start_col: 9, end_row: 0, end_col: 16 };
+    let b_range   = NodeRange { start_row: 1, start_col: 0, end_row: 4, end_col: 3 };
+    let ret_range = NodeRange { start_row: 3, start_col: 2, end_row: 3, end_col: 10 };
+
+    let params = NodeOutline { node_type: "parameters".into(), range: p_range.clone(), child_count: 2 };
+    let func   = NodeOutline::new("function_declaration", fn_range.clone());
+    let root   = NodeOutline::new("chunk",                fn_range.clone());
+    let all    = vec![&params, &func, &root];
+
+    let snapshot = NodeSnapshot {
+        node_type: "parameters".into(),
+        text:      "(x, y)".into(),
+        range:     p_range.clone(),
+        fields:    Default::default(),
+        children:  vec![
+            SnapshotChild { node_type: "identifier".into(), text: "x".into(), range: NodeRange { start_row: 0, start_col: 10, end_row: 0, end_col: 11 } },
+            SnapshotChild { node_type: "identifier".into(), text: "y".into(), range: NodeRange { start_row: 0, start_col: 13, end_row: 0, end_col: 14 } },
+        ],
+        siblings: vec![
+            SnapshotChild { node_type: "identifier".into(), text: "add".into(),   range: NodeRange { start_row: 0, start_col: 9, end_row: 0, end_col: 12 } },
+            SnapshotChild { node_type: "parameters".into(), text: "(x, y)".into(), range: p_range.clone() },
+            SnapshotChild { node_type: "block".into(),      text: "...".into(),    range: b_range.clone() },
+        ],
+    };
+
+    snap("block")
+        .child_ranged("variable_declaration", "local z = x + y", 2, 2, 2, 18)
+        .child_ranged("return_statement",     "return z",         ret_range.start_row, ret_range.start_col, ret_range.end_row, ret_range.end_col)
+        .inject();
+
+    let nav = NavigationInfo::from_snapshot(Language::Lua, &all, 0, &snapshot);
+
+    let next = nav.next_sibling.as_ref().expect("should have next sibling");
+    assert_eq!(next.node_type, "block", "next sibling of parameters should be block");
+
+    let prev = nav.prev_sibling.as_ref().expect("should have prev sibling");
+    assert_eq!(prev.node_type, "return_statement", "prev sibling of parameters should wrap to return_statement");
+}
+
+#[test]
+fn body_siblings_include_params_and_return() {
+    // When focused on the block (Body) inside a function, siblings should include
+    // parameters and return_statement, found in node_snapshot.children directly.
+    let fn_range  = NodeRange { start_row: 0, start_col: 0, end_row: 5, end_col: 3 };
+    let p_range   = NodeRange { start_row: 0, start_col: 9, end_row: 0, end_col: 16 };
+    let b_range   = NodeRange { start_row: 1, start_col: 0, end_row: 4, end_col: 3 };
+    let ret_range = NodeRange { start_row: 3, start_col: 2, end_row: 3, end_col: 10 };
+
+    let block = NodeOutline { node_type: "block".into(), range: b_range.clone(), child_count: 2 };
+    let func  = NodeOutline::new("function_declaration", fn_range.clone());
+    let root  = NodeOutline::new("chunk",                fn_range.clone());
+    let all   = vec![&block, &func, &root];
+
+    let snapshot = NodeSnapshot {
+        node_type: "block".into(),
+        text:      "...".into(),
+        range:     b_range.clone(),
+        fields:    Default::default(),
+        children:  vec![
+            SnapshotChild { node_type: "variable_declaration".into(), text: "local z = x + y".into(), range: NodeRange { start_row: 2, start_col: 2, end_row: 2, end_col: 18 } },
+            SnapshotChild { node_type: "return_statement".into(),     text: "return z".into(),         range: ret_range.clone() },
+        ],
+        siblings: vec![
+            SnapshotChild { node_type: "identifier".into(),  text: "add".into(),   range: NodeRange { start_row: 0, start_col: 9, end_row: 0, end_col: 12 } },
+            SnapshotChild { node_type: "parameters".into(),  text: "(x, y)".into(), range: p_range.clone() },
+            SnapshotChild { node_type: "block".into(),       text: "...".into(),    range: b_range.clone() },
+        ],
+    };
+
+    // No snap injection needed — return_statement is found in node_snapshot.children directly.
+
+    let nav = NavigationInfo::from_snapshot(Language::Lua, &all, 0, &snapshot);
+
+    let prev = nav.prev_sibling.as_ref().expect("should have prev sibling");
+    assert_eq!(prev.node_type, "parameters", "prev sibling of block should be parameters");
+
+    let next = nav.next_sibling.as_ref().expect("should have next sibling");
+    assert_eq!(next.node_type, "return_statement", "next sibling of block should be return_statement");
+}
+
+#[test]
+fn return_statement_siblings_include_params_and_body() {
+    // When focused on return_statement inside a function body, sibling navigation
+    // should cycle between function-level components [params, body, return],
+    // not the body's statement-level siblings.
+    let fn_range  = NodeRange { start_row: 0, start_col: 0, end_row: 5, end_col: 3 };
+    let p_range   = NodeRange { start_row: 0, start_col: 9, end_row: 0, end_col: 16 };
+    let b_range   = NodeRange { start_row: 1, start_col: 0, end_row: 4, end_col: 3 };
+    let ret_range = NodeRange { start_row: 3, start_col: 2, end_row: 3, end_col: 10 };
+
+    let ret_node = NodeOutline { node_type: "return_statement".into(), range: ret_range.clone(), child_count: 0 };
+    let block    = NodeOutline { node_type: "block".into(),            range: b_range.clone(),   child_count: 2 };
+    let func     = NodeOutline::new("function_declaration", fn_range.clone());
+    let root     = NodeOutline::new("chunk",                fn_range.clone());
+    let all      = vec![&ret_node, &block, &func, &root];
+
+    let snapshot = NodeSnapshot {
+        node_type: "return_statement".into(),
+        text:      "return z".into(),
+        range:     ret_range.clone(),
+        fields:    Default::default(),
+        children:  vec![],
+        siblings:  vec![
+            SnapshotChild { node_type: "variable_declaration".into(), text: "local z = x + y".into(), range: NodeRange { start_row: 2, start_col: 2, end_row: 2, end_col: 18 } },
+            SnapshotChild { node_type: "return_statement".into(),     text: "return z".into(),         range: ret_range.clone() },
+        ],
+    };
+
+    // Block snapshot — siblings are the function's named children
+    snap("block")
+        .sibling_ranged("identifier",  0,  9, 0, 12)
+        .sibling_ranged("parameters",  p_range.start_row, p_range.start_col, p_range.end_row, p_range.end_col)
+        .sibling_ranged("block",       b_range.start_row, b_range.start_col, b_range.end_row, b_range.end_col)
+        .inject();
+
+    let nav = NavigationInfo::from_snapshot(Language::Lua, &all, 0, &snapshot);
+
+    let prev = nav.prev_sibling.as_ref().expect("should have prev sibling");
+    assert_eq!(prev.node_type, "block", "prev sibling of return_statement should be block (body)");
+
+    let next = nav.next_sibling.as_ref().expect("should have next sibling");
+    assert_eq!(next.node_type, "parameters", "next sibling of return_statement should wrap to parameters");
+}
+
+#[test]
+fn statement_inside_function_body_excludes_return_from_siblings() {
+    // Statements inside a function body should not see return_statement as a sibling.
+    // The return is promoted to a function-level component (handled separately).
+    let fn_range  = NodeRange { start_row: 0, start_col: 0, end_row: 5, end_col: 3 };
+    let b_range   = NodeRange { start_row: 1, start_col: 0, end_row: 4, end_col: 3 };
+    let s1_range  = NodeRange { start_row: 1, start_col: 2, end_row: 1, end_col: 18 };
+    let s2_range  = NodeRange { start_row: 2, start_col: 2, end_row: 2, end_col: 18 };
+    let ret_range = NodeRange { start_row: 3, start_col: 2, end_row: 3, end_col: 10 };
+
+    let stmt  = NodeOutline { node_type: "variable_declaration".into(), range: s1_range.clone(), child_count: 0 };
+    let block = NodeOutline { node_type: "block".into(),                range: b_range.clone(),  child_count: 2 };
+    let func  = NodeOutline::new("function_declaration", fn_range.clone());
+    let root  = NodeOutline::new("chunk",                fn_range.clone());
+    let all   = vec![&stmt, &block, &func, &root];
+
+    let snapshot = NodeSnapshot {
+        node_type: "variable_declaration".into(),
+        text:      "local z = x + y".into(),
+        range:     s1_range.clone(),
+        fields:    Default::default(),
+        children:  vec![],
+        siblings:  vec![
+            SnapshotChild { node_type: "variable_declaration".into(), text: "local z = x + y".into(), range: s1_range.clone() },
+            SnapshotChild { node_type: "variable_declaration".into(), text: "local w = 1".into(),     range: s2_range.clone() },
+            SnapshotChild { node_type: "return_statement".into(),     text: "return z".into(),         range: ret_range.clone() },
+        ],
+    };
+
+    let nav = NavigationInfo::from_snapshot(Language::Lua, &all, 0, &snapshot);
+
+    if let Some(next) = &nav.next_sibling {
+        assert_ne!(next.node_type, "return_statement", "next sibling should not be return_statement");
+    }
+    if let Some(prev) = &nav.prev_sibling {
+        assert_ne!(prev.node_type, "return_statement", "prev sibling should not be return_statement");
+    }
+}
+
+// ── Assignment component sibling navigation ───────────────────────────────
+
+#[test]
+fn assignment_name_and_value_are_siblings() {
+    // variable_list and expression_list are AST siblings inside assignment_statement.
+    // When focused on variable_list (multi-child), expression_list should be its sibling.
+    let a_range   = NodeRange { start_row: 0, start_col: 0, end_row: 0, end_col: 12 };
+    let lhs_range = NodeRange { start_row: 0, start_col: 0, end_row: 0, end_col: 4 };
+    let val_range = NodeRange { start_row: 0, start_col: 7, end_row: 0, end_col: 12 };
+
+    let vlist  = NodeOutline { node_type: "variable_list".into(),   range: lhs_range.clone(), child_count: 2 };
+    let assign = NodeOutline::new("assignment_statement", a_range.clone());
+    let root   = NodeOutline::new("chunk",                a_range.clone());
+    let all    = vec![&vlist, &assign, &root];
+
+    let snapshot = NodeSnapshot {
+        node_type: "variable_list".into(),
+        text:      "x, y".into(),
+        range:     lhs_range.clone(),
+        fields:    Default::default(),
+        children:  vec![
+            SnapshotChild { node_type: "identifier".into(), text: "x".into(), range: NodeRange { start_row: 0, start_col: 0, end_row: 0, end_col: 1 } },
+            SnapshotChild { node_type: "identifier".into(), text: "y".into(), range: NodeRange { start_row: 0, start_col: 3, end_row: 0, end_col: 4 } },
+        ],
+        siblings: vec![
+            SnapshotChild { node_type: "variable_list".into(),   text: "x, y".into(),  range: lhs_range.clone() },
+            SnapshotChild { node_type: "expression_list".into(), text: "1, 2".into(),  range: val_range.clone() },
+        ],
+    };
+
+    let nav = NavigationInfo::from_snapshot(Language::Lua, &all, 0, &snapshot);
+
+    let next = nav.next_sibling.as_ref().expect("should have next sibling");
+    assert_eq!(next.node_type, "expression_list", "next sibling of variable_list should be expression_list");
+
+    let prev = nav.prev_sibling.as_ref().expect("should have prev sibling");
+    assert_eq!(prev.node_type, "expression_list", "prev sibling wraps back to expression_list");
 }

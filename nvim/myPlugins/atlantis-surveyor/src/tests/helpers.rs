@@ -77,6 +77,7 @@ pub struct SnapBuilder {
     range:     NodeRange,
     fields:    HashMap<String, SnapshotChild>,
     children:  Vec<SnapshotChild>,
+    siblings:  Vec<SnapshotChild>,
 }
 
 impl SnapBuilder {
@@ -116,6 +117,13 @@ impl SnapBuilder {
         self
     }
 
+    pub fn sibling_ranged(mut self, kind: &str, sr: u32, sc: u32, er: u32, ec: u32) -> Self {
+        self.siblings.push(SnapshotChild {
+            node_type: kind.to_owned(), text: String::new(), range: r(sr, sc, er, ec),
+        });
+        self
+    }
+
     fn to_snapshot(&self) -> NodeSnapshot {
         NodeSnapshot {
             node_type: self.node_type.clone(),
@@ -123,7 +131,7 @@ impl SnapBuilder {
             range:     self.range.clone(),
             fields:    self.fields.clone(),
             children:  self.children.clone(),
-            siblings:  vec![],
+            siblings:  self.siblings.clone(),
         }
     }
 
@@ -144,12 +152,13 @@ impl SnapBuilder {
 
 /// Start building a `NodeSnapshot`. Chain `.field()` / `.child()` then `.inject()`, `.queue()`, or `.build()`.
 pub fn snap(node_type: &str) -> SnapBuilder {
-    SnapBuilder { 
-        node_type: node_type.to_owned(), 
-        text: node_type.to_owned(), 
-        range: ZERO, 
-        fields: HashMap::new(), 
-        children: vec![] 
+    SnapBuilder {
+        node_type: node_type.to_owned(),
+        text: node_type.to_owned(),
+        range: ZERO,
+        fields: HashMap::new(),
+        children: vec![],
+        siblings: vec![],
     }
 }
 

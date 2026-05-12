@@ -1,10 +1,10 @@
 use serde::Serialize;
 
+use crate::model::lang::NodeKind;
 use crate::model::node::{NodeRange, RawNode};
 use crate::model::AtlantisNode;
 use crate::probe::language::Language;
-use crate::probe::treesitter::NodeOutline;
-use crate::probe::treesitter::NodeSnapshot;
+use crate::probe::treesitter::{self, NodeOutline, NodeSnapshot, SnapshotChild};
 use crate::model::NavigationTarget;
 
 pub(super) mod binary_navigation;
@@ -159,12 +159,71 @@ impl NavigationInfo {
         node_snapshot: &NodeSnapshot,
         is_leaf_focus: bool,
     ) -> (Option<NavigationTarget>, Option<NavigationTarget>) {
+        // When focused on a return_statement inside a function body, treat it as a
+        // function-level component and cycle between [params, body, return] instead
+        // of the body's statement-level siblings.
+        if matches!(ctx.lang.node_kind_for(&node_snapshot.node_type), Some(NodeKind::ReturnStatement)) {
+            let grandparent_is_fn = ctx.all.get(ctx.focus_idx + 2)
+                .map_or(false, |gp| matches!(ctx.lang.node_kind_for(&gp.node_type), Some(NodeKind::Function)));
+            if grandparent_is_fn {
+                let siblings = Self::collect_function_components_for_return(ctx, node_snapshot);
+                return sibling_nav(&siblings, &node_snapshot.node_type, &node_snapshot.range);
+            }
+        }
+
         if let Some((_, bn)) = Self::find_outermost_binary(ctx) {
             let flat = gather_binary_siblings(ctx.lang, bn);
             sibling_nav(&flat, &node_snapshot.node_type, &node_snapshot.range)
         } else {
             Self::resolve_direct_siblings(ctx, node_snapshot, is_leaf_focus)
         }
+    }
+
+    /// When focused on a return_statement inside a function body, build siblings from
+    /// the function's named children (params + body) plus the return itself.
+    fn collect_function_components_for_return(
+        ctx:           &AncestryContext,
+        node_snapshot: &NodeSnapshot,
+    ) -> Vec<NavigationTarget> {
+        let block = match ctx.all.get(ctx.focus_idx + 1) {
+            Some(b) => *b,
+            None    => return vec![],
+        };
+
+        let Ok(block_snap) = treesitter::snapshot(
+            block.range.start_row, block.range.start_col,
+            Some(&block.node_type),
+            Some((block.range.start_row, block.range.start_col)),
+            Some((block.range.end_row,   block.range.end_col)),
+        ) else { return vec![]; };
+
+        let parent_of_block = ctx.all.get(ctx.focus_idx + 2).copied();
+
+        let mut siblings: Vec<NavigationTarget> = block_snap.siblings.iter()
+            .filter_map(|s| {
+                let kind = ctx.lang.node_kind_for(&s.node_type)?;
+                if !matches!(kind, NodeKind::ParameterList | NodeKind::Body) {
+                    return None;
+                }
+                let mut raw = RawNode::from(s);
+                raw.child_count = raw.child_count.max(2);
+                as_navigation_target(raw, &|r| ctx.lang.classify(r, parent_of_block))
+            })
+            .collect();
+
+        siblings.push(NavigationTarget {
+            node_type:      node_snapshot.node_type.clone(),
+            classification: "ReturnStatement".to_string(),
+            range:          node_snapshot.range.clone(),
+            key:            None,
+        });
+
+        siblings.sort_by(|a, b| {
+            a.range.start_row.cmp(&b.range.start_row)
+                .then(a.range.start_col.cmp(&b.range.start_col))
+        });
+
+        siblings
     }
 
     /// Locates the outermost binary_expression ancestor (for flattening operand chains).
@@ -197,6 +256,13 @@ impl NavigationInfo {
         let mut supported_siblings: Vec<NavigationTarget> = node_snapshot.siblings.iter()
             .filter_map(|s| {
                 let classify = |raw: RawNode| {
+                    // SnapshotChild never carries child_count (it comes from Lua siblings
+                    // without that field). Guard B would collapse every transparent node
+                    // (ParameterList, Body, ExpressionList) to Unrecognised. Override with
+                    // 2 so they are treated as Recognised navigation targets, which is correct
+                    // for sibling navigation where collapsing is not needed.
+                    let mut raw = raw;
+                    raw.child_count = raw.child_count.max(2);
                     let c = ctx.lang.classify(raw, parent_ref);
                     if is_leaf_focus && matches!(c, AtlantisNode::Unrecognised) { AtlantisNode::Leaf } else { c }
                 };
@@ -204,11 +270,82 @@ impl NavigationInfo {
             })
             .collect();
 
+        // When inside a function body, the return statement is promoted to a function-level
+        // component. Exclude it from the body's statement-level sibling set so that
+        // statements only cycle among themselves (not into the return).
+        let grandparent_is_fn = ctx.all.get(ctx.focus_idx + 2)
+            .map_or(false, |gp| matches!(ctx.lang.node_kind_for(&gp.node_type), Some(NodeKind::Function)));
+        if matches!(parent_ref.and_then(|p| ctx.lang.node_kind_for(&p.node_type)), Some(NodeKind::Body))
+            && grandparent_is_fn
+        {
+            supported_siblings.retain(|t| {
+                !matches!(ctx.lang.node_kind_for(&t.node_type), Some(NodeKind::ReturnStatement))
+            });
+        }
+
         if is_leaf_focus {
             Self::inject_leaf_focus_if_absent(&mut supported_siblings, node_snapshot);
         }
 
+        Self::maybe_add_return_sibling(ctx.lang, &mut supported_siblings, node_snapshot, parent_ref);
+
         supported_siblings
+    }
+
+    fn maybe_add_return_sibling(
+        lang:               Language,
+        supported_siblings: &mut Vec<NavigationTarget>,
+        node_snapshot:      &NodeSnapshot,
+        parent_ref:         Option<&NodeOutline>,
+    ) {
+        if !matches!(parent_ref.and_then(|p| lang.node_kind_for(&p.node_type)), Some(NodeKind::Function)) {
+            return;
+        }
+
+        let ret: Option<SnapshotChild> = match lang.node_kind_for(&node_snapshot.node_type) {
+            Some(NodeKind::Body) => {
+                node_snapshot.children.iter()
+                    .rev()
+                    .find(|c| matches!(lang.node_kind_for(&c.node_type), Some(NodeKind::ReturnStatement)))
+                    .cloned()
+            }
+            Some(NodeKind::ParameterList) => {
+                let body_sib = node_snapshot.siblings.iter()
+                    .find(|s| matches!(lang.node_kind_for(&s.node_type), Some(NodeKind::Body)));
+                body_sib.and_then(|body| {
+                    treesitter::snapshot(
+                        body.range.start_row, body.range.start_col,
+                        None,
+                        Some((body.range.start_row, body.range.start_col)),
+                        Some((body.range.end_row,   body.range.end_col)),
+                    ).ok()
+                }).and_then(|body_snap| {
+                    body_snap.children.into_iter()
+                        .rev()
+                        .find(|c| matches!(lang.node_kind_for(&c.node_type), Some(NodeKind::ReturnStatement)))
+                })
+            }
+            _ => return,
+        };
+
+        let Some(ret) = ret else { return };
+
+        if supported_siblings.iter().any(|t| {
+            t.range.start_row == ret.range.start_row && t.range.start_col == ret.range.start_col
+        }) {
+            return;
+        }
+
+        supported_siblings.push(NavigationTarget {
+            node_type:      ret.node_type,
+            classification: "ReturnStatement".to_string(),
+            range:          ret.range,
+            key:            None,
+        });
+        supported_siblings.sort_by(|a, b| {
+            a.range.start_row.cmp(&b.range.start_row)
+                .then(a.range.start_col.cmp(&b.range.start_col))
+        });
     }
 
     /// Adds the focus node to the sibling list if it's absent (for Leaf focuses).

@@ -6,6 +6,7 @@ mod outline;
 use nvim_oxi::Dictionary;
 
 use crate::error::AtlantisError;
+use crate::model::lang::NodeKind;
 use crate::model::node::{NodeRange, RawNode};
 use crate::model::{AtlantisNode, OutlineItem};
 use crate::probe::treesitter::{self, NodeOutline};
@@ -63,7 +64,24 @@ impl FocusedNode {
         let node       = lang.classify(RawNode::from(&node_snapshot), parent_ref);
         let navigation = NavigationInfo::from_snapshot(lang, &all, focus_idx, &node_snapshot);
         let node_type  = node_snapshot.node_type.clone();
-        let range      = node_snapshot.range.clone();
+        let mut range  = node_snapshot.range.clone();
+
+        // When the focus is a Body, trim its range to exclude any trailing return statement.
+        // This makes the highlighted range and title reflect only the statements, keeping
+        // body and return as logically distinct ranges.
+        if matches!(lang.node_kind_for(&node_snapshot.node_type), Some(NodeKind::Body)) {
+            if let Some(ret) = node_snapshot.children.iter().rev()
+                .find(|c| matches!(lang.node_kind_for(&c.node_type), Some(NodeKind::ReturnStatement)))
+            {
+                let last_non_ret = node_snapshot.children.iter().rev()
+                    .find(|c| !matches!(lang.node_kind_for(&c.node_type), Some(NodeKind::ReturnStatement)));
+                let (end_row, end_col) = last_non_ret
+                    .map(|c| (c.range.end_row, c.range.end_col))
+                    .unwrap_or((ret.range.start_row, ret.range.start_col));
+                range.end_row = end_row;
+                range.end_col = end_col;
+            }
+        }
 
         let mut outline = Self::compute_outline(&node_snapshot.children);
 
@@ -111,11 +129,69 @@ impl FocusedNode {
             }
         }
 
+        if matches!(lang.node_kind_for(&node_snapshot.node_type), Some(NodeKind::Function)) {
+            Self::enrich_function_outline(lang, &mut outline);
+        }
+
         let focused = FocusedNode {
             node_type, range, node, navigation, outline,
         };
 
         Ok(Some(focused))
+    }
+
+    fn enrich_function_outline(lang: crate::probe::language::Language, outline: &mut Vec<OutlineItem>) {
+        let (body_range, body_node_type) = match outline.iter()
+            .find(|i| matches!(lang.node_kind_for(&i.node_type), Some(NodeKind::Body)))
+        {
+            Some(i) => (i.range.clone(), i.node_type.clone()),
+            None    => return,
+        };
+
+        let Ok(body_snap) = treesitter::snapshot(
+            body_range.start_row, body_range.start_col,
+            Some(&body_node_type),
+            Some((body_range.start_row, body_range.start_col)),
+            Some((body_range.end_row,   body_range.end_col)),
+        ) else { return };
+
+        let Some(ret) = body_snap.children.iter()
+            .rev()
+            .find(|c| matches!(lang.node_kind_for(&c.node_type), Some(NodeKind::ReturnStatement)))
+        else { return };
+
+        let last_non_return = body_snap.children.iter()
+            .rev()
+            .find(|c| !matches!(lang.node_kind_for(&c.node_type), Some(NodeKind::ReturnStatement)));
+
+        if let Some(idx) = outline.iter().position(|i| {
+            matches!(lang.node_kind_for(&i.node_type), Some(NodeKind::Body))
+        }) {
+            match last_non_return {
+                Some(last) => {
+                    outline[idx].range.end_row = last.range.end_row;
+                    outline[idx].range.end_col = last.range.end_col;
+                }
+                None => {
+                    outline[idx].range.end_row = ret.range.start_row;
+                    outline[idx].range.end_col = ret.range.start_col;
+                }
+            }
+        }
+
+        if outline.iter().any(|t| {
+            t.range.start_row == ret.range.start_row && t.range.start_col == ret.range.start_col
+        }) {
+            return;
+        }
+
+        let label = ret.text.lines()
+            .find(|l| !l.trim().is_empty())
+            .map(|s| { let s = s.trim(); if s.len() > 16 { s[..16].to_string() } else { s.to_string() } })
+            .unwrap_or_else(|| ret.node_type.clone());
+
+        outline.push(OutlineItem { label, node_type: ret.node_type.clone(), range: ret.range.clone(), hint_key: Some("r") });
+        outline.sort_by(|a, b| a.range.start_row.cmp(&b.range.start_row).then(a.range.start_col.cmp(&b.range.start_col)));
     }
 }
 
