@@ -1,32 +1,6 @@
 use crate::model::OutlineItem;
 use crate::probe::language::Language;
-use crate::probe::treesitter::{self, NodeOutline};
-use crate::model::NavigationTarget;
-
-/// Snapshots the outermost binary_expression and recursively flattens all nested
-/// binary_expression nodes, returning a flat list of operand NavigationTargets.
-pub fn gather_binary_siblings(lang: Language, root: &NodeOutline) -> Vec<NavigationTarget> {
-    let Ok(snap) = treesitter::snapshot(
-        root.range.start_row,
-        root.range.start_col,
-        Some("binary_expression"),
-        Some((root.range.start_row, root.range.start_col)),
-        Some((root.range.end_row,   root.range.end_col)),
-    ) else { return vec![]; };
-
-    let mut outline = super::super::FocusedNode::compute_outline(&snap.children);
-
-    flatten_binary_outline(lang, &mut outline);
-
-    outline.into_iter()
-        .map(|item| NavigationTarget {
-            node_type: item.node_type,
-            classification: String::new(),
-            range: item.range,
-            key: None,
-        })
-        .collect()
-}
+use crate::probe::treesitter;
 
 /// Recursively expands binary_expression entries in an outline until only
 /// non-binary operands remain.

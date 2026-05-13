@@ -2,17 +2,25 @@
 //
 // Each test name states a rule. Tests are grouped by the rule they verify.
 //
-// Rule 1: A transparent node (ParameterList / ArgumentList / ExpressionList / Body)
-//         with ≤ 1 named child returns Unrecognised — both the node itself and any
-//         unrecognised token inside it. The walker climbs to the nearest meaningful parent.
-//         Rationale: the only purpose of focusing a transparent node is to select a
-//         specific child. With fewer than 2 children there is no selection to be made.
+// Terminology:
+//   Translucent = an intrinsic node kind property (ParameterList, ArgumentList,
+//                 ExpressionList, Body). Behaviour depends on child count and context.
+//   Transparent = a translucent node instance that is invisible and climbed through:
+//                 Guard B fires (≤1 child), or Guard C fires (same-type nesting).
+//   Opaque      = a focusable, recognised node.
 //
-// Rule 2: A transparent node with 2+ named children is Recognised.
-//         Each unrecognised token directly inside it is a Leaf — individually focusable
-//         because each item has distinct identity.
+// Rule 1 (Guard B): A translucent node with ≤1 named child is transparent — both the
+//         node itself and any unrecognised token inside it return Unrecognised.
+//         The walker climbs to the nearest meaningful parent.
 //
-// Leaf exceptions: tokens whose parent is a non-transparent non-list node (e.g. the name
+// Rule 2: A translucent node with 2+ named children is opaque (Recognised).
+//         Each unrecognised token directly inside it is a Leaf — individually focusable.
+//
+// Rule 3 (Guard C): An ExpressionList node directly inside another node of the same
+//         node_type is transparent, regardless of child count. This makes nested
+//         binary_expression chains collapse naturally without bespoke flattening logic.
+//
+// Leaf exceptions: tokens whose parent is a non-translucent node (e.g. the name
 //         identifier of a function_declaration) are never Leaf; they stay Unrecognised
 //         and climb to the enclosing construct.
 
@@ -47,17 +55,20 @@ fn parameters_with_one_param_climbs_to_function_declaration() {
 }
 
 #[test]
-fn identifier_inside_single_param_list_climbs_to_function_declaration() {
-    // `x` cursor inside `parameters(1)` → Unrecognised → climbs past parameters → function.
+fn identifier_inside_single_param_list_is_focused_as_parameter() {
+    // `x` cursor inside `parameters(1)` → Recognised(Parameter) → focused directly.
+    // (Changed from "climbs to function_declaration" now that Guard A reclassifies
+    //  identifier inside a 1-child ParameterList as Parameter.)
     let ident  = outline("identifier",           0);
     let params = outline("parameters",           1);
     let func   = outline("function_declaration", 0);
     let root   = NodeOutline::new("chunk", range(0, 0, 0, 20));
     let ancestry = NodeAncestry::new_test(vec![ident, params, func], root, Language::Lua);
 
-    snap("function_declaration").inject();
+    snap("identifier").inject();
     let result = FocusedNode::from_ancestry(ancestry, None).unwrap().unwrap();
-    assert_eq!(result.node_type, "function_declaration");
+    assert_eq!(result.node_type, "identifier",
+        "identifier in single-param list is Recognised(Parameter) and should be focused directly");
 }
 
 #[test]
@@ -151,7 +162,7 @@ fn identifier_inside_multi_statement_block_is_leaf() {
 #[test]
 fn function_name_identifier_is_not_leaf() {
     // `foo` in `function foo(...)` — parent is function_declaration (Function kind,
-    // not semi-transparent) so the identifier stays Unrecognised and climbs.
+    // not translucent) so the identifier stays Unrecognised and climbs.
     let ident = outline("identifier",           0);
     let func  = outline("function_declaration", 0);
     let root  = NodeOutline::new("chunk", range(0, 0, 0, 20));
@@ -161,4 +172,50 @@ fn function_name_identifier_is_not_leaf() {
     let result = FocusedNode::from_ancestry(ancestry, None).unwrap().unwrap();
     assert_eq!(result.node_type, "function_declaration",
         "function name identifier should not be a Leaf; focus climbs to function_declaration");
+}
+
+// ── Single-param reclassification: identifier in 1-child ParameterList → Parameter ──
+
+#[test]
+fn identifier_inside_single_param_list_is_recognised_as_parameter() {
+    // Guard A special case: a Lua identifier whose parent is a ParameterList with exactly
+    // 1 child must be Recognised(Parameter), not Unrecognised — so it can be jumped to.
+    use crate::model::node::RawNode;
+
+    let params = outline("parameters", 1);
+    let ident  = NodeOutline { node_type: "identifier".into(), range: range(0, 10, 0, 11), child_count: 0 };
+    let lang   = Language::Lua;
+
+    let classified = lang.classify(RawNode::from(&ident), Some(&params));
+    assert!(
+        matches!(classified, crate::model::AtlantisNode::Recognised(_)),
+        "identifier inside 1-child ParameterList should be Recognised(Parameter), got {:?}", classified
+    );
+    assert_eq!(classified.classification_name(), "Parameter");
+}
+
+// ── Rule 3 (Guard C): ExpressionList inside same node_type is transparent ────
+
+#[test]
+fn inner_binary_expression_with_binary_expression_parent_is_unrecognised() {
+    // Guard C: `binary_expression` directly inside `binary_expression` → transparent,
+    // regardless of child count. The outermost binary_expression (whose parent is
+    // expression_list, not binary_expression) remains Recognised (opaque).
+    use crate::probe::language::Language;
+    use crate::model::node::RawNode;
+
+    let lang = Language::Lua;
+
+    // Inner binary_expression — parent is also binary_expression.
+    let inner_be = NodeOutline { node_type: "binary_expression".into(), range: range(0, 0, 0, 5), child_count: 2 };
+    let outer_be = NodeOutline { node_type: "binary_expression".into(), range: range(0, 0, 0, 11), child_count: 2 };
+    let classified = lang.classify(RawNode::from(&inner_be), Some(&outer_be));
+    assert!(matches!(classified, crate::model::AtlantisNode::Unrecognised),
+        "inner binary_expression inside binary_expression should be Unrecognised (Guard C)");
+
+    // Outer binary_expression — parent is expression_list (not binary_expression) → opaque.
+    let expr_list = NodeOutline { node_type: "expression_list".into(), range: range(0, 0, 0, 11), child_count: 1 };
+    let classified_outer = lang.classify(RawNode::from(&outer_be), Some(&expr_list));
+    assert!(matches!(classified_outer, crate::model::AtlantisNode::Recognised(_)),
+        "outer binary_expression inside expression_list should be Recognised (opaque)");
 }

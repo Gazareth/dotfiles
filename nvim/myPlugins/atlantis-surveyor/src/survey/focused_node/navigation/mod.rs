@@ -8,7 +8,6 @@ use crate::probe::treesitter::{self, NodeOutline, NodeSnapshot, SnapshotChild};
 use crate::model::NavigationTarget;
 
 pub(super) mod binary_navigation;
-use binary_navigation::gather_binary_siblings;
 
 /// Context bundling ancestry state to reduce parameter threading and redundant classifications.
 struct AncestryContext<'a> {
@@ -153,7 +152,7 @@ impl NavigationInfo {
             .and_then(|(i, n)| as_navigation_target(RawNode::from(*n), &|raw| ctx.lang.classify(raw, ctx.parent_at(i))))
     }
 
-    /// Resolves prev/next sibling, with special handling for binary expression chains.
+    /// Resolves prev/next sibling using the general walk-up / walk-down algorithm.
     fn resolve_siblings(
         ctx: &AncestryContext,
         node_snapshot: &NodeSnapshot,
@@ -171,12 +170,197 @@ impl NavigationInfo {
             }
         }
 
-        if let Some((_, bn)) = Self::find_outermost_binary(ctx) {
-            let flat = gather_binary_siblings(ctx.lang, bn);
-            sibling_nav(&flat, &node_snapshot.node_type, &node_snapshot.range)
-        } else {
-            Self::resolve_direct_siblings(ctx, node_snapshot, is_leaf_focus)
+        Self::resolve_siblings_general(ctx, node_snapshot, is_leaf_focus)
+    }
+
+    /// Walk up to the nearest Recognised ancestor (semantic parent), snapshot it,
+    /// then walk down each child branch — descending through transparent nodes —
+    /// to collect the sibling set.
+    fn resolve_siblings_general(
+        ctx:           &AncestryContext,
+        node_snapshot: &NodeSnapshot,
+        is_leaf_focus: bool,
+    ) -> (Option<NavigationTarget>, Option<NavigationTarget>) {
+        // Find the nearest Recognised ancestor above the focus.
+        let sp_idx = (ctx.focus_idx + 1..ctx.all.len()).find(|&i| {
+            matches!(
+                ctx.lang.classify(RawNode::from(ctx.all[i]), ctx.all.get(i + 1).copied()),
+                AtlantisNode::Recognised(_)
+            )
+        });
+        let Some(sp_idx) = sp_idx else { return (None, None); };
+        let sp = ctx.all[sp_idx];
+
+        let Ok(sp_snap) = treesitter::snapshot(
+            sp.range.start_row, sp.range.start_col,
+            Some(&sp.node_type),
+            Some((sp.range.start_row, sp.range.start_col)),
+            Some((sp.range.end_row,   sp.range.end_col)),
+        ) else { return (None, None); };
+
+        let mut siblings: Vec<NavigationTarget> = sp_snap.children.iter()
+            .filter_map(|child| Self::resolve_child_sibling(ctx, child, sp, is_leaf_focus))
+            .collect();
+
+        // When the semantic parent is a Body inside a Function, the return statement is
+        // promoted to function-level and excluded from the body's statement sibling set.
+        let sp_parent = ctx.all.get(sp_idx + 1);
+        if matches!(ctx.lang.node_kind_for(&sp.node_type), Some(NodeKind::Body))
+            && matches!(sp_parent.and_then(|p| ctx.lang.node_kind_for(&p.node_type)), Some(NodeKind::Function))
+        {
+            siblings.retain(|t| !matches!(ctx.lang.node_kind_for(&t.node_type), Some(NodeKind::ReturnStatement)));
         }
+
+        if is_leaf_focus {
+            Self::inject_leaf_focus_if_absent(&mut siblings, node_snapshot);
+        }
+        Self::maybe_add_return_sibling(ctx.lang, &mut siblings, node_snapshot, ctx.parent_at(ctx.focus_idx));
+
+        // maybe_add_return_sibling is guarded by parent_ref being a Function. When the focus
+        // is a parameter whose immediate parent is a transparent ParameterList, parent_ref is
+        // ParameterList — so the return is not added. Handle that gap here.
+        let focus_parent_is_pl = matches!(
+            ctx.parent_at(ctx.focus_idx).and_then(|p| ctx.lang.node_kind_for(&p.node_type)),
+            Some(NodeKind::ParameterList)
+        );
+        if focus_parent_is_pl
+            && matches!(ctx.lang.node_kind_for(&sp.node_type), Some(NodeKind::Function))
+        {
+            if let Some(body_nav) = siblings.iter()
+                .find(|s| matches!(ctx.lang.node_kind_for(&s.node_type), Some(NodeKind::Body)))
+                .cloned()
+            {
+                if let Ok(body_snap) = treesitter::snapshot(
+                    body_nav.range.start_row, body_nav.range.start_col,
+                    None,
+                    Some((body_nav.range.start_row, body_nav.range.start_col)),
+                    Some((body_nav.range.end_row,   body_nav.range.end_col)),
+                ) {
+                    if let Some(ret) = body_snap.children.into_iter().rev()
+                        .find(|c| matches!(ctx.lang.node_kind_for(&c.node_type), Some(NodeKind::ReturnStatement)))
+                    {
+                        if !siblings.iter().any(|t| {
+                            t.range.start_row == ret.range.start_row
+                                && t.range.start_col == ret.range.start_col
+                        }) {
+                            siblings.push(NavigationTarget {
+                                node_type:      ret.node_type,
+                                classification: "ReturnStatement".to_string(),
+                                range:          ret.range,
+                                key:            None,
+                            });
+                            siblings.sort_by(|a, b| {
+                                a.range.start_row.cmp(&b.range.start_row)
+                                    .then(a.range.start_col.cmp(&b.range.start_col))
+                            });
+                        }
+                    }
+                }
+            }
+        }
+
+        sibling_nav(&siblings, &node_snapshot.node_type, &node_snapshot.range)
+    }
+
+    /// Resolves a single child of the semantic parent into a sibling NavigationTarget.
+    ///
+    /// - Children in the focused ancestry branch resolve as the focused node itself.
+    /// - Translucent children are snapshotted to get their real child count:
+    ///   if ≤1 and not a Body, descend recursively; otherwise include as opaque.
+    /// - Body nodes are always included as opaque siblings (never descended into).
+    /// - Non-translucent children are classified normally.
+    fn resolve_child_sibling(
+        ctx:           &AncestryContext,
+        child:         &SnapshotChild,
+        sp:            &NodeOutline,
+        is_leaf_focus: bool,
+    ) -> Option<NavigationTarget> {
+        // If this child overlaps a node in the focused ancestry, use the focused
+        // node as the sibling representative (avoids an extra snapshot and gives
+        // the correct child_count from NodeOutline).
+        let in_ancestry = ctx.all[..=ctx.focus_idx].iter().any(|n| {
+            n.range.start_row == child.range.start_row
+                && n.range.start_col == child.range.start_col
+                && n.range.end_row   == child.range.end_row
+                && n.range.end_col   == child.range.end_col
+        });
+        if in_ancestry {
+            let focused = ctx.all[ctx.focus_idx];
+            return as_navigation_target(
+                RawNode::from(focused),
+                &|r| ctx.lang.classify(r, ctx.all.get(ctx.focus_idx + 1).copied()),
+            );
+        }
+
+        let is_translucent_kind = ctx.lang.node_kind_for(&child.node_type)
+            .map_or(false, |k| k.is_translucent());
+
+        if is_translucent_kind {
+            // Body is a semantic container — always include it as an opaque sibling,
+            // never descend into it.
+            let is_body = matches!(ctx.lang.node_kind_for(&child.node_type), Some(NodeKind::Body));
+
+            let Ok(snap) = treesitter::snapshot(
+                child.range.start_row, child.range.start_col,
+                Some(&child.node_type),
+                Some((child.range.start_row, child.range.start_col)),
+                Some((child.range.end_row,   child.range.end_col)),
+            ) else { return None; };
+
+            let actual_count = snap.children.len();
+
+            if actual_count <= 1 && !is_body {
+                return snap.children.first().and_then(|inner| {
+                    // If the inner child is the focused node, return it classified against
+                    // its real parent (the translucent list), not sp.
+                    let in_focused = ctx.all[..=ctx.focus_idx].iter().any(|n| {
+                        n.range.start_row == inner.range.start_row
+                            && n.range.start_col == inner.range.start_col
+                            && n.range.end_row   == inner.range.end_row
+                            && n.range.end_col   == inner.range.end_col
+                    });
+                    if in_focused {
+                        let focused = ctx.all[ctx.focus_idx];
+                        return as_navigation_target(
+                            RawNode::from(focused),
+                            &|r| ctx.lang.classify(r, ctx.all.get(ctx.focus_idx + 1).copied()),
+                        );
+                    }
+                    // Classify inner against the translucent parent (e.g. ParameterList) so that
+                    // language reclassification (identifier → Parameter) applies correctly.
+                    let pl_outline = NodeOutline {
+                        node_type:   child.node_type.clone(),
+                        range:       child.range.clone(),
+                        child_count: actual_count,
+                    };
+                    as_navigation_target(
+                        RawNode::from(inner),
+                        &|r| ctx.lang.classify(r, Some(&pl_outline)),
+                    )
+                });
+            }
+
+            // Opaque: force child_count ≥ 2 so Guard B does not fire.
+            let mut raw = RawNode::from(child);
+            raw.child_count = actual_count.max(2);
+            return as_navigation_target(raw, &|r| ctx.lang.classify(r, Some(sp)));
+        }
+
+        // Non-translucent: classify normally, with is_leaf_focus promotion for
+        // unrecognised siblings when the focus itself is a Leaf.
+        let raw = RawNode::from(child);
+        let classified = {
+            let c = ctx.lang.classify(raw.clone(), Some(sp));
+            if is_leaf_focus && matches!(c, AtlantisNode::Unrecognised) {
+                AtlantisNode::Leaf
+            } else {
+                c
+            }
+        };
+        if matches!(classified, AtlantisNode::Unrecognised) {
+            return None;
+        }
+        as_navigation_target(raw, &|r| ctx.lang.classify(r, Some(sp)))
     }
 
     /// When focused on a return_statement inside a function body, build siblings from
@@ -211,6 +395,13 @@ impl NavigationInfo {
             })
             .collect();
 
+        // Redirect any transparent ParameterList component to the inner parameter.
+        for sibling in siblings.iter_mut() {
+            if matches!(ctx.lang.node_kind_for(&sibling.node_type), Some(NodeKind::ParameterList)) {
+                Self::redirect_transparent_param_nav_target(ctx.lang, sibling);
+            }
+        }
+
         siblings.push(NavigationTarget {
             node_type:      node_snapshot.node_type.clone(),
             classification: "ReturnStatement".to_string(),
@@ -226,70 +417,22 @@ impl NavigationInfo {
         siblings
     }
 
-    /// Locates the outermost binary_expression ancestor (for flattening operand chains).
-    fn find_outermost_binary<'a>(ctx: &AncestryContext<'a>) -> Option<(usize, &'a NodeOutline)> {
-        ctx.all.iter().enumerate().skip(ctx.focus_idx + 1)
-            .find(|(i, n)| {
-                n.node_type == "binary_expression"
-                && !ctx.all.get(i + 1).map_or(false, |p| p.node_type == "binary_expression")
-            })
-            .map(|(i, n)| (i, *n))
-    }
+    /// Redirects a ParameterList NavigationTarget to its single inner child when the list
+    /// is transparent (exactly 1 child). No-op if the snapshot fails or has ≠ 1 child.
+    fn redirect_transparent_param_nav_target(lang: Language, target: &mut NavigationTarget) {
+        let Ok(snap) = treesitter::snapshot(
+            target.range.start_row, target.range.start_col,
+            Some(&target.node_type),
+            Some((target.range.start_row, target.range.start_col)),
+            Some((target.range.end_row,   target.range.end_col)),
+        ) else { return };
 
-    /// Resolves siblings from the snapshot, with mode filtering and leaf focus injection.
-    fn resolve_direct_siblings(
-        ctx: &AncestryContext,
-        node_snapshot: &NodeSnapshot,
-        is_leaf_focus: bool,
-    ) -> (Option<NavigationTarget>, Option<NavigationTarget>) {
-        let supported_siblings = Self::build_supported_siblings(ctx, node_snapshot, is_leaf_focus);
-        sibling_nav(&supported_siblings, &node_snapshot.node_type, &node_snapshot.range)
-    }
+        if snap.children.len() != 1 { return; }
 
-    /// Builds the list of supported siblings, filtered by kind and with optional Leaf focus injection.
-    fn build_supported_siblings(
-        ctx: &AncestryContext,
-        node_snapshot: &NodeSnapshot,
-        is_leaf_focus: bool,
-    ) -> Vec<NavigationTarget> {
-        let parent_ref = ctx.parent_at(ctx.focus_idx);
-        let mut supported_siblings: Vec<NavigationTarget> = node_snapshot.siblings.iter()
-            .filter_map(|s| {
-                let classify = |raw: RawNode| {
-                    // SnapshotChild never carries child_count (it comes from Lua siblings
-                    // without that field). Guard B would collapse every transparent node
-                    // (ParameterList, Body, ExpressionList) to Unrecognised. Override with
-                    // 2 so they are treated as Recognised navigation targets, which is correct
-                    // for sibling navigation where collapsing is not needed.
-                    let mut raw = raw;
-                    raw.child_count = raw.child_count.max(2);
-                    let c = ctx.lang.classify(raw, parent_ref);
-                    if is_leaf_focus && matches!(c, AtlantisNode::Unrecognised) { AtlantisNode::Leaf } else { c }
-                };
-                as_navigation_target(RawNode::from(s), &classify)
-            })
-            .collect();
-
-        // When inside a function body, the return statement is promoted to a function-level
-        // component. Exclude it from the body's statement-level sibling set so that
-        // statements only cycle among themselves (not into the return).
-        let grandparent_is_fn = ctx.all.get(ctx.focus_idx + 2)
-            .map_or(false, |gp| matches!(ctx.lang.node_kind_for(&gp.node_type), Some(NodeKind::Function)));
-        if matches!(parent_ref.and_then(|p| ctx.lang.node_kind_for(&p.node_type)), Some(NodeKind::Body))
-            && grandparent_is_fn
-        {
-            supported_siblings.retain(|t| {
-                !matches!(ctx.lang.node_kind_for(&t.node_type), Some(NodeKind::ReturnStatement))
-            });
-        }
-
-        if is_leaf_focus {
-            Self::inject_leaf_focus_if_absent(&mut supported_siblings, node_snapshot);
-        }
-
-        Self::maybe_add_return_sibling(ctx.lang, &mut supported_siblings, node_snapshot, parent_ref);
-
-        supported_siblings
+        let inner = &snap.children[0];
+        target.node_type      = inner.node_type.clone();
+        target.range          = inner.range.clone();
+        target.classification = "Parameter".to_string();
     }
 
     fn maybe_add_return_sibling(
@@ -310,7 +453,8 @@ impl NavigationInfo {
                     .cloned()
             }
             Some(NodeKind::ParameterList) => {
-                let body_sib = node_snapshot.siblings.iter()
+                // Body is already in the built sibling set; snapshot it to find the return.
+                let body_sib = supported_siblings.iter()
                     .find(|s| matches!(lang.node_kind_for(&s.node_type), Some(NodeKind::Body)));
                 body_sib.and_then(|body| {
                     treesitter::snapshot(

@@ -16,12 +16,11 @@ pub enum NodeKind {
 }
 
 impl NodeKind {
-    /// Homogeneous selection container.
-    /// With ≤ 1 named child the node and its unrecognised children are Unrecognised
-    /// (nothing to select — walker climbs). With ≥ 2 named children the node is
-    /// Recognised and each unrecognised child inside is a Leaf (individually focusable).
-    /// Also used by the hint-navigation outermost-match path in find_focus_idx.
-    pub fn is_transparent(&self) -> bool {
+    /// True for node kinds whose focusability depends on context (translucent kinds).
+    /// A translucent node becomes transparent — invisible, climbed through — when
+    /// Guard B fires (≤1 child) or Guard C fires (same-type ExpressionList nesting).
+    /// With ≥2 children it is opaque: Recognised, with each unrecognised child a Leaf.
+    pub fn is_translucent(&self) -> bool {
         matches!(self,
             NodeKind::ParameterList  |
             NodeKind::ArgumentList   |

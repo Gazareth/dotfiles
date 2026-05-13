@@ -60,6 +60,7 @@ fn function_declaration_outline_includes_return_statement() {
     let root  = NodeOutline::new("chunk",                fn_range.clone());
     let ancestry = NodeAncestry::new_test(vec![focus], root, Language::Lua);
 
+    // Snap 1: function_declaration focus — consumed by from_ancestry (node_snapshot).
     snap("function_declaration")
         .field_ranged("parameters", "(x, y)", p_range.start_row, p_range.start_col, p_range.end_row, p_range.end_col)
         .field_ranged("block",      "...",    b_range.start_row, b_range.start_col, b_range.end_row, b_range.end_col)
@@ -67,6 +68,12 @@ fn function_declaration_outline_includes_return_statement() {
         .child_ranged("block",      "...",    b_range.start_row, b_range.start_col, b_range.end_row, b_range.end_col)
         .queue();
 
+    // Snap 2: chunk (semantic parent of function_declaration) — consumed by resolve_siblings_general.
+    snap("chunk")
+        .child_ranged("function_declaration", "...", fn_range.start_row, fn_range.start_col, fn_range.end_row, fn_range.end_col)
+        .queue();
+
+    // Snap 3: block — consumed by enrich_function_outline to find the return statement.
     snap("block")
         .child_ranged("variable_declaration", "local z = x + y", 2, 2, 2, 18)
         .child_ranged("return_statement",     "return z",         ret_range.start_row, ret_range.start_col, ret_range.end_row, ret_range.end_col)

@@ -131,6 +131,7 @@ impl FocusedNode {
 
         if matches!(lang.node_kind_for(&node_snapshot.node_type), Some(NodeKind::Function)) {
             Self::enrich_function_outline(lang, &mut outline);
+            Self::redirect_transparent_param_outline_item(lang, &mut outline);
         }
 
         let focused = FocusedNode {
@@ -192,6 +193,34 @@ impl FocusedNode {
 
         outline.push(OutlineItem { label, node_type: ret.node_type.clone(), range: ret.range.clone(), hint_key: Some("r") });
         outline.sort_by(|a, b| a.range.start_row.cmp(&b.range.start_row).then(a.range.start_col.cmp(&b.range.start_col)));
+    }
+
+    /// Redirects any ParameterList outline item to its single inner child when the list
+    /// is transparent (exactly 1 child). hint_key ("p") is preserved.
+    /// No-op if the snapshot fails or the list has ≠ 1 child.
+    fn redirect_transparent_param_outline_item(lang: crate::probe::language::Language, outline: &mut Vec<OutlineItem>) {
+        for item in outline.iter_mut() {
+            if !matches!(lang.node_kind_for(&item.node_type), Some(NodeKind::ParameterList)) {
+                continue;
+            }
+            let Ok(snap) = treesitter::snapshot(
+                item.range.start_row, item.range.start_col,
+                Some(&item.node_type),
+                Some((item.range.start_row, item.range.start_col)),
+                Some((item.range.end_row,   item.range.end_col)),
+            ) else { continue };
+
+            if snap.children.len() != 1 { continue; }
+
+            let inner = &snap.children[0];
+            item.node_type = inner.node_type.clone();
+            item.range     = inner.range.clone();
+            item.label     = inner.text.lines()
+                .find(|l| !l.trim().is_empty())
+                .map(|s| { let s = s.trim(); if s.len() > 16 { s[..16].to_string() } else { s.to_string() } })
+                .unwrap_or_else(|| inner.node_type.clone());
+            // hint_key ("p") is preserved from the earlier stamping step.
+        }
     }
 }
 

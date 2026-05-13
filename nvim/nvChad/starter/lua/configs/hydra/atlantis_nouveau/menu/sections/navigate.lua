@@ -104,31 +104,28 @@ function M.build(result)
     end
   end
 
-  -- Siblings sub-section
-  local sibling_items = {}
-  if nav.prev_sibling then
-    table.insert(sibling_items, {
-      key    = "u",
-      icon   = "󰜶",
-      label  = "to previous sibling",
-      action = function() jump_and_reopen(result.bufnr, nav.prev_sibling) end,
-    })
-  end
-  if nav.next_sibling then
-    table.insert(sibling_items, {
-      key    = "i",
-      icon   = "󰜴",
-      label  = "to next sibling",
-      action = function() jump_and_reopen(result.bufnr, nav.next_sibling) end,
-    })
-  end
-
-  if #sibling_items > 0 then
-    table.insert(items, { heading = "Siblings" })
-    for _, item in ipairs(sibling_items) do
-      table.insert(items, item)
-    end
-  end
+  -- Siblings sub-section (always shown; notifies when no sibling is available)
+  table.insert(items, { heading = "Siblings" })
+  table.insert(items, {
+    key    = "u",
+    icon   = "󰜶",
+    label  = nav.prev_sibling and "to previous sibling" or "no sibling",
+    action = nav.prev_sibling
+      and function() jump_and_reopen(result.bufnr, nav.prev_sibling) end
+      or  function()
+            vim.notify("No sibling — use h to jump to parent.", vim.log.levels.INFO)
+          end,
+  })
+  table.insert(items, {
+    key    = "i",
+    icon   = "󰜴",
+    label  = nav.next_sibling and "to next sibling" or "no sibling",
+    action = nav.next_sibling
+      and function() jump_and_reopen(result.bufnr, nav.next_sibling) end
+      or  function()
+            vim.notify("No sibling — use h to jump to parent.", vim.log.levels.INFO)
+          end,
+  })
 
   if #items == 0 then return nil end
 

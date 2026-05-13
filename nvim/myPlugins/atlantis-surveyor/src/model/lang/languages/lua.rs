@@ -125,6 +125,7 @@ crate::impl_language_syntax_map!(Lua, LUA_KINDS, {
     "expression_list"    => ExpressionList,
     "binary_expression"  => ExpressionList,
     "arguments"          => ExpressionList,
+    "table_constructor"  => ExpressionList,
 });
 
 crate::impl_lang_node_resolver!(Lua, LuaNode);

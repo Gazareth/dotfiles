@@ -85,16 +85,46 @@ impl NodeAncestry {
         // (e.g. `assignment_statement` → `variable_declaration` both resolve to Assignment).
         // Leaf nodes are never walked upward — they stay at exactly the candidate position.
         let candidate_kind = lang.classify(RawNode::from(all[candidate_idx]), all.get(candidate_idx + 1).copied());
-        if matches!(candidate_kind, AtlantisNode::Leaf | AtlantisNode::Unrecognised) {
+        if matches!(candidate_kind, AtlantisNode::Leaf) {
             return Ok(candidate_idx);
         }
-        Ok(all[candidate_idx..].iter()
+
+        // Transparent node with ≤1 child (Unrecognised via Guard B):
+        // 1. Look inward — if the single child in the ancestry is itself Recognised, focus it.
+        //    (e.g. expression_list wrapping a multi-element table_constructor)
+        // 2. Otherwise climb outward, then fall through to the same_construct_kind walk
+        //    so that e.g. assignment_statement merges up into variable_declaration.
+        let walk_start = if matches!(candidate_kind, AtlantisNode::Unrecognised) {
+            if candidate_idx > 0 {
+                let inner_kind = lang.classify(
+                    RawNode::from(all[candidate_idx - 1]),
+                    all.get(candidate_idx).copied(),
+                );
+                if matches!(inner_kind, AtlantisNode::Recognised(_)) {
+                    return Ok(candidate_idx - 1);
+                }
+            }
+            (candidate_idx + 1..all.len())
+                .find(|&i| matches!(
+                    lang.classify(RawNode::from(all[i]), all.get(i + 1).copied()),
+                    AtlantisNode::Recognised(_) | AtlantisNode::Leaf
+                ))
+                .unwrap_or(candidate_idx)
+        } else {
+            candidate_idx
+        };
+
+        let walk_kind = lang.classify(RawNode::from(all[walk_start]), all.get(walk_start + 1).copied());
+        if matches!(walk_kind, AtlantisNode::Leaf | AtlantisNode::Unrecognised) {
+            return Ok(walk_start);
+        }
+        Ok(all[walk_start..].iter()
             .enumerate()
-            .take_while(|(i, n)| candidate_kind.same_construct_kind(
-                &lang.classify(RawNode::from(**n), all.get(candidate_idx + i + 1).copied())
+            .take_while(|(i, n)| walk_kind.same_construct_kind(
+                &lang.classify(RawNode::from(**n), all.get(walk_start + i + 1).copied())
             ))
             .last()
-            .map(|(i, _)| candidate_idx + i)
-            .unwrap_or(candidate_idx))
+            .map(|(i, _)| walk_start + i)
+            .unwrap_or(walk_start))
     }
 }

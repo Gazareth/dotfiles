@@ -34,8 +34,8 @@ impl Language {
         }
     }
 
-    pub fn is_transparent(&self, node_type: &str) -> bool {
-        self.node_kind_for(node_type).map_or(false, |k| k.is_transparent())
+    pub fn is_translucent(&self, node_type: &str) -> bool {
+        self.node_kind_for(node_type).map_or(false, |k| k.is_translucent())
     }
 
     /// Returns `Some(true)` if the node type is a file root for this language,
@@ -59,12 +59,23 @@ impl Language {
     pub fn classify(&self, raw: RawNode, parent: Option<&NodeOutline>) -> AtlantisNode {
         let base = AtlantisNode::from_raw(raw.clone(), self);
 
-        // Guard A — unrecognised child of a transparent parent.
+        // Guard A — unrecognised child of a translucent parent.
         if matches!(base, AtlantisNode::Unrecognised) {
             if let Some(p) = parent {
                 if let Some(pk) = self.node_kind_for(&p.node_type) {
-                    if pk.is_transparent() {
+                    if pk.is_translucent() {
                         if p.child_count <= 1 {
+                            // Allow Lua identifier → Parameter reclassification even inside a
+                            // transparent (≤1 child) list, so a single parameter is focusable.
+                            if let Language::Lua = self {
+                                if raw.kind == "identifier"
+                                    && matches!(pk, NodeKind::ParameterList)
+                                {
+                                    let mut refined = raw;
+                                    refined.kind = "parameter".to_string();
+                                    return AtlantisNode::from_raw(refined, self);
+                                }
+                            }
                             return AtlantisNode::Unrecognised;
                         }
                         return AtlantisNode::Leaf;
@@ -73,31 +84,25 @@ impl Language {
             }
         }
 
-        // Guard B — transparent node itself with ≤ 1 child: no selection possible.
+        // Guard B — translucent node with ≤1 child → transparent: no selection possible.
         if raw.child_count <= 1 {
             if let Some(k) = self.node_kind_for(&raw.kind) {
-                if k.is_transparent() {
+                if k.is_translucent() {
                     return AtlantisNode::Unrecognised;
                 }
             }
         }
 
-        match self {
-            // Lua: a bare identifier inside a parameter list is a parameter.
-            // Other languages have distinct node kinds for their parameters.
-            Language::Lua => {
-                if matches!(base, AtlantisNode::Unrecognised) && raw.kind == "identifier" {
-                    if let Some(p) = parent {
-                        if matches!(Lua::node_kind(&p.node_type), Some(NodeKind::ParameterList)) {
-                            let mut refined = raw;
-                            refined.kind = "parameter".to_string();
-                            return AtlantisNode::from_raw(refined, self);
-                        }
-                    }
-                }
-                base
+        // Guard C — ExpressionList node directly inside a parent of the same node_type
+        // → transparent: the inner node is an intermediate in the chain, climbed through
+        // regardless of child count. This makes nested binary_expression chains flatten
+        // naturally without bespoke sibling logic.
+        if let Some(NodeKind::ExpressionList) = self.node_kind_for(&raw.kind) {
+            if parent.map_or(false, |p| p.node_type == raw.kind) {
+                return AtlantisNode::Unrecognised;
             }
-            _ => base,
         }
+
+        base
     }
 }

@@ -47,6 +47,56 @@ fn function_outline_shows_only_parameters_and_body() {
     assert_eq!(body.hint_key, Some("b"), "block should get hint_key 'b'");
 }
 
+// ── single-parameter function — outline redirect ─────────────────────────
+
+#[test]
+fn single_param_function_outline_redirects_parameters_item_to_identifier() {
+    // When a function has exactly one parameter, the `parameters` outline item
+    // should be redirected to the inner identifier so jumping lands on the parameter.
+    let fn_range = range(0, 0, 4, 3);
+    let p_range  = range(0, 12, 0, 15);  // "(x)"
+    let x_range  = range(0, 13, 0, 14);  // "x"
+    let b_range  = range(1, 0, 4, 3);
+
+    let focus = NodeOutline::new("function_declaration", fn_range.clone());
+    let root  = NodeOutline::new("chunk",                fn_range.clone());
+    let ancestry = NodeAncestry::new_test(vec![focus], root, Language::Lua);
+
+    // Snap 1: function_declaration focus — consumed by from_ancestry.
+    snap("function_declaration")
+        .field_ranged("parameters", "(x)",  p_range.start_row, p_range.start_col, p_range.end_row, p_range.end_col)
+        .field_ranged("block",      "...",  b_range.start_row, b_range.start_col, b_range.end_row, b_range.end_col)
+        .child_ranged("parameters", "(x)",  p_range.start_row, p_range.start_col, p_range.end_row, p_range.end_col)
+        .child_ranged("block",      "...",  b_range.start_row, b_range.start_col, b_range.end_row, b_range.end_col)
+        .queue();
+    // Snap 2: chunk — consumed by resolve_siblings_general (sp snapshot).
+    snap("chunk")
+        .child_ranged("function_declaration", "...", fn_range.start_row, fn_range.start_col, fn_range.end_row, fn_range.end_col)
+        .queue();
+    // Snap 3: block (no return) — consumed by enrich_function_outline.
+    // No children → no return_statement found → enrich returns early without adding return item.
+    snap("block")
+        .queue();
+    // Snap 4: parameters — consumed by redirect_transparent_param_outline_item.
+    snap("parameters")
+        .child_ranged("identifier", "x", x_range.start_row, x_range.start_col, x_range.end_row, x_range.end_col)
+        .queue();
+
+    let result = FocusedNode::from_ancestry(ancestry, None).unwrap().unwrap();
+    let outline = &result.outline;
+
+    assert_eq!(outline.len(), 2, "should have two items (redirected param + block)");
+
+    let param_item = outline.iter().find(|i| i.hint_key == Some("p")).expect("item with hint_key 'p' missing");
+    assert_eq!(param_item.node_type, "identifier",
+        "parameters item should be redirected to the inner identifier");
+    assert_eq!(param_item.range.start_col, x_range.start_col,
+        "redirected item range should point at the identifier, not the '(' of parameters");
+
+    let body = outline.iter().find(|i| i.node_type == "block").expect("block missing");
+    assert_eq!(body.hint_key, Some("b"));
+}
+
 // ── assignment_statement ──────────────────────────────────────────────────
 
 #[test]
@@ -99,13 +149,19 @@ fn variable_declaration_outline_shows_only_name_and_value() {
     let root  = NodeOutline::new("chunk",                vd_range.clone());
     let ancestry = NodeAncestry::new_test(vec![focus], root, Language::Lua);
 
-    // Snapshot 1: variable_declaration — single child is assignment_statement.
+    // Snap 1: variable_declaration focus — consumed by from_ancestry (node_snapshot).
     snap("variable_declaration")
         .child_ranged("assignment_statement", "x = 1",
             as_range.start_row, as_range.start_col, as_range.end_row, as_range.end_col)
         .queue();
 
-    // Snapshot 2: assignment_statement — its children (consumed during wrapper expansion).
+    // Snap 2: chunk (semantic parent) — consumed by resolve_siblings_general.
+    snap("chunk")
+        .child_ranged("variable_declaration", "local x = 1",
+            vd_range.start_row, vd_range.start_col, vd_range.end_row, vd_range.end_col)
+        .queue();
+
+    // Snap 3: assignment_statement — consumed during wrapper expansion.
     snap("assignment_statement")
         .child_ranged("variable_list",   "x",
             vl_range.start_row, vl_range.start_col, vl_range.end_row, vl_range.end_col)
