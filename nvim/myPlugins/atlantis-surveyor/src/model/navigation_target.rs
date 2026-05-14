@@ -6,6 +6,9 @@ use crate::model::node::{NodeRange, RawNode};
 pub struct OutlineItem {
     pub label:     String,
     pub node_type: String,
+    /// Coarse classification used by the UI to bucket outline items into headings:
+    /// "assignment", "conditional", "loop", "function", "other".
+    pub category:  &'static str,
     pub range:     NodeRange,
     /// Pinned hotkey hint, stamped by the owning node's state at extraction time.
     /// When present, the UI should prefer this key over the generic sequential assignment.

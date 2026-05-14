@@ -83,7 +83,7 @@ impl FocusedNode {
             }
         }
 
-        let mut outline = Self::compute_outline(&node_snapshot.children);
+        let mut outline = Self::compute_outline(lang, &node_snapshot.children);
 
         // Suppress identifiers/names by matching their start position against exceptions.
         let exceptions = node.outline_exceptions();
@@ -107,7 +107,7 @@ impl FocusedNode {
                 Some((wrapper.range.start_row, wrapper.range.start_col)),
                 Some((wrapper.range.end_row,   wrapper.range.end_col)),
             ) {
-                let mut expanded = Self::compute_outline(&snap.children);
+                let mut expanded = Self::compute_outline(lang, &snap.children);
                 expanded.sort_by(|a, b| {
                     a.range.start_row.cmp(&b.range.start_row)
                         .then(a.range.start_col.cmp(&b.range.start_col))
@@ -191,7 +191,13 @@ impl FocusedNode {
             .map(|s| { let s = s.trim(); if s.len() > 16 { s[..16].to_string() } else { s.to_string() } })
             .unwrap_or_else(|| ret.node_type.clone());
 
-        outline.push(OutlineItem { label, node_type: ret.node_type.clone(), range: ret.range.clone(), hint_key: Some("r") });
+        outline.push(OutlineItem {
+            label,
+            node_type: ret.node_type.clone(),
+            category: outline::category_for(lang, &ret.node_type),
+            range: ret.range.clone(),
+            hint_key: Some("r"),
+        });
         outline.sort_by(|a, b| a.range.start_row.cmp(&b.range.start_row).then(a.range.start_col.cmp(&b.range.start_col)));
     }
 
@@ -214,6 +220,7 @@ impl FocusedNode {
 
             let inner = &snap.children[0];
             item.node_type = inner.node_type.clone();
+            item.category  = outline::category_for(lang, &inner.node_type);
             item.range     = inner.range.clone();
             item.label     = inner.text.lines()
                 .find(|l| !l.trim().is_empty())

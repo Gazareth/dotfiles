@@ -20,7 +20,7 @@ impl Extract<FunctionCall> for Lua {
             // Lua function_call uses `name`, not `function`, for the callee field.
             name:       raw.field_text("name"),
             name_range: name_node.map(|r| r.range.clone()),
-            parameters: raw.field("args").map(|r| NavigationTarget::from_raw(&r)),
+            parameters: raw.field("args").map(|r| NavigationTarget::with_key(&r, "a")),
         }
     }
 }
@@ -115,6 +115,11 @@ crate::impl_language_syntax_map!(Lua, LUA_KINDS, {
     "local_declaration"      => Assignment,
     "variable_declaration"   => Assignment,
     "if_statement"         => Conditional,
+    "for_statement"         => Loop,
+    "for_generic_statement" => Loop,
+    "for_numeric_statement" => Loop,
+    "while_statement"       => Loop,
+    "repeat_statement"      => Loop,
     "function_call"        => Call,
     "parameter"            => Parameter,
     "return_statement"          => ReturnStatement,

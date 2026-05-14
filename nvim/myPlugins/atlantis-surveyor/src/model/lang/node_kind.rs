@@ -6,6 +6,7 @@ pub enum NodeKind {
     Call,
     Assignment,
     Conditional,
+    Loop,
     Parameter,
     ReturnStatement,
     FileRoot,

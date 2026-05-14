@@ -29,7 +29,7 @@ impl<Lang: HasFunctionCalls> Extract<FunctionCall> for Lang {
         FunctionCall {
             name:       raw.field_text("function"),
             name_range: raw.field("function").map(|r| r.range.clone()),
-            parameters: raw.field("arguments").map(|r| NavigationTarget::from_raw(&r)),
+            parameters: raw.field("arguments").map(|r| NavigationTarget::with_key(&r, "a")),
         }
     }
 }

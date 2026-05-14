@@ -32,6 +32,7 @@ macro_rules! impl_lang_node_resolver {
             Call($crate::model::node::Node<$Lang, $crate::model::supported_nodes::FunctionCall>),
             Assignment($crate::model::node::Node<$Lang, $crate::model::supported_nodes::Assignment>),
             Conditional($crate::model::node::Node<$Lang, $crate::model::supported_nodes::ConditionalStatement>),
+            Loop($crate::model::node::Node<$Lang, $crate::model::supported_nodes::LoopStatement>),
             Parameter($crate::model::node::Node<$Lang, $crate::model::supported_nodes::Parameter>),
             ReturnStatement($crate::model::node::Node<$Lang, $crate::model::supported_nodes::ReturnStatement>),
             FileRoot($crate::model::node::Node<$Lang, $crate::model::supported_nodes::FileRoot>),
@@ -52,6 +53,7 @@ macro_rules! impl_lang_node_resolver {
                     $Enum::Call(_)        => "Call",
                     $Enum::Assignment(_)  => "Assignment",
                     $Enum::Conditional(_) => "Conditional",
+                    $Enum::Loop(_)        => "Loop",
                     $Enum::Parameter(_)   => "Parameter",
                     $Enum::ReturnStatement(_) => "ReturnStatement",
                     $Enum::FileRoot(_)      => "FileRoot",
@@ -68,6 +70,7 @@ macro_rules! impl_lang_node_resolver {
                     $Enum::Call(_)            => &["rename"],
                     $Enum::Assignment(_)      => &["rename"],
                     $Enum::Conditional(_)     => &[],
+                    $Enum::Loop(_)            => &[],
                     $Enum::Parameter(_)       => &["rename"],
                     $Enum::ReturnStatement(_) => &[],
                     $Enum::FileRoot(_)      => &[],
@@ -90,11 +93,15 @@ macro_rules! impl_lang_node_resolver {
                         if let Some(h) = collect(&n.state.parameters) { hints.push(h); }
                         if let Some(h) = collect(&n.state.body)        { hints.push(h); }
                     }
+                    $Enum::Call(n) => {
+                        if let Some(h) = collect(&n.state.parameters) { hints.push(h); }
+                    }
                     $Enum::Assignment(n) => {
                         if let Some(h) = collect(&n.state.lhs)   { hints.push(h); }
                         if let Some(h) = collect(&n.state.value) { hints.push(h); }
                     }
                     $Enum::Conditional(n) => {
+                        hints.push((n.state.condition.range.clone(), "t"));
                         if let Some(h) = collect(&n.state.consequence) { hints.push(h); }
                         if let Some(h) = collect(&n.state.alternate)   { hints.push(h); }
                     }
@@ -102,8 +109,6 @@ macro_rules! impl_lang_node_resolver {
                 }
                 hints
             }
-
-
 
             fn outline_exceptions(&self) -> Vec<$crate::model::node::NodeRange> {
                 let mut exceptions = vec![];
@@ -149,6 +154,12 @@ macro_rules! impl_lang_node_resolver {
                     Some(NodeKind::Conditional) =>
                         $Enum::Conditional($crate::model::node::Node {
                             state: <$Lang as $crate::model::node::Extract<$crate::model::supported_nodes::ConditionalStatement>>::extract(&self.raw),
+                            raw: self.raw,
+                            _lang: PhantomData,
+                        }),
+                    Some(NodeKind::Loop) =>
+                        $Enum::Loop($crate::model::node::Node {
+                            state: <$Lang as $crate::model::node::Extract<$crate::model::supported_nodes::LoopStatement>>::extract(&self.raw),
                             raw: self.raw,
                             _lang: PhantomData,
                         }),

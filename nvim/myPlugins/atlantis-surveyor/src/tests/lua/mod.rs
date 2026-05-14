@@ -3,6 +3,7 @@ mod classification_spec;
 mod conditional;
 mod container;
 mod function;
+mod loop_spec;
 mod snapshot;
 mod navigation;
 mod outline_hints;

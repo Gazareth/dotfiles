@@ -21,6 +21,7 @@ pub use standard::{
     ConditionalStatement, HasConditionals,
     FunctionDeclaration, HasStandardFunctions,
     FunctionCall, HasFunctionCalls,
+    LoopStatement, HasLoops,
     Parameter, HasParameter,
     ReturnStatement, HasReturnStatement,
 };

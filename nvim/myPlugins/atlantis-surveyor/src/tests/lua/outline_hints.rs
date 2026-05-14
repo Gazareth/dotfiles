@@ -127,6 +127,69 @@ fn assignment_statement_outline_shows_only_name_and_value() {
     assert_eq!(val.hint_key, Some("v"), "expression_list should get hint_key 'v'");
 }
 
+// ── function_call ─────────────────────────────────────────────────────────
+
+#[test]
+fn function_call_outline_stamps_arguments_with_a() {
+    // Focusing a function_call must stamp its `args` child (an ExpressionList /
+    // arguments node) with hint_key 'a'. The function name identifier is suppressed
+    // by outline_exceptions, so only the arguments item should remain.
+    let call_range = range(0, 0, 0, 11); // print("hi")
+    let name_range = range(0, 0, 0, 5);  // print
+    let args_range = range(0, 5, 0, 11); // ("hi")
+
+    let focus = NodeOutline::new("function_call", call_range.clone());
+    let root  = NodeOutline::new("chunk",         call_range.clone());
+    let ancestry = NodeAncestry::new_test(vec![focus], root, Language::Lua);
+
+    snap("function_call")
+        .field_ranged("name", "print",    name_range.start_row, name_range.start_col, name_range.end_row, name_range.end_col)
+        .field_ranged("args", "(\"hi\")", args_range.start_row, args_range.start_col, args_range.end_row, args_range.end_col)
+        .child_ranged("identifier", "print", name_range.start_row, name_range.start_col, name_range.end_row, name_range.end_col)
+        .child_ranged("arguments",  "(\"hi\")", args_range.start_row, args_range.start_col, args_range.end_row, args_range.end_col)
+        .inject();
+
+    let result = FocusedNode::from_ancestry(ancestry, None).unwrap().unwrap();
+    let outline = &result.outline;
+
+    let args = outline.iter().find(|i| i.node_type == "arguments").expect("arguments missing");
+    assert_eq!(args.hint_key, Some("a"), "arguments should get hint_key 'a'");
+}
+
+// ── if_statement (condition pinned to 't') ────────────────────────────────
+
+#[test]
+fn if_statement_outline_stamps_condition_with_t() {
+    // Focusing an if_statement must stamp its `condition` child with hint_key 't'.
+    // Consequence keeps 'b' and alternate (if present) keeps 'e'.
+    // Use an identifier condition so binary_expression flattening doesn't kick in.
+    let if_range   = range(0, 0, 4, 3);
+    let cond_range = range(0, 3, 0, 4);  // x
+    let body_range = range(1, 2, 3, 0);
+
+    let focus = NodeOutline::new("if_statement", if_range.clone());
+    let root  = NodeOutline::new("chunk",        if_range.clone());
+    let ancestry = NodeAncestry::new_test(vec![focus], root, Language::Lua);
+
+    snap("if_statement")
+        .field_ranged("condition",   "x",   cond_range.start_row, cond_range.start_col, cond_range.end_row, cond_range.end_col)
+        .field_ranged("consequence", "...", body_range.start_row, body_range.start_col, body_range.end_row, body_range.end_col)
+        .child_ranged("identifier", "x",   cond_range.start_row, cond_range.start_col, cond_range.end_row, cond_range.end_col)
+        .child_ranged("block",      "...", body_range.start_row, body_range.start_col, body_range.end_row, body_range.end_col)
+        .inject();
+
+    let result = FocusedNode::from_ancestry(ancestry, None).unwrap().unwrap();
+    let outline = &result.outline;
+
+    let cond = outline.iter()
+        .find(|i| i.range.start_row == cond_range.start_row && i.range.start_col == cond_range.start_col)
+        .expect("condition outline item missing");
+    assert_eq!(cond.hint_key, Some("t"), "condition should get hint_key 't'");
+
+    let body = outline.iter().find(|i| i.node_type == "block").expect("block missing");
+    assert_eq!(body.hint_key, Some("b"), "consequence should keep hint_key 'b'");
+}
+
 // ── variable_declaration ──────────────────────────────────────────────────
 
 #[test]

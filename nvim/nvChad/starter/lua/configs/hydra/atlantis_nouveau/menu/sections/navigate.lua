@@ -60,7 +60,7 @@ function M.build(result)
        and not same_target(nav.nearest_function, nav.parent)
        and not same_target(nav.nearest_function, nav.nearest_body) then
       table.insert(context_items, {
-        key    = "f",
+        key    = "F",
         icon   = "󰜷",
         label  = "to function",
         action = function() jump_and_reopen(result.bufnr, nav.nearest_function) end,
@@ -68,7 +68,7 @@ function M.build(result)
     end
     if nav.nearest_body and not same_target(nav.nearest_body, nav.parent) then
       table.insert(context_items, {
-        key    = "b",
+        key    = "B",
         icon   = "󰜷",
         label  = "to body",
         action = function() jump_and_reopen(result.bufnr, nav.nearest_body) end,

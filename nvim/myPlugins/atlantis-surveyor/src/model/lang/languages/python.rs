@@ -27,6 +27,8 @@ crate::impl_language_syntax_map!(Python, PYTHON_KINDS, {
     "assignment"                => Assignment,
     "augmented_assignment"      => Assignment,
     "if_statement"              => Conditional,
+    "for_statement"             => Loop,
+    "while_statement"           => Loop,
     "call"                      => Call,
     "typed_parameter"           => Parameter,
     "default_parameter"         => Parameter,

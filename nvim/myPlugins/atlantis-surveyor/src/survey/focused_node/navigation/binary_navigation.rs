@@ -18,7 +18,7 @@ pub(in crate::survey::focused_node) fn flatten_binary_outline(lang: Language, ou
             Some((item.range.end_row,   item.range.end_col)),
         ) else { break; };
 
-        let children = super::super::FocusedNode::compute_outline(&snap.children);
+        let children = super::super::FocusedNode::compute_outline(lang, &snap.children);
         outline.extend(children);
         outline.sort_by(|a, b| {
             a.range.start_row.cmp(&b.range.start_row)
