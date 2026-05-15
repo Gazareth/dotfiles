@@ -3,7 +3,7 @@ local menu     = require("configs.hydra.atlantis_nouveau.menu")
 
 local M = {}
 
-M._flash_mode = false  -- persists selection mode across Atlantis sessions
+M._mode = "standard"  -- persists selection mode across Atlantis sessions: "standard", "flash", "namu"
 
 local function node_data(n)
   local sr, sc, er, ec = n:range()
@@ -62,7 +62,7 @@ function M.open(opts)
   local target_node_type = opts.target_node_type
   local target_start_row = opts.target_start_row
   local target_start_col = opts.target_start_col
-  local flash_mode       = opts.flash_mode
+  local mode_opt         = opts.mode
 
   local cursor = vim.api.nvim_win_get_cursor(0)
   local row = cursor[1] - 1
@@ -88,19 +88,21 @@ function M.open(opts)
     return
   end
 
-  -- nil = use remembered preference; true/false = explicit, and updates memory.
-  local use_flash
-  if flash_mode == nil then
-    use_flash = M._flash_mode
+  -- nil = use remembered preference; explicit string = use that and update memory.
+  local mode
+  if mode_opt == nil then
+    mode = M._mode
   else
-    use_flash = flash_mode
-    M._flash_mode = flash_mode
+    mode = mode_opt
+    M._mode = mode_opt
   end
 
-  if use_flash then
+  if mode == "flash" then
     local highlight_node = require("configs.hydra.atlantis_nouveau.menu.highlight_node")
     result._highlight_cleanup = highlight_node.apply(result.bufnr, result.range)
     require("configs.hydra.atlantis_nouveau.flash").open(result)
+  elseif mode == "namu" then
+    require("configs.hydra.atlantis_nouveau.namu").open(result)
   else
     menu.open(result)
   end

@@ -170,7 +170,7 @@ local function do_jump(bufnr, item)
       target_node_type = item.node_type,
       target_start_row = range.start_row,
       target_start_col = range.start_col,
-      flash_mode       = true,
+      mode             = "flash",
     })
   end)
 end
@@ -234,7 +234,7 @@ vim.keymap.set("n", "<Plug>(AtlantisJump)", function()
         target_node_type = result.node_type,
         target_start_row = result.range.start_row,
         target_start_col = result.range.start_col,
-        flash_mode       = false,
+        mode             = "namu",
       })
     end)
   elseif nav_item then
@@ -250,7 +250,7 @@ end)
 function M.open(result)
   -- Update remembered mode here because this can be called directly from the
   -- Tab head in menu/init.lua, bypassing init.lua's controlled setter.
-  require("configs.hydra.atlantis_nouveau")._flash_mode = true
+  require("configs.hydra.atlantis_nouveau")._mode = "flash"
   -- <Plug> indirection is needed because flash.jump() must run outside of a
   -- fast event (keymap callbacks from Hydra are fast); feedkeys defers it.
   M._pending = result

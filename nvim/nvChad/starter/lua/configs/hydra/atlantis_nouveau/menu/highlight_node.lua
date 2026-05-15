@@ -52,4 +52,17 @@ function M.apply(bufnr, r)
   end
 end
 
+--- Swap the highlight to a new range without touching open_count or cursorline.
+--- Used by namu's on_move to track the selected item live.
+function M.update(bufnr, r)
+  if not bufnr or not r then return end
+  vim.api.nvim_buf_clear_namespace(bufnr, ns, 0, -1)
+  vim.api.nvim_buf_set_extmark(bufnr, ns, r.start_row, r.start_col, {
+    end_row  = r.end_row,
+    end_col  = r.end_col,
+    hl_group = "AtlantisHL",
+    priority = 4096,
+  })
+end
+
 return M

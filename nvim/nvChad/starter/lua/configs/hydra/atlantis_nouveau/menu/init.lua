@@ -52,6 +52,7 @@ function M.open(result)
   local has_substitute = pcall(require, "substitute")
   local has_exchange   = vim.fn.exists("g:loaded_exchange") == 1
   local has_flash      = pcall(require, "flash")
+  local has_namu       = pcall(require, "namu.selecta.selecta")
 
   -- Support lazy-loaded plugins by checking the lazy.nvim registry
   local ok, lazy_config = pcall(require, "lazy.core.config")
@@ -59,7 +60,11 @@ function M.open(result)
     has_substitute = has_substitute or (lazy_config.plugins["substitute.nvim"] ~= nil)
     has_exchange   = has_exchange   or (lazy_config.plugins["vim-exchange"] ~= nil)
     has_flash      = has_flash      or (lazy_config.plugins["flash.nvim"] ~= nil)
+    has_namu       = has_namu       or (lazy_config.plugins["namu.nvim"] ~= nil)
   end
+
+  local OVERFLOW_THRESHOLD = 9
+  local is_overflow = result.outline and #result.outline > OVERFLOW_THRESHOLD
 
   local header_actions = {}
   local extra_line = {}
@@ -81,34 +86,81 @@ function M.open(result)
     table.insert(header_actions, extra_line)
   end
 
+  -- In overflow mode the normal Contents section is replaced with a single
+  -- heading so the hint window stays compact; Tab opens namu directly.
+  local sections
+  if is_overflow then
+    local all = standard.sections(result)
+    sections = {}
+    for _, s in ipairs(all) do
+      if s.title == "Contents" then
+        sections[#sections + 1] = {
+          title = "Contents",
+          items = { { heading = "[<Tab>] Select child..." } },
+        }
+      else
+        sections[#sections + 1] = s
+      end
+    end
+  else
+    sections = standard.sections(result)
+  end
+
   local skip_highlight_cleanup = false
-  make_hydra.open({
-    title          = menu_title(result),
-    common_actions = common_actions,
-    header_actions = header_actions,
-    sections       = standard.sections(result),
-    on_exit        = function()
-      if not skip_highlight_cleanup then on_exit() end
-    end,
-    hint_opts      = {
-      footer = {
-        left  = has_flash
-          and "[?] toggle hint  [<Tab>] cycle selection mode"
-          or  "[?] toggle hint",
-        right = "[q]/[Esc] exit",
-      },
-    },
-    extra_heads    = has_flash and {
+
+  local extra_heads
+  if is_overflow and has_namu then
+    extra_heads = {
       {
         "<Tab>",
         function()
-          skip_highlight_cleanup  = true
+          -- Open namu but preserve M._mode — overflow is a display override only.
+          local atlantis = require("configs.hydra.atlantis_nouveau")
+          local saved    = atlantis._mode
+          require("configs.hydra.atlantis_nouveau.namu").open(result)
+          atlantis._mode = saved
+        end,
+        { exit = true, desc = false },
+      },
+    }
+  elseif not is_overflow and has_flash then
+    extra_heads = {
+      {
+        "<Tab>",
+        function()
+          skip_highlight_cleanup    = true
           result._highlight_cleanup = on_exit
           require("configs.hydra.atlantis_nouveau.flash").open(result)
         end,
         { exit = true, desc = false },
       },
-    } or nil,
+    }
+  end
+
+  local footer_left
+  if is_overflow and has_namu then
+    footer_left = "[?] toggle hint  [<Tab>] select child..."
+  elseif not is_overflow and has_flash then
+    footer_left = "[?] toggle hint  [<Tab>] cycle selection mode"
+  else
+    footer_left = "[?] toggle hint"
+  end
+
+  make_hydra.open({
+    title          = menu_title(result),
+    common_actions = common_actions,
+    header_actions = header_actions,
+    sections       = sections,
+    on_exit        = function()
+      if not skip_highlight_cleanup then on_exit() end
+    end,
+    hint_opts      = {
+      footer = {
+        left  = footer_left,
+        right = "[q]/[Esc] exit",
+      },
+    },
+    extra_heads    = extra_heads,
   })
 end
 
