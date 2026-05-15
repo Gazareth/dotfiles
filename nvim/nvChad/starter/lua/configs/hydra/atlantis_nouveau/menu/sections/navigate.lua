@@ -6,10 +6,12 @@ local function jump_and_reopen(bufnr, target)
   vim.api.nvim_win_set_cursor(0, { range.start_row + 1, range.start_col })
   vim.cmd("normal! zz")
   vim.schedule(function()
-    require("configs.hydra.atlantis_nouveau").open(
-      bufnr, nil,
-      target.node_type, range.start_row, range.start_col
-    )
+    require("configs.hydra.atlantis_nouveau").open({
+      bufnr            = bufnr,
+      target_node_type = target.node_type,
+      target_start_row = range.start_row,
+      target_start_col = range.start_col,
+    })
   end)
 end
 
@@ -77,7 +79,6 @@ function M.build(result)
     if nav.parent then
       local p = nav.parent
       local class = p.classification ~= "" and p.classification or "Node"
-      
       table.insert(context_items, {
         key    = "h",
         icon   = "󰜷",
@@ -107,7 +108,7 @@ function M.build(result)
   -- Siblings sub-section (always shown; notifies when no sibling is available)
   table.insert(items, { heading = "Siblings" })
   table.insert(items, {
-    key    = "u",
+    key    = "j",
     icon   = "󰜶",
     label  = nav.prev_sibling and "to previous sibling" or "no sibling",
     action = nav.prev_sibling
@@ -117,7 +118,7 @@ function M.build(result)
           end,
   })
   table.insert(items, {
-    key    = "i",
+    key    = "k",
     icon   = "󰜴",
     label  = nav.next_sibling and "to next sibling" or "no sibling",
     action = nav.next_sibling

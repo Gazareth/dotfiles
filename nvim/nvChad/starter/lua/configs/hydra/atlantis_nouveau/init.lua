@@ -3,6 +3,8 @@ local menu     = require("configs.hydra.atlantis_nouveau.menu")
 
 local M = {}
 
+M._flash_mode = false  -- persists selection mode across Atlantis sessions
+
 local function node_data(n)
   local sr, sc, er, ec = n:range()
   return {
@@ -53,8 +55,15 @@ local function collect_ancestry(bufnr, row, col)
   return { filetype = ft, ancestry = ancestry }
 end
 
-function M.open(bufnr, focus_mode, target_node_type, target_start_row, target_start_col)
-  bufnr = bufnr or vim.api.nvim_get_current_buf()
+function M.open(opts)
+  opts = opts or {}
+  local bufnr            = opts.bufnr or vim.api.nvim_get_current_buf()
+  local focus_mode       = opts.focus_mode
+  local target_node_type = opts.target_node_type
+  local target_start_row = opts.target_start_row
+  local target_start_col = opts.target_start_col
+  local flash_mode       = opts.flash_mode
+
   local cursor = vim.api.nvim_win_get_cursor(0)
   local row = cursor[1] - 1
   local col = cursor[2]
@@ -79,7 +88,22 @@ function M.open(bufnr, focus_mode, target_node_type, target_start_row, target_st
     return
   end
 
-  menu.open(result)
+  -- nil = use remembered preference; true/false = explicit, and updates memory.
+  local use_flash
+  if flash_mode == nil then
+    use_flash = M._flash_mode
+  else
+    use_flash = flash_mode
+    M._flash_mode = flash_mode
+  end
+
+  if use_flash then
+    local highlight_node = require("configs.hydra.atlantis_nouveau.menu.highlight_node")
+    result._highlight_cleanup = highlight_node.apply(result.bufnr, result.range)
+    require("configs.hydra.atlantis_nouveau.flash").open(result)
+  else
+    menu.open(result)
+  end
 end
 
 return M

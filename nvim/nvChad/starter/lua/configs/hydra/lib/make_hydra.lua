@@ -88,7 +88,7 @@ local function toggle_hint_window()
   end
 end
 
-local function build_heads(rendered)
+local function build_heads(rendered, spec)
   local heads = {}
 
   for _, section in ipairs(rendered.sections) do
@@ -111,6 +111,10 @@ local function build_heads(rendered)
     toggle_hint_window,
     { exit = false, desc = false },
   }
+
+  for _, head in ipairs(type(spec) == "table" and spec.extra_heads or {}) do
+    heads[#heads + 1] = head
+  end
 
   return heads
 end
@@ -142,7 +146,7 @@ function M.open(spec, opts)
     name = spec.title or "Hydra",
     mode = "n",
     hint = rendered.hint,
-    heads = build_heads(rendered),
+    heads = build_heads(rendered, spec),
     config = {
       color = "red",
       invoke_on_body = false,
@@ -155,8 +159,14 @@ function M.open(spec, opts)
 
   -- Set on_exit after construction to bypass hydra's setfenv/tbl_deep_extend
   -- crash that occurs when on_exit captures _G via upvalues.
-  if type(spec.on_exit) == "function" then
-    hydra.config.on_exit = spec.on_exit
+  -- Also reset eventignore: Hydra sets it to "all" during operation and may
+  -- not restore it if our post-construction on_exit bypasses its normal cleanup path.
+  local user_on_exit = spec.on_exit
+  hydra.config.on_exit = function()
+    vim.o.eventignore = ""
+    if type(user_on_exit) == "function" then
+      user_on_exit()
+    end
   end
 
   hydra:activate()

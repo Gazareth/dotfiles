@@ -32,10 +32,12 @@ local function jump_to_item(bufnr, item)
   vim.api.nvim_win_set_cursor(0, { range.start_row + 1, range.start_col })
   vim.cmd("normal! zz")
   vim.schedule(function()
-    require("configs.hydra.atlantis_nouveau").open(
-      bufnr, nil,
-      item.node_type, range.start_row, range.start_col
-    )
+    require("configs.hydra.atlantis_nouveau").open({
+      bufnr            = bufnr,
+      target_node_type = item.node_type,
+      target_start_row = range.start_row,
+      target_start_col = range.start_col,
+    })
   end)
 end
 
@@ -134,6 +136,17 @@ function M.build(result)
     rows = build_parameters_rows(result)
   else
     rows = build_classification_rows(result)
+  end
+
+  -- For component/parameter focus the navigate "l" key also jumps to the first
+  -- outline item, so annotate its label to make that visible.
+  if focus and (COMPONENTS_FOCUS[focus] or PARAMETERS_FOCUS[focus]) then
+    for _, row in ipairs(rows) do
+      if type(row.key) == "string" and row.key ~= "" then
+        row.label = (row.label or "") .. " (l)"
+        break
+      end
+    end
   end
 
   return { title = "Contents", items = rows }

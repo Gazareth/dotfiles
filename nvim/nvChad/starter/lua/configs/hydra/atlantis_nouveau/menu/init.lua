@@ -29,8 +29,7 @@ end
 function M.open(result)
   -- Apply a transient highlight over the node that is being hovered over
   -- Also get an on_exit callback that clears the highlight when the menu is closed
-  local on_exit = highlight_node.apply(result.bufnr, result.range)
-
+  local on_exit  = highlight_node.apply(result.bufnr, result.range)
   local registry = require("configs.hydra.atlantis_nouveau.ops.registry")
   local common_actions = {
     {
@@ -52,12 +51,14 @@ function M.open(result)
 
   local has_substitute = pcall(require, "substitute")
   local has_exchange   = vim.fn.exists("g:loaded_exchange") == 1
+  local has_flash      = pcall(require, "flash")
 
   -- Support lazy-loaded plugins by checking the lazy.nvim registry
   local ok, lazy_config = pcall(require, "lazy.core.config")
   if ok and lazy_config.plugins then
     has_substitute = has_substitute or (lazy_config.plugins["substitute.nvim"] ~= nil)
     has_exchange   = has_exchange   or (lazy_config.plugins["vim-exchange"] ~= nil)
+    has_flash      = has_flash      or (lazy_config.plugins["flash.nvim"] ~= nil)
   end
 
   local header_actions = {}
@@ -80,12 +81,34 @@ function M.open(result)
     table.insert(header_actions, extra_line)
   end
 
+  local skip_highlight_cleanup = false
   make_hydra.open({
     title          = menu_title(result),
     common_actions = common_actions,
     header_actions = header_actions,
     sections       = standard.sections(result),
-    on_exit        = on_exit,
+    on_exit        = function()
+      if not skip_highlight_cleanup then on_exit() end
+    end,
+    hint_opts      = {
+      footer = {
+        left  = has_flash
+          and "[?] toggle hint  [<Tab>] cycle selection mode"
+          or  "[?] toggle hint",
+        right = "[q]/[Esc] exit",
+      },
+    },
+    extra_heads    = has_flash and {
+      {
+        "<Tab>",
+        function()
+          skip_highlight_cleanup  = true
+          result._highlight_cleanup = on_exit
+          require("configs.hydra.atlantis_nouveau.flash").open(result)
+        end,
+        { exit = true, desc = false },
+      },
+    } or nil,
   })
 end
 
