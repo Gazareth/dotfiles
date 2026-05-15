@@ -1,17 +1,21 @@
 use crate::model::OutlineItem;
 use crate::probe::language::Language;
-use crate::probe::treesitter;
+use crate::survey::focused_node::Fetch;
 
 /// Recursively expands binary_expression entries in an outline until only
 /// non-binary operands remain.
-pub(in crate::survey::focused_node) fn flatten_binary_outline(lang: Language, outline: &mut Vec<OutlineItem>) {
+pub(in crate::survey::focused_node) fn flatten_binary_outline(
+    lang:    Language,
+    outline: &mut Vec<OutlineItem>,
+    fetch:   &mut Fetch<'_>,
+) {
     loop {
         let Some(idx) = outline.iter().position(|item| {
             item.node_type == "binary_expression"
         }) else { break; };
 
         let item = outline.remove(idx);
-        let Ok(snap) = treesitter::snapshot(
+        let Ok(snap) = fetch(
             item.range.start_row, item.range.start_col,
             Some("binary_expression"),
             Some((item.range.start_row, item.range.start_col)),

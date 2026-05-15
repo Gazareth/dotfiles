@@ -49,8 +49,9 @@ fn parameters_with_one_param_climbs_to_function_declaration() {
     let root   = NodeOutline::new("chunk", range(0, 0, 0, 20));
     let ancestry = NodeAncestry::new_test(vec![params, func], root, Language::Lua);
 
-    snap("function_declaration").inject();
-    let result = FocusedNode::from_ancestry(ancestry, None).unwrap().unwrap();
+    let result = FocusedNode::from_ancestry(ancestry, None, vec![
+        snap("function_declaration").build(),
+    ]).unwrap().unwrap();
     assert_eq!(result.node_type, "function_declaration");
 }
 
@@ -65,8 +66,9 @@ fn identifier_inside_single_param_list_is_focused_as_parameter() {
     let root   = NodeOutline::new("chunk", range(0, 0, 0, 20));
     let ancestry = NodeAncestry::new_test(vec![ident, params, func], root, Language::Lua);
 
-    snap("identifier").inject();
-    let result = FocusedNode::from_ancestry(ancestry, None).unwrap().unwrap();
+    let result = FocusedNode::from_ancestry(ancestry, None, vec![
+        snap("identifier").build(),
+    ]).unwrap().unwrap();
     assert_eq!(result.node_type, "identifier",
         "identifier in single-param list is Recognised(Parameter) and should be focused directly");
 }
@@ -80,8 +82,9 @@ fn block_with_one_statement_climbs_to_enclosing_function() {
     let root  = NodeOutline::new("chunk", range(0, 0, 5, 3));
     let ancestry = NodeAncestry::new_test(vec![token, block, func], root, Language::Lua);
 
-    snap("function_declaration").inject();
-    let result = FocusedNode::from_ancestry(ancestry, None).unwrap().unwrap();
+    let result = FocusedNode::from_ancestry(ancestry, None, vec![
+        snap("function_declaration").build(),
+    ]).unwrap().unwrap();
     assert_eq!(result.node_type, "function_declaration");
 }
 
@@ -93,8 +96,9 @@ fn arguments_with_one_arg_climbs_to_function_call() {
     let root = NodeOutline::new("chunk", range(0, 0, 0, 10));
     let ancestry = NodeAncestry::new_test(vec![args, call], root, Language::Lua);
 
-    snap("function_call").inject();
-    let result = FocusedNode::from_ancestry(ancestry, None).unwrap().unwrap();
+    let result = FocusedNode::from_ancestry(ancestry, None, vec![
+        snap("function_call").build(),
+    ]).unwrap().unwrap();
     assert_eq!(result.node_type, "function_call");
 }
 
@@ -107,8 +111,9 @@ fn identifier_inside_single_arg_list_climbs_to_function_call() {
     let root  = NodeOutline::new("chunk", range(0, 0, 0, 10));
     let ancestry = NodeAncestry::new_test(vec![ident, args, call], root, Language::Lua);
 
-    snap("function_call").inject();
-    let result = FocusedNode::from_ancestry(ancestry, None).unwrap().unwrap();
+    let result = FocusedNode::from_ancestry(ancestry, None, vec![
+        snap("function_call").build(),
+    ]).unwrap().unwrap();
     assert_eq!(result.node_type, "function_call");
 }
 
@@ -122,8 +127,9 @@ fn parameters_with_multiple_params_is_recognised() {
     let root   = NodeOutline::new("chunk", range(0, 0, 0, 20));
     let ancestry = NodeAncestry::new_test(vec![params, func], root, Language::Lua);
 
-    snap("parameters").inject();
-    let result = FocusedNode::from_ancestry(ancestry, None).unwrap().unwrap();
+    let result = FocusedNode::from_ancestry(ancestry, None, vec![
+        snap("parameters").build(),
+    ]).unwrap().unwrap();
     assert_eq!(result.node_type, "parameters");
 }
 
@@ -136,8 +142,9 @@ fn identifier_inside_multi_param_list_is_leaf() {
     let root   = NodeOutline::new("chunk", range(0, 0, 0, 20));
     let ancestry = NodeAncestry::new_test(vec![ident, params, func], root, Language::Lua);
 
-    snap("identifier").inject();
-    let result = FocusedNode::from_ancestry(ancestry, None).unwrap().unwrap();
+    let result = FocusedNode::from_ancestry(ancestry, None, vec![
+        snap("identifier").build(),
+    ]).unwrap().unwrap();
     assert_eq!(result.node_type, "identifier",
         "one of multiple params should be a Leaf focus target");
 }
@@ -151,8 +158,9 @@ fn identifier_inside_multi_statement_block_is_leaf() {
     let root  = NodeOutline::new("chunk", range(0, 0, 5, 3));
     let ancestry = NodeAncestry::new_test(vec![token, block, func], root, Language::Lua);
 
-    snap("end").inject();
-    let result = FocusedNode::from_ancestry(ancestry, None).unwrap().unwrap();
+    let result = FocusedNode::from_ancestry(ancestry, None, vec![
+        snap("end").build(),
+    ]).unwrap().unwrap();
     assert_eq!(result.node_type, "end",
         "token inside multi-statement block should remain as Leaf");
 }
@@ -168,8 +176,9 @@ fn function_name_identifier_is_not_leaf() {
     let root  = NodeOutline::new("chunk", range(0, 0, 0, 20));
     let ancestry = NodeAncestry::new_test(vec![ident, func], root, Language::Lua);
 
-    snap("function_declaration").inject();
-    let result = FocusedNode::from_ancestry(ancestry, None).unwrap().unwrap();
+    let result = FocusedNode::from_ancestry(ancestry, None, vec![
+        snap("function_declaration").build(),
+    ]).unwrap().unwrap();
     assert_eq!(result.node_type, "function_declaration",
         "function name identifier should not be a Leaf; focus climbs to function_declaration");
 }

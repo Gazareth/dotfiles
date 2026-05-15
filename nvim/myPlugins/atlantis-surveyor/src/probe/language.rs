@@ -4,7 +4,6 @@ use crate::model::lang::languages::{JavaScript, Lua, Python, TypeScript};
 use crate::model::node::RawNode;
 use crate::probe::treesitter::NodeOutline;
 
-#[cfg_attr(test, allow(dead_code))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Language {
     Lua,
@@ -14,7 +13,6 @@ pub enum Language {
     Unknown,
 }
 
-#[cfg(not(test))]
 pub fn detect(filetype: &str) -> Language {
     match filetype {
         "lua"        => Language::Lua,
@@ -39,7 +37,6 @@ impl Language {
     /// Returns `Some(true)` if the node type is a file root for this language,
     /// `Some(false)` if it is recognised but is not a file root, and
     /// `None` for unknown languages where the check cannot be performed.
-    #[cfg(not(test))]
     pub fn is_file_root(&self, node_type: &str) -> Option<bool> {
         if matches!(self, Language::Unknown) { return None; }
         Some(matches!(self.node_kind_for(node_type), Some(NodeKind::FileRoot)))
@@ -97,7 +94,7 @@ impl Language {
         // regardless of child count. This makes nested binary_expression chains flatten
         // naturally without bespoke sibling logic.
         if let Some(NodeKind::ExpressionList) = self.node_kind_for(&raw.kind) {
-            if parent.map_or(false, |p| p.node_type == raw.kind) {
+            if parent.is_some_and(|p| p.node_type == raw.kind) {
                 return AtlantisNode::Unrecognised;
             }
         }

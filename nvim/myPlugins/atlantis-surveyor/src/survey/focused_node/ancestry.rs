@@ -77,12 +77,7 @@ impl NodeAncestry {
                 let parent = all.get(i + 1);
                 let classified = lang.classify(RawNode::from(*n), parent.copied());
                 
-                match classified {
-                    AtlantisNode::Recognised(_) => true,
-                    AtlantisNode::Leaf         => true,
-                    
-                    _ => false,
-                }
+                matches!(classified, AtlantisNode::Recognised(_) | AtlantisNode::Leaf)
             }).ok_or(AtlantisError::UnsupportedLanguage)?
         };
 

@@ -10,11 +10,16 @@ use crate::error::AtlantisError;
 use crate::model::lang::NodeKind;
 use crate::model::node::{NodeRange, RawNode};
 use crate::model::{AtlantisNode, OutlineItem};
-use crate::probe::treesitter::{self, NodeOutline};
+use crate::probe::treesitter::NodeOutline;
 
 use self::ancestry::NodeAncestry;
 
 pub use self::navigation::NavigationInfo;
+
+/// Snapshot-fetching callback threaded through the survey pipeline.
+/// Production: wraps `treesitter::snapshot`. Tests: pops from a local `Vec`.
+pub(crate) type Fetch<'a> = dyn FnMut(u32, u32, Option<&str>, Option<(u32, u32)>, Option<(u32, u32)>)
+    -> Result<crate::probe::treesitter::NodeSnapshot, AtlantisError> + 'a;
 
 
 // ── FocusedNode ───────────────────────────────────────────────────────
@@ -30,7 +35,6 @@ pub struct FocusedNode {
 
 impl FocusedNode {
     #[cfg(not(test))]
-    #[must_use]
     pub fn from_raw(
         raw:         &Dictionary,
         target_hint: Option<(&str, u32, u32)>,
@@ -39,10 +43,32 @@ impl FocusedNode {
         Self::from_ancestry(ancestry, target_hint)
     }
 
-    #[must_use]
+    /// Production entry point: fetches snapshots via the real Tree-sitter probe.
+    #[cfg(not(test))]
     pub fn from_ancestry(
         ancestry:    NodeAncestry,
         target_hint: Option<(&str, u32, u32)>,
+    ) -> Result<Option<Self>, AtlantisError> {
+        Self::from_ancestry_inner(ancestry, target_hint, &mut crate::probe::treesitter::snapshot)
+    }
+
+    /// Test entry point: consumes snapshots from a pre-supplied list in order.
+    #[cfg(test)]
+    pub fn from_ancestry(
+        ancestry:    NodeAncestry,
+        target_hint: Option<(&str, u32, u32)>,
+        snapshots:   Vec<crate::probe::treesitter::NodeSnapshot>,
+    ) -> Result<Option<Self>, AtlantisError> {
+        let mut queue = std::collections::VecDeque::from(snapshots);
+        Self::from_ancestry_inner(ancestry, target_hint, &mut |_, _, _, _, _| {
+            queue.pop_front().ok_or(AtlantisError::NoNode)
+        })
+    }
+
+    fn from_ancestry_inner(
+        ancestry:    NodeAncestry,
+        target_hint: Option<(&str, u32, u32)>,
+        fetch:       &mut Fetch<'_>,
     ) -> Result<Option<Self>, AtlantisError> {
         let lang = ancestry.language();
         let all: Vec<&NodeOutline> = ancestry.all().collect();
@@ -55,7 +81,7 @@ impl FocusedNode {
         let focus_node_outline = all[focus_idx];
         let parent_ref = all.get(focus_idx + 1).copied();
 
-        let node_snapshot = treesitter::snapshot(
+        let node_snapshot = fetch(
             focus_node_outline.range.start_row,
             focus_node_outline.range.start_col,
             Some(&focus_node_outline.node_type),
@@ -64,13 +90,11 @@ impl FocusedNode {
         )?;
 
         let node       = lang.classify(RawNode::from(&node_snapshot), parent_ref);
-        let navigation = NavigationInfo::from_snapshot(lang, &all, focus_idx, &node_snapshot);
+        let navigation = NavigationInfo::from_snapshot_inner(lang, &all, focus_idx, &node_snapshot, fetch);
         let node_type  = node_snapshot.node_type.clone();
         let mut range  = node_snapshot.range.clone();
 
         // When the focus is a Body, trim its range to exclude any trailing return statement.
-        // This makes the highlighted range and title reflect only the statements, keeping
-        // body and return as logically distinct ranges.
         if matches!(lang.node_kind_for(&node_snapshot.node_type), Some(NodeKind::Body)) {
             if let Some(ret) = node_snapshot.children.iter().rev()
                 .find(|c| matches!(lang.node_kind_for(&c.node_type), Some(NodeKind::ReturnStatement)))
@@ -87,7 +111,6 @@ impl FocusedNode {
 
         let mut outline = Self::compute_outline(lang, &node_snapshot.children);
 
-        // Suppress identifiers/names by matching their start position against exceptions.
         let exceptions = node.outline_exceptions();
         outline.retain(|item| {
             !exceptions.iter().any(|ex| {
@@ -96,14 +119,13 @@ impl FocusedNode {
         });
 
         // Expand variable_declaration: its single assignment_statement child is a transparent
-        // wrapper — replace it with the assignment_statement's own children so that the
-        // name (variable_list) and value (expression_list) appear directly in the outline.
+        // wrapper — replace it with the assignment_statement's own children.
         if node_snapshot.node_type == "variable_declaration"
             && outline.len() == 1
             && outline[0].node_type == "assignment_statement"
         {
             let wrapper = outline.remove(0);
-            if let Ok(snap) = treesitter::snapshot(
+            if let Ok(snap) = fetch(
                 wrapper.range.start_row, wrapper.range.start_col,
                 Some("assignment_statement"),
                 Some((wrapper.range.start_row, wrapper.range.start_col)),
@@ -118,10 +140,8 @@ impl FocusedNode {
             }
         }
 
-        // Flatten binary expressions (e.g. x + y -> [x, y]).
-        navigation::binary_navigation::flatten_binary_outline(lang, &mut outline);
+        navigation::binary_navigation::flatten_binary_outline(lang, &mut outline, fetch);
 
-        // Stamp hotkey hints (e.g. [p] for parameters, [b] for body).
         let hints = node.keyed_outline_hints();
         for item in &mut outline {
             if let Some((_, key)) = hints.iter().find(|(r, _)| {
@@ -132,8 +152,8 @@ impl FocusedNode {
         }
 
         if matches!(lang.node_kind_for(&node_snapshot.node_type), Some(NodeKind::Function)) {
-            Self::enrich_function_outline(lang, &mut outline);
-            Self::redirect_transparent_param_outline_item(lang, &mut outline);
+            Self::enrich_function_outline(lang, &mut outline, fetch);
+            Self::redirect_transparent_param_outline_item(lang, &mut outline, fetch);
         }
 
         let focused = FocusedNode {
@@ -143,7 +163,11 @@ impl FocusedNode {
         Ok(Some(focused))
     }
 
-    fn enrich_function_outline(lang: crate::probe::language::Language, outline: &mut Vec<OutlineItem>) {
+    fn enrich_function_outline(
+        lang:    crate::probe::language::Language,
+        outline: &mut Vec<OutlineItem>,
+        fetch:   &mut Fetch<'_>,
+    ) {
         let (body_range, body_node_type) = match outline.iter()
             .find(|i| matches!(lang.node_kind_for(&i.node_type), Some(NodeKind::Body)))
         {
@@ -151,7 +175,7 @@ impl FocusedNode {
             None    => return,
         };
 
-        let Ok(body_snap) = treesitter::snapshot(
+        let Ok(body_snap) = fetch(
             body_range.start_row, body_range.start_col,
             Some(&body_node_type),
             Some((body_range.start_row, body_range.start_col)),
@@ -205,13 +229,16 @@ impl FocusedNode {
 
     /// Redirects any ParameterList outline item to its single inner child when the list
     /// is transparent (exactly 1 child). hint_key ("p") is preserved.
-    /// No-op if the snapshot fails or the list has ≠ 1 child.
-    fn redirect_transparent_param_outline_item(lang: crate::probe::language::Language, outline: &mut Vec<OutlineItem>) {
+    fn redirect_transparent_param_outline_item(
+        lang:    crate::probe::language::Language,
+        outline: &mut [OutlineItem],
+        fetch:   &mut Fetch<'_>,
+    ) {
         for item in outline.iter_mut() {
             if !matches!(lang.node_kind_for(&item.node_type), Some(NodeKind::ParameterList)) {
                 continue;
             }
-            let Ok(snap) = treesitter::snapshot(
+            let Ok(snap) = fetch(
                 item.range.start_row, item.range.start_col,
                 Some(&item.node_type),
                 Some((item.range.start_row, item.range.start_col)),
@@ -228,8 +255,6 @@ impl FocusedNode {
                 .find(|l| !l.trim().is_empty())
                 .map(|s| { let s = s.trim(); if s.len() > 16 { s[..16].to_string() } else { s.to_string() } })
                 .unwrap_or_else(|| inner.node_type.clone());
-            // hint_key ("p") is preserved from the earlier stamping step.
         }
     }
 }
-

@@ -16,8 +16,8 @@ impl Extract<Assignment> for Python {
         Assignment {
             name:             raw.field_text("left"),
             is_local_binding: false,
-            lhs:              raw.field("left").map(|r| NavigationTarget::from_raw(&r)),
-            value:            raw.field("right").map(|r| NavigationTarget::from_raw(&r)),
+            lhs:              raw.field("left").map(NavigationTarget::from_raw),
+            value:            raw.field("right").map(NavigationTarget::from_raw),
         }
     }
 }

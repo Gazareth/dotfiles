@@ -5,7 +5,6 @@ pub trait ConstructActions: std::fmt::Debug + Send + Sync {
     fn node_type_name(&self) -> &'static str;
 
     /// List of semantic actions available for this node.
-    #[cfg(not(test))]
     fn available_actions(&self) -> &'static [&'static str];
 
     /// Returns (range, hint_key) pairs for NavigationTarget fields that carry a pinned hotkey.

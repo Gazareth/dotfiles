@@ -1,22 +1,4 @@
 use crate::tests::lua::*;
-use crate::probe::treesitter;
-
-#[test]
-fn returns_error_when_nothing_is_injected() {
-    treesitter::clear_snapshot();
-    assert!(treesitter::snapshot(0, 0, None, None, None).is_err());
-}
-
-#[test]
-fn injected_snapshot_is_returned_by_next_call() {
-    snap("function_declaration").field_text("name", "add").inject();
-
-    let returned = treesitter::snapshot(0, 0, None, None, None)
-        .expect("should return the injected snapshot");
-
-    assert_eq!(returned.node_type, "function_declaration");
-    treesitter::clear_snapshot();
-}
 
 #[test]
 fn snapshot_converts_to_raw_node_and_classifies_correctly() {

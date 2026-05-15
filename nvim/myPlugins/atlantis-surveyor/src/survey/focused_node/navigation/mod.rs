@@ -1,11 +1,14 @@
 use serde::Serialize;
 
+#[cfg(test)]
+use crate::error::AtlantisError;
 use crate::model::lang::NodeKind;
 use crate::model::node::{NodeRange, RawNode};
 use crate::model::AtlantisNode;
 use crate::probe::language::Language;
-use crate::probe::treesitter::{self, NodeOutline, NodeSnapshot, SnapshotChild};
+use crate::probe::treesitter::{NodeOutline, NodeSnapshot, SnapshotChild};
 use crate::model::NavigationTarget;
+use crate::survey::focused_node::Fetch;
 
 pub(super) mod binary_navigation;
 
@@ -92,19 +95,35 @@ fn position_matches(target: &NavigationTarget, node_type: &str, range: &NodeRang
 }
 
 impl NavigationInfo {
+    /// Test entry point: fetches snapshots from a pre-supplied list in order.
+    #[cfg(test)]
     pub fn from_snapshot(
         lang:          Language,
         all:           &[&NodeOutline],
         focus_idx:     usize,
         node_snapshot: &NodeSnapshot,
+        snapshots:     Vec<NodeSnapshot>,
+    ) -> Self {
+        let mut queue = std::collections::VecDeque::from(snapshots);
+        Self::from_snapshot_inner(lang, all, focus_idx, node_snapshot, &mut |_, _, _, _, _| {
+            queue.pop_front().ok_or(AtlantisError::NoNode)
+        })
+    }
+
+    pub(super) fn from_snapshot_inner(
+        lang:          Language,
+        all:           &[&NodeOutline],
+        focus_idx:     usize,
+        node_snapshot: &NodeSnapshot,
+        fetch:         &mut Fetch<'_>,
     ) -> Self {
         let ctx = AncestryContext::new(lang, all, focus_idx);
-        
+
         let focus_node = ctx.lang.classify(RawNode::from(all[focus_idx]), ctx.parent_at(focus_idx));
         let is_leaf_focus = matches!(focus_node, AtlantisNode::Leaf);
 
         let top_level = Self::resolve_top_level(&ctx);
-        let (prev_sibling, next_sibling) = Self::resolve_siblings(&ctx, node_snapshot, is_leaf_focus);
+        let (prev_sibling, next_sibling) = Self::resolve_siblings(&ctx, node_snapshot, is_leaf_focus, fetch);
         let is_at_top = Self::is_at_top(&top_level, node_snapshot);
 
         Self {
@@ -154,23 +173,24 @@ impl NavigationInfo {
 
     /// Resolves prev/next sibling using the general walk-up / walk-down algorithm.
     fn resolve_siblings(
-        ctx: &AncestryContext,
+        ctx:           &AncestryContext,
         node_snapshot: &NodeSnapshot,
         is_leaf_focus: bool,
+        fetch:         &mut Fetch<'_>,
     ) -> (Option<NavigationTarget>, Option<NavigationTarget>) {
         // When focused on a return_statement inside a function body, treat it as a
         // function-level component and cycle between [params, body, return] instead
         // of the body's statement-level siblings.
         if matches!(ctx.lang.node_kind_for(&node_snapshot.node_type), Some(NodeKind::ReturnStatement)) {
             let grandparent_is_fn = ctx.all.get(ctx.focus_idx + 2)
-                .map_or(false, |gp| matches!(ctx.lang.node_kind_for(&gp.node_type), Some(NodeKind::Function)));
+                .is_some_and(|gp| matches!(ctx.lang.node_kind_for(&gp.node_type), Some(NodeKind::Function)));
             if grandparent_is_fn {
-                let siblings = Self::collect_function_components_for_return(ctx, node_snapshot);
+                let siblings = Self::collect_function_components_for_return(ctx, node_snapshot, fetch);
                 return sibling_nav(&siblings, &node_snapshot.node_type, &node_snapshot.range);
             }
         }
 
-        Self::resolve_siblings_general(ctx, node_snapshot, is_leaf_focus)
+        Self::resolve_siblings_general(ctx, node_snapshot, is_leaf_focus, fetch)
     }
 
     /// Walk up to the nearest Recognised ancestor (semantic parent), snapshot it,
@@ -180,6 +200,7 @@ impl NavigationInfo {
         ctx:           &AncestryContext,
         node_snapshot: &NodeSnapshot,
         is_leaf_focus: bool,
+        fetch:         &mut Fetch<'_>,
     ) -> (Option<NavigationTarget>, Option<NavigationTarget>) {
         // Find the nearest Recognised ancestor above the focus.
         let sp_idx = (ctx.focus_idx + 1..ctx.all.len()).find(|&i| {
@@ -191,7 +212,7 @@ impl NavigationInfo {
         let Some(sp_idx) = sp_idx else { return (None, None); };
         let sp = ctx.all[sp_idx];
 
-        let Ok(sp_snap) = treesitter::snapshot(
+        let Ok(sp_snap) = fetch(
             sp.range.start_row, sp.range.start_col,
             Some(&sp.node_type),
             Some((sp.range.start_row, sp.range.start_col)),
@@ -199,7 +220,7 @@ impl NavigationInfo {
         ) else { return (None, None); };
 
         let mut siblings: Vec<NavigationTarget> = sp_snap.children.iter()
-            .filter_map(|child| Self::resolve_child_sibling(ctx, child, sp, is_leaf_focus))
+            .filter_map(|child| Self::resolve_child_sibling(ctx, child, sp, is_leaf_focus, fetch))
             .collect();
 
         // When the semantic parent is a Body inside a Function, the return statement is
@@ -214,7 +235,7 @@ impl NavigationInfo {
         if is_leaf_focus {
             Self::inject_leaf_focus_if_absent(&mut siblings, node_snapshot);
         }
-        Self::maybe_add_return_sibling(ctx.lang, &mut siblings, node_snapshot, ctx.parent_at(ctx.focus_idx));
+        Self::maybe_add_return_sibling(ctx.lang, &mut siblings, node_snapshot, ctx.parent_at(ctx.focus_idx), fetch);
 
         // maybe_add_return_sibling is guarded by parent_ref being a Function. When the focus
         // is a parameter whose immediate parent is a transparent ParameterList, parent_ref is
@@ -230,7 +251,7 @@ impl NavigationInfo {
                 .find(|s| matches!(ctx.lang.node_kind_for(&s.node_type), Some(NodeKind::Body)))
                 .cloned()
             {
-                if let Ok(body_snap) = treesitter::snapshot(
+                if let Ok(body_snap) = fetch(
                     body_nav.range.start_row, body_nav.range.start_col,
                     None,
                     Some((body_nav.range.start_row, body_nav.range.start_col)),
@@ -263,21 +284,15 @@ impl NavigationInfo {
     }
 
     /// Resolves a single child of the semantic parent into a sibling NavigationTarget.
-    ///
-    /// - Children in the focused ancestry branch resolve as the focused node itself.
-    /// - Translucent children are snapshotted to get their real child count:
-    ///   if ≤1 and not a Body, descend recursively; otherwise include as opaque.
-    /// - Body nodes are always included as opaque siblings (never descended into).
-    /// - Non-translucent children are classified normally.
     fn resolve_child_sibling(
         ctx:           &AncestryContext,
         child:         &SnapshotChild,
         sp:            &NodeOutline,
         is_leaf_focus: bool,
+        fetch:         &mut Fetch<'_>,
     ) -> Option<NavigationTarget> {
         // If this child overlaps a node in the focused ancestry, use the focused
-        // node as the sibling representative (avoids an extra snapshot and gives
-        // the correct child_count from NodeOutline).
+        // node as the sibling representative.
         let in_ancestry = ctx.all[..=ctx.focus_idx].iter().any(|n| {
             n.range.start_row == child.range.start_row
                 && n.range.start_col == child.range.start_col
@@ -293,14 +308,14 @@ impl NavigationInfo {
         }
 
         let is_translucent_kind = ctx.lang.node_kind_for(&child.node_type)
-            .map_or(false, |k| k.is_translucent());
+            .is_some_and(|k| k.is_translucent());
 
         if is_translucent_kind {
             // Body is a semantic container — always include it as an opaque sibling,
             // never descend into it.
             let is_body = matches!(ctx.lang.node_kind_for(&child.node_type), Some(NodeKind::Body));
 
-            let Ok(snap) = treesitter::snapshot(
+            let Ok(snap) = fetch(
                 child.range.start_row, child.range.start_col,
                 Some(&child.node_type),
                 Some((child.range.start_row, child.range.start_col)),
@@ -311,8 +326,6 @@ impl NavigationInfo {
 
             if actual_count <= 1 && !is_body {
                 return snap.children.first().and_then(|inner| {
-                    // If the inner child is the focused node, return it classified against
-                    // its real parent (the translucent list), not sp.
                     let in_focused = ctx.all[..=ctx.focus_idx].iter().any(|n| {
                         n.range.start_row == inner.range.start_row
                             && n.range.start_col == inner.range.start_col
@@ -326,8 +339,6 @@ impl NavigationInfo {
                             &|r| ctx.lang.classify(r, ctx.all.get(ctx.focus_idx + 1).copied()),
                         );
                     }
-                    // Classify inner against the translucent parent (e.g. ParameterList) so that
-                    // language reclassification (identifier → Parameter) applies correctly.
                     let pl_outline = NodeOutline {
                         node_type:   child.node_type.clone(),
                         range:       child.range.clone(),
@@ -368,13 +379,14 @@ impl NavigationInfo {
     fn collect_function_components_for_return(
         ctx:           &AncestryContext,
         node_snapshot: &NodeSnapshot,
+        fetch:         &mut Fetch<'_>,
     ) -> Vec<NavigationTarget> {
         let block = match ctx.all.get(ctx.focus_idx + 1) {
             Some(b) => *b,
             None    => return vec![],
         };
 
-        let Ok(block_snap) = treesitter::snapshot(
+        let Ok(block_snap) = fetch(
             block.range.start_row, block.range.start_col,
             Some(&block.node_type),
             Some((block.range.start_row, block.range.start_col)),
@@ -398,7 +410,7 @@ impl NavigationInfo {
         // Redirect any transparent ParameterList component to the inner parameter.
         for sibling in siblings.iter_mut() {
             if matches!(ctx.lang.node_kind_for(&sibling.node_type), Some(NodeKind::ParameterList)) {
-                Self::redirect_transparent_param_nav_target(ctx.lang, sibling);
+                Self::redirect_transparent_param_nav_target(sibling, fetch);
             }
         }
 
@@ -419,8 +431,8 @@ impl NavigationInfo {
 
     /// Redirects a ParameterList NavigationTarget to its single inner child when the list
     /// is transparent (exactly 1 child). No-op if the snapshot fails or has ≠ 1 child.
-    fn redirect_transparent_param_nav_target(_lang: Language, target: &mut NavigationTarget) {
-        let Ok(snap) = treesitter::snapshot(
+    fn redirect_transparent_param_nav_target(target: &mut NavigationTarget, fetch: &mut Fetch<'_>) {
+        let Ok(snap) = fetch(
             target.range.start_row, target.range.start_col,
             Some(&target.node_type),
             Some((target.range.start_row, target.range.start_col)),
@@ -440,6 +452,7 @@ impl NavigationInfo {
         supported_siblings: &mut Vec<NavigationTarget>,
         node_snapshot:      &NodeSnapshot,
         parent_ref:         Option<&NodeOutline>,
+        fetch:              &mut Fetch<'_>,
     ) {
         if !matches!(parent_ref.and_then(|p| lang.node_kind_for(&p.node_type)), Some(NodeKind::Function)) {
             return;
@@ -453,11 +466,10 @@ impl NavigationInfo {
                     .cloned()
             }
             Some(NodeKind::ParameterList) => {
-                // Body is already in the built sibling set; snapshot it to find the return.
                 let body_sib = supported_siblings.iter()
                     .find(|s| matches!(lang.node_kind_for(&s.node_type), Some(NodeKind::Body)));
                 body_sib.and_then(|body| {
-                    treesitter::snapshot(
+                    fetch(
                         body.range.start_row, body.range.start_col,
                         None,
                         Some((body.range.start_row, body.range.start_col)),

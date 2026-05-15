@@ -22,8 +22,8 @@ pub trait HasStandardFunctions {}
 
 impl<Lang: HasStandardFunctions> Extract<FunctionDeclaration> for Lang {
     fn extract(raw: &RawNode) -> FunctionDeclaration {
-        let params = raw.field("parameters").map(|r| NavigationTarget::with_key(&r, "p"));
-        let body   = raw.field("body").map(|r| NavigationTarget::with_key(&r, "b"));
+        let params = raw.field("parameters").map(|r| NavigationTarget::with_key(r, "p"));
+        let body   = raw.field("body").map(|r| NavigationTarget::with_key(r, "b"));
 
         FunctionDeclaration {
             name: raw.field_text("name"),

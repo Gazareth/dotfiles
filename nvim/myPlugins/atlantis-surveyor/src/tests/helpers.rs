@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use crate::model::node::{NodeRange, RawNode};
 use crate::model::AtlantisNode;
 use crate::probe::language::Language;
-use crate::probe::treesitter::{self, NodeSnapshot, SnapshotChild};
+use crate::probe::treesitter::{NodeSnapshot, SnapshotChild};
 
 const ZERO: NodeRange = NodeRange { start_row: 0, start_col: 0, end_row: 0, end_col: 0 };
 
@@ -119,22 +119,12 @@ impl SnapBuilder {
         }
     }
 
-    /// Pre-load this snapshot into the mock queue.
-    pub fn inject(self) {
-        treesitter::set_snapshot(self.to_snapshot());
-    }
-
-    /// Append this snapshot to the mock queue (for tests that need multiple snapshots).
-    pub fn queue(self) {
-        treesitter::push_snapshot(self.to_snapshot());
-    }
-
     pub fn build(self) -> NodeSnapshot {
         self.to_snapshot()
     }
 }
 
-/// Start building a `NodeSnapshot`. Chain `.field()` / `.child()` then `.inject()`, `.queue()`, or `.build()`.
+/// Start building a `NodeSnapshot`. Chain `.field()` / `.child()` then `.build()`.
 pub fn snap(node_type: &str) -> SnapBuilder {
     SnapBuilder {
         node_type: node_type.to_owned(),

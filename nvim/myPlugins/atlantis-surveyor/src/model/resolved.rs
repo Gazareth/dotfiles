@@ -19,7 +19,6 @@ pub enum AnyNode {
 }
 
 impl AnyNode {
-    #[cfg(not(test))]
     pub fn available_actions(&self) -> &'static [&'static str] {
         match self {
             AnyNode::Lua(n)        => n.available_actions(),

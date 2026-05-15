@@ -1,5 +1,6 @@
 mod assignment;
 mod classification_spec;
+mod language;
 mod conditional;
 mod container;
 mod function;
@@ -8,12 +9,14 @@ mod snapshot;
 mod navigation;
 mod outline_hints;
 pub mod outline;
+mod survey_result;
 
 pub use super::helpers::*;
 pub use crate::model::AtlantisNode;
 pub use crate::model::resolved::AnyNode;
 pub use crate::model::LuaNode;
 
+#[allow(clippy::wrong_self_convention)] // `as_*` methods consume `self` (move semantics) — the `is_*` naming convention doesn't fit
 pub trait AsLuaNode: Sized {
     type Function;
     type Assignment;

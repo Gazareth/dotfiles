@@ -60,7 +60,6 @@ macro_rules! impl_lang_node_resolver {
                 }
             }
 
-            #[cfg(not(test))]
             fn available_actions(&self) -> &'static [&'static str] {
                 match self {
                     $Enum::Function(_)        => &["rename"],

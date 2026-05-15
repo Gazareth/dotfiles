@@ -3,35 +3,28 @@ use std::fmt;
 /// Errors surfaced by atlantis_surveyor (Atlantis ecosystem).
 #[derive(Debug, Clone)]
 pub enum AtlantisError {
-    #[cfg(not(test))]
     NoParser,
     NoNode,
     UnsupportedLanguage,
-    #[cfg(not(test))]
     Api(String),
-    #[cfg(not(test))]
     InvalidResponse(String),
 }
 
 impl AtlantisError {
-    #[cfg(not(test))]
     pub fn from_lua_err_code(code: &str) -> Self {
         match code {
             "no_parser" => Self::NoParser,
-            "no_node" => Self::NoNode,
-            other => Self::InvalidResponse(other.to_string()),
+            "no_node"   => Self::NoNode,
+            other       => Self::InvalidResponse(other.to_string()),
         }
     }
 
     pub fn user_message(&self) -> String {
         match self {
-            #[cfg(not(test))]
             Self::NoParser            => "no Tree-sitter parser for this buffer".to_string(),
             Self::NoNode              => "no Tree-sitter node at position".to_string(),
             Self::UnsupportedLanguage => "file type not supported by Atlantis".to_string(),
-            #[cfg(not(test))]
             Self::Api(s)              => format!("nvim api: {s}"),
-            #[cfg(not(test))]
             Self::InvalidResponse(s)  => format!("invalid probe response: {s}"),
         }
     }

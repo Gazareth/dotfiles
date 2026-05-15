@@ -20,7 +20,7 @@ impl Extract<FunctionCall> for Lua {
             // Lua function_call uses `name`, not `function`, for the callee field.
             name:       raw.field_text("name"),
             name_range: name_node.map(|r| r.range.clone()),
-            parameters: raw.field("args").map(|r| NavigationTarget::with_key(&r, "a")),
+            parameters: raw.field("args").map(|r| NavigationTarget::with_key(r, "a")),
         }
     }
 }
@@ -42,8 +42,8 @@ impl Extract<FunctionDeclaration> for Lua {
             name:       raw.field_text("name"),
             name_range: name_node.map(|r| r.range.clone()),
             is_async:   raw.has_field("async"),
-            parameters: raw.field("parameters").map(|r| NavigationTarget::with_key(&r, "p")),
-            body:       body_node.map(|r| NavigationTarget::with_key(&r, "b")),
+            parameters: raw.field("parameters").map(|r| NavigationTarget::with_key(r, "p")),
+            body:       body_node.map(|r| NavigationTarget::with_key(r, "b")),
         }
     }
 }
@@ -94,15 +94,15 @@ impl Extract<Assignment> for Lua {
             "assignment_statement" => Assignment {
                 name:             raw.children.first().map(|c| c.text.clone()).unwrap_or_default(),
                 is_local_binding: false,
-                lhs:              raw.children.first().map(|r| NavigationTarget::with_key(&r, "n")),
-                value:            raw.children.get(1).map(|r| NavigationTarget::with_key(&r, "v")),
+                lhs:              raw.children.first().map(|r| NavigationTarget::with_key(r, "n")),
+                value:            raw.children.get(1).map(|r| NavigationTarget::with_key(r, "v")),
             },
             // Old nvim-treesitter grammar (field names: "name", "value")
             _ => Assignment {
                 name:             raw.field_text("name"),
                 is_local_binding: raw.kind == "local_declaration",
-                lhs:              raw.field("name").map(|r| NavigationTarget::from_raw(&r)),
-                value:            raw.field("value").map(|r| NavigationTarget::from_raw(&r)),
+                lhs:              raw.field("name").map(NavigationTarget::from_raw),
+                value:            raw.field("value").map(NavigationTarget::from_raw),
             },
         }
     }

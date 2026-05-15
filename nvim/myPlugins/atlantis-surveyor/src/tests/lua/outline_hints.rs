@@ -27,15 +27,19 @@ fn function_outline_shows_only_parameters_and_body() {
     let root  = NodeOutline::new("chunk",                fn_range.clone());
     let ancestry = NodeAncestry::new_test(vec![focus], root, Language::Lua);
 
-    snap("function_declaration")
-        .field_text("name", "add")
-        .field_ranged("parameters", "(x, y)", p_range.start_row, p_range.start_col, p_range.end_row, p_range.end_col)
-        .field_ranged("block", "...",          b_range.start_row, b_range.start_col, b_range.end_row, b_range.end_col)
-        .child_ranged("parameters", "(x, y)",  p_range.start_row, p_range.start_col, p_range.end_row, p_range.end_col)
-        .child_ranged("block", "...",           b_range.start_row, b_range.start_col, b_range.end_row, b_range.end_col)
-        .inject();
+    let result = FocusedNode::from_ancestry(ancestry, None, vec![
+        // Snap 1: function_declaration focus — consumed by from_ancestry.
+        // Subsequent fetches (chunk for siblings, block for enrich) get Err(NoNode) and return
+        // gracefully — this test only asserts on outline hint_keys, not on navigation.
+        snap("function_declaration")
+            .field_text("name", "add")
+            .field_ranged("parameters", "(x, y)", p_range.start_row, p_range.start_col, p_range.end_row, p_range.end_col)
+            .field_ranged("block", "...",          b_range.start_row, b_range.start_col, b_range.end_row, b_range.end_col)
+            .child_ranged("parameters", "(x, y)",  p_range.start_row, p_range.start_col, p_range.end_row, p_range.end_col)
+            .child_ranged("block", "...",           b_range.start_row, b_range.start_col, b_range.end_row, b_range.end_col)
+            .build(),
+    ]).unwrap().unwrap();
 
-    let result = FocusedNode::from_ancestry(ancestry, None).unwrap().unwrap();
     let outline = &result.outline;
 
     assert_eq!(outline.len(), 2, "outline should have exactly two items");
@@ -62,27 +66,28 @@ fn single_param_function_outline_redirects_parameters_item_to_identifier() {
     let root  = NodeOutline::new("chunk",                fn_range.clone());
     let ancestry = NodeAncestry::new_test(vec![focus], root, Language::Lua);
 
-    // Snap 1: function_declaration focus — consumed by from_ancestry.
-    snap("function_declaration")
-        .field_ranged("parameters", "(x)",  p_range.start_row, p_range.start_col, p_range.end_row, p_range.end_col)
-        .field_ranged("block",      "...",  b_range.start_row, b_range.start_col, b_range.end_row, b_range.end_col)
-        .child_ranged("parameters", "(x)",  p_range.start_row, p_range.start_col, p_range.end_row, p_range.end_col)
-        .child_ranged("block",      "...",  b_range.start_row, b_range.start_col, b_range.end_row, b_range.end_col)
-        .queue();
-    // Snap 2: chunk — consumed by resolve_siblings_general (sp snapshot).
-    snap("chunk")
-        .child_ranged("function_declaration", "...", fn_range.start_row, fn_range.start_col, fn_range.end_row, fn_range.end_col)
-        .queue();
-    // Snap 3: block (no return) — consumed by enrich_function_outline.
-    // No children → no return_statement found → enrich returns early without adding return item.
-    snap("block")
-        .queue();
-    // Snap 4: parameters — consumed by redirect_transparent_param_outline_item.
-    snap("parameters")
-        .child_ranged("identifier", "x", x_range.start_row, x_range.start_col, x_range.end_row, x_range.end_col)
-        .queue();
+    let result = FocusedNode::from_ancestry(ancestry, None, vec![
+        // Snap 1: function_declaration focus — consumed by from_ancestry.
+        snap("function_declaration")
+            .field_ranged("parameters", "(x)",  p_range.start_row, p_range.start_col, p_range.end_row, p_range.end_col)
+            .field_ranged("block",      "...",  b_range.start_row, b_range.start_col, b_range.end_row, b_range.end_col)
+            .child_ranged("parameters", "(x)",  p_range.start_row, p_range.start_col, p_range.end_row, p_range.end_col)
+            .child_ranged("block",      "...",  b_range.start_row, b_range.start_col, b_range.end_row, b_range.end_col)
+            .build(),
+        // Snap 2: chunk — consumed by resolve_siblings_general (sp snapshot).
+        snap("chunk")
+            .child_ranged("function_declaration", "...", fn_range.start_row, fn_range.start_col, fn_range.end_row, fn_range.end_col)
+            .build(),
+        // Snap 3: block (no return) — consumed by enrich_function_outline.
+        // No children → no return_statement found → enrich returns early without adding return item.
+        snap("block")
+            .build(),
+        // Snap 4: parameters — consumed by redirect_transparent_param_outline_item.
+        snap("parameters")
+            .child_ranged("identifier", "x", x_range.start_row, x_range.start_col, x_range.end_row, x_range.end_col)
+            .build(),
+    ]).unwrap().unwrap();
 
-    let result = FocusedNode::from_ancestry(ancestry, None).unwrap().unwrap();
     let outline = &result.outline;
 
     assert_eq!(outline.len(), 2, "should have two items (redirected param + block)");
@@ -110,12 +115,15 @@ fn assignment_statement_outline_shows_only_name_and_value() {
     let root  = NodeOutline::new("chunk",                a_range.clone());
     let ancestry = NodeAncestry::new_test(vec![focus], root, Language::Lua);
 
-    snap("assignment_statement")
-        .child_ranged("variable_list",   "x",     lhs_range.start_row, lhs_range.start_col, lhs_range.end_row, lhs_range.end_col)
-        .child_ranged("expression_list", "1 + 2", val_range.start_row, val_range.start_col, val_range.end_row, val_range.end_col)
-        .inject();
+    let result = FocusedNode::from_ancestry(ancestry, None, vec![
+        // Snap 1: assignment_statement focus — consumed by from_ancestry.
+        // Subsequent fetch (chunk for siblings) gets Err(NoNode) → (None, None) siblings.
+        snap("assignment_statement")
+            .child_ranged("variable_list",   "x",     lhs_range.start_row, lhs_range.start_col, lhs_range.end_row, lhs_range.end_col)
+            .child_ranged("expression_list", "1 + 2", val_range.start_row, val_range.start_col, val_range.end_row, val_range.end_col)
+            .build(),
+    ]).unwrap().unwrap();
 
-    let result = FocusedNode::from_ancestry(ancestry, None).unwrap().unwrap();
     let outline = &result.outline;
 
     assert_eq!(outline.len(), 2, "outline should have exactly two items");
@@ -142,14 +150,17 @@ fn function_call_outline_stamps_arguments_with_a() {
     let root  = NodeOutline::new("chunk",         call_range.clone());
     let ancestry = NodeAncestry::new_test(vec![focus], root, Language::Lua);
 
-    snap("function_call")
-        .field_ranged("name", "print",    name_range.start_row, name_range.start_col, name_range.end_row, name_range.end_col)
-        .field_ranged("args", "(\"hi\")", args_range.start_row, args_range.start_col, args_range.end_row, args_range.end_col)
-        .child_ranged("identifier", "print", name_range.start_row, name_range.start_col, name_range.end_row, name_range.end_col)
-        .child_ranged("arguments",  "(\"hi\")", args_range.start_row, args_range.start_col, args_range.end_row, args_range.end_col)
-        .inject();
+    let result = FocusedNode::from_ancestry(ancestry, None, vec![
+        // Snap 1: function_call focus — consumed by from_ancestry.
+        // Subsequent fetch (chunk for siblings) gets Err(NoNode) → (None, None) siblings.
+        snap("function_call")
+            .field_ranged("name", "print",    name_range.start_row, name_range.start_col, name_range.end_row, name_range.end_col)
+            .field_ranged("args", "(\"hi\")", args_range.start_row, args_range.start_col, args_range.end_row, args_range.end_col)
+            .child_ranged("identifier", "print", name_range.start_row, name_range.start_col, name_range.end_row, name_range.end_col)
+            .child_ranged("arguments",  "(\"hi\")", args_range.start_row, args_range.start_col, args_range.end_row, args_range.end_col)
+            .build(),
+    ]).unwrap().unwrap();
 
-    let result = FocusedNode::from_ancestry(ancestry, None).unwrap().unwrap();
     let outline = &result.outline;
 
     let args = outline.iter().find(|i| i.node_type == "arguments").expect("arguments missing");
@@ -171,14 +182,17 @@ fn if_statement_outline_stamps_condition_with_t() {
     let root  = NodeOutline::new("chunk",        if_range.clone());
     let ancestry = NodeAncestry::new_test(vec![focus], root, Language::Lua);
 
-    snap("if_statement")
-        .field_ranged("condition",   "x",   cond_range.start_row, cond_range.start_col, cond_range.end_row, cond_range.end_col)
-        .field_ranged("consequence", "...", body_range.start_row, body_range.start_col, body_range.end_row, body_range.end_col)
-        .child_ranged("identifier", "x",   cond_range.start_row, cond_range.start_col, cond_range.end_row, cond_range.end_col)
-        .child_ranged("block",      "...", body_range.start_row, body_range.start_col, body_range.end_row, body_range.end_col)
-        .inject();
+    let result = FocusedNode::from_ancestry(ancestry, None, vec![
+        // Snap 1: if_statement focus — consumed by from_ancestry.
+        // Subsequent fetch (chunk for siblings) gets Err(NoNode) → (None, None) siblings.
+        snap("if_statement")
+            .field_ranged("condition",   "x",   cond_range.start_row, cond_range.start_col, cond_range.end_row, cond_range.end_col)
+            .field_ranged("consequence", "...", body_range.start_row, body_range.start_col, body_range.end_row, body_range.end_col)
+            .child_ranged("identifier", "x",   cond_range.start_row, cond_range.start_col, cond_range.end_row, cond_range.end_col)
+            .child_ranged("block",      "...", body_range.start_row, body_range.start_col, body_range.end_row, body_range.end_col)
+            .build(),
+    ]).unwrap().unwrap();
 
-    let result = FocusedNode::from_ancestry(ancestry, None).unwrap().unwrap();
     let outline = &result.outline;
 
     let cond = outline.iter()
@@ -212,27 +226,26 @@ fn variable_declaration_outline_shows_only_name_and_value() {
     let root  = NodeOutline::new("chunk",                vd_range.clone());
     let ancestry = NodeAncestry::new_test(vec![focus], root, Language::Lua);
 
-    // Snap 1: variable_declaration focus — consumed by from_ancestry (node_snapshot).
-    snap("variable_declaration")
-        .child_ranged("assignment_statement", "x = 1",
-            as_range.start_row, as_range.start_col, as_range.end_row, as_range.end_col)
-        .queue();
+    let result = FocusedNode::from_ancestry(ancestry, None, vec![
+        // Snap 1: variable_declaration focus — consumed by from_ancestry (node_snapshot).
+        snap("variable_declaration")
+            .child_ranged("assignment_statement", "x = 1",
+                as_range.start_row, as_range.start_col, as_range.end_row, as_range.end_col)
+            .build(),
+        // Snap 2: chunk (semantic parent) — consumed by resolve_siblings_general.
+        snap("chunk")
+            .child_ranged("variable_declaration", "local x = 1",
+                vd_range.start_row, vd_range.start_col, vd_range.end_row, vd_range.end_col)
+            .build(),
+        // Snap 3: assignment_statement — consumed during wrapper expansion.
+        snap("assignment_statement")
+            .child_ranged("variable_list",   "x",
+                vl_range.start_row, vl_range.start_col, vl_range.end_row, vl_range.end_col)
+            .child_ranged("expression_list", "1",
+                el_range.start_row, el_range.start_col, el_range.end_row, el_range.end_col)
+            .build(),
+    ]).unwrap().unwrap();
 
-    // Snap 2: chunk (semantic parent) — consumed by resolve_siblings_general.
-    snap("chunk")
-        .child_ranged("variable_declaration", "local x = 1",
-            vd_range.start_row, vd_range.start_col, vd_range.end_row, vd_range.end_col)
-        .queue();
-
-    // Snap 3: assignment_statement — consumed during wrapper expansion.
-    snap("assignment_statement")
-        .child_ranged("variable_list",   "x",
-            vl_range.start_row, vl_range.start_col, vl_range.end_row, vl_range.end_col)
-        .child_ranged("expression_list", "1",
-            el_range.start_row, el_range.start_col, el_range.end_row, el_range.end_col)
-        .queue();
-
-    let result = FocusedNode::from_ancestry(ancestry, None).unwrap().unwrap();
     let outline = &result.outline;
 
     assert_eq!(outline.len(), 2, "outline should have exactly two items after wrapper expansion");

@@ -7,6 +7,7 @@ use crate::model::resolved::AnyNode;
 use crate::probe::language::Language;
 
 /// Atlantis classification of a node — the resolved output of a `RawNode` against a language.
+#[allow(clippy::large_enum_variant)] // `AnyNode` holds fully-decoded node data inline (strings, ranges, navigation targets) — the size comes from its content, not an oversight
 #[derive(Debug, Serialize, Clone)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum AtlantisNode {
