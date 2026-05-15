@@ -253,7 +253,7 @@ impl NavigationInfo {
             {
                 if let Ok(body_snap) = fetch(
                     body_nav.range.start_row, body_nav.range.start_col,
-                    None,
+                    Some(body_nav.node_type.as_str()),
                     Some((body_nav.range.start_row, body_nav.range.start_col)),
                     Some((body_nav.range.end_row,   body_nav.range.end_col)),
                 ) {
@@ -471,7 +471,7 @@ impl NavigationInfo {
                 body_sib.and_then(|body| {
                     fetch(
                         body.range.start_row, body.range.start_col,
-                        None,
+                        Some(body.node_type.as_str()),
                         Some((body.range.start_row, body.range.start_col)),
                         Some((body.range.end_row,   body.range.end_col)),
                     ).ok()
