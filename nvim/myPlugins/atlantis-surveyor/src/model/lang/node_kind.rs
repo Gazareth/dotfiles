@@ -12,7 +12,6 @@ pub enum NodeKind {
     FileRoot,
     Body,
     ParameterList,
-    ArgumentList,
     ExpressionList,
 }
 
@@ -24,7 +23,6 @@ impl NodeKind {
     pub fn is_translucent(&self) -> bool {
         matches!(self,
             NodeKind::ParameterList  |
-            NodeKind::ArgumentList   |
             NodeKind::ExpressionList |
             NodeKind::Body
         )

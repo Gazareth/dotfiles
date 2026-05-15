@@ -5,8 +5,6 @@ use crate::probe::language::Language;
 
 use crate::model::node::NodeRange;
 
-const ZERO: NodeRange = NodeRange { start_row: 0, start_col: 0, end_row: 0, end_col: 0 };
-
 #[test]
 fn parent_navigation_can_target_containers() {
     // Structure: block -> variable_declaration -> assignment_statement

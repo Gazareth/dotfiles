@@ -43,10 +43,6 @@ macro_rules! impl_lang_node_resolver {
         }
 
         impl $crate::action::ConstructActions for $Enum {
-            fn classification_name(&self) -> String {
-                self.node_type_name().to_string()
-            }
-
             fn node_type_name(&self) -> &'static str {
                 match self {
                     $Enum::Function(_)    => "Function",
@@ -64,6 +60,7 @@ macro_rules! impl_lang_node_resolver {
                 }
             }
 
+            #[cfg(not(test))]
             fn available_actions(&self) -> &'static [&'static str] {
                 match self {
                     $Enum::Function(_)        => &["rename"],
@@ -190,12 +187,6 @@ macro_rules! impl_lang_node_resolver {
                     Some(NodeKind::ParameterList) =>
                         $Enum::ParameterList($crate::model::node::Node {
                             state: <$Lang as $crate::model::node::Extract<$crate::model::supported_nodes::ParameterList>>::extract(&self.raw),
-                            raw: self.raw,
-                            _lang: PhantomData,
-                        }),
-                    Some(NodeKind::ArgumentList) =>
-                        $Enum::Unresolved($crate::model::node::Node {
-                            state: $crate::model::node::Unresolved,
                             raw: self.raw,
                             _lang: PhantomData,
                         }),

@@ -17,6 +17,7 @@ pub mod resolve;
 
 pub use common::{CLike, Common};
 pub use node_kind::{LanguageConfig, NodeKind};
+#[allow(unused_imports)]
 pub use languages::{
     JavaScript, JavaScriptNode,
     Lua, LuaNode,

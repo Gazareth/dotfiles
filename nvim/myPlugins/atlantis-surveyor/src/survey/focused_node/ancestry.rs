@@ -1,10 +1,13 @@
+#[cfg(not(test))]
 use nvim_oxi::Dictionary;
 
 use crate::error::AtlantisError;
 use crate::model::AtlantisNode;
 use crate::model::node::RawNode;
-use crate::probe::language::{detect, Language};
-use crate::probe::treesitter::{self, NodeOutline};
+use crate::probe::language::Language;
+use crate::probe::treesitter::NodeOutline;
+#[cfg(not(test))]
+use crate::probe::treesitter;
 
 /// Language-aware view of the ancestry chain.
 /// The `root` field guarantees at least one node is always present.
@@ -21,7 +24,9 @@ impl NodeAncestry {
     /// Fails if the ancestry is empty or, for known languages, if the outermost
     /// node is not a recognised file root (indicating malformed input).
     /// Unknown languages pass through — `FocusedNode::from_ancestry` will return `None` for them.
+    #[cfg(not(test))]
     pub(super) fn parse(raw: &Dictionary) -> Result<Self, AtlantisError> {
+        use crate::probe::language::detect;
         let (filetype, mut outlines) = treesitter::decode::ancestry::decode(raw)?;
         let language = detect(&filetype);
 

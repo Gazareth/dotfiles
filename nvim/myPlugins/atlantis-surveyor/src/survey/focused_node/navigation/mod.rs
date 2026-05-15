@@ -419,7 +419,7 @@ impl NavigationInfo {
 
     /// Redirects a ParameterList NavigationTarget to its single inner child when the list
     /// is transparent (exactly 1 child). No-op if the snapshot fails or has ≠ 1 child.
-    fn redirect_transparent_param_nav_target(lang: Language, target: &mut NavigationTarget) {
+    fn redirect_transparent_param_nav_target(_lang: Language, target: &mut NavigationTarget) {
         let Ok(snap) = treesitter::snapshot(
             target.range.start_row, target.range.start_col,
             Some(&target.node_type),

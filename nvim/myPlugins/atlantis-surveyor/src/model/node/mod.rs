@@ -93,16 +93,6 @@ pub struct Node<Lang, State = Unknown> {
     pub _lang: PhantomData<Lang>,
 }
 
-impl<Lang, State> Node<Lang, State> {
-    pub fn range(&self) -> &NodeRange {
-        &self.raw.range
-    }
-
-    pub fn kind(&self) -> &str {
-        &self.raw.kind
-    }
-}
-
 impl<Lang> Node<Lang, Unknown> {
     pub fn new(raw: RawNode) -> Self {
         Self {

@@ -3,6 +3,7 @@ pub(crate) mod ancestry;
 mod navigation;
 mod outline;
 
+#[cfg(not(test))]
 use nvim_oxi::Dictionary;
 
 use crate::error::AtlantisError;
@@ -28,6 +29,7 @@ pub struct FocusedNode {
 }
 
 impl FocusedNode {
+    #[cfg(not(test))]
     #[must_use]
     pub fn from_raw(
         raw:         &Dictionary,

@@ -38,12 +38,6 @@ impl NodeBuilder {
         self
     }
 
-    pub fn child_field(mut self, name: &str, child: NodeSnapshot) -> Self {
-        self.fields.push((name.to_owned(), child.text.clone()));
-        self.children.push((child.node_type.clone(), child.text));
-        self
-    }
-
     pub fn classify(self) -> AtlantisNode {
         let raw = RawNode {
             kind:        self.kind.clone(),
@@ -81,11 +75,6 @@ pub struct SnapBuilder {
 }
 
 impl SnapBuilder {
-    pub fn text(mut self, text: &str) -> Self {
-        self.text = text.to_owned();
-        self
-    }
-
     pub fn range(mut self, sr: u32, sc: u32, er: u32, ec: u32) -> Self {
         self.range = r(sr, sc, er, ec);
         self
@@ -102,11 +91,6 @@ impl SnapBuilder {
         self.fields.insert(name.to_owned(), SnapshotChild {
             node_type: name.to_owned(), text: text.to_owned(), range: r(sr, sc, er, ec),
         });
-        self
-    }
-
-    pub fn child(mut self, child: impl IntoSnapshotChild) -> Self {
-        self.children.push(child.into_snapshot_child());
         self
     }
 
@@ -159,30 +143,5 @@ pub fn snap(node_type: &str) -> SnapBuilder {
         fields: HashMap::new(),
         children: vec![],
         siblings: vec![],
-    }
-}
-
-pub trait IntoSnapshotChild {
-    fn into_snapshot_child(self) -> SnapshotChild;
-}
-
-impl IntoSnapshotChild for (&str, &str) {
-    fn into_snapshot_child(self) -> SnapshotChild {
-        SnapshotChild {
-            node_type: self.0.to_owned(),
-            text: self.1.to_owned(),
-            range: ZERO,
-        }
-    }
-}
-
-impl IntoSnapshotChild for SnapBuilder {
-    fn into_snapshot_child(self) -> SnapshotChild {
-        let s = self.to_snapshot();
-        SnapshotChild {
-            node_type: s.node_type,
-            text: s.text,
-            range: s.range,
-        }
     }
 }

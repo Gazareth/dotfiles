@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 use crate::model::node::{Extract, RawNode};
 use crate::model::NavigationTarget;
-use super::Named;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Assignment {
@@ -13,12 +12,6 @@ pub struct Assignment {
     pub lhs: Option<NavigationTarget>,
     /// Navigation target for the right-hand side expression.
     pub value: Option<NavigationTarget>,
-}
-
-impl Named for Assignment {
-    fn name(&self) -> &str {
-        &self.name
-    }
 }
 
 /// Languages where assignment follows: `name = value` with no scoping keyword.

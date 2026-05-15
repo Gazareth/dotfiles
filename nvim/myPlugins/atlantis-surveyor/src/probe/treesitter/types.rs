@@ -25,6 +25,7 @@ pub struct NodeOutline {
 impl NodeOutline {
     /// Construct with `child_count = 0` (the common case for nodes that do not
     /// use the child-count to influence classification).
+    #[cfg(test)]
     pub fn new(node_type: impl Into<String>, range: NodeRange) -> Self {
         Self { node_type: node_type.into(), range, child_count: 0 }
     }

@@ -4,6 +4,7 @@ use crate::model::lang::languages::{JavaScript, Lua, Python, TypeScript};
 use crate::model::node::RawNode;
 use crate::probe::treesitter::NodeOutline;
 
+#[cfg_attr(test, allow(dead_code))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Language {
     Lua,
@@ -13,6 +14,7 @@ pub enum Language {
     Unknown,
 }
 
+#[cfg(not(test))]
 pub fn detect(filetype: &str) -> Language {
     match filetype {
         "lua"        => Language::Lua,
@@ -34,13 +36,10 @@ impl Language {
         }
     }
 
-    pub fn is_translucent(&self, node_type: &str) -> bool {
-        self.node_kind_for(node_type).map_or(false, |k| k.is_translucent())
-    }
-
     /// Returns `Some(true)` if the node type is a file root for this language,
     /// `Some(false)` if it is recognised but is not a file root, and
     /// `None` for unknown languages where the check cannot be performed.
+    #[cfg(not(test))]
     pub fn is_file_root(&self, node_type: &str) -> Option<bool> {
         if matches!(self, Language::Unknown) { return None; }
         Some(matches!(self.node_kind_for(node_type), Some(NodeKind::FileRoot)))

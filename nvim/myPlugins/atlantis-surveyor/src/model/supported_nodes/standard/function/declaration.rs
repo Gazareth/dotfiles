@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
 use crate::model::node::{Extract, RawNode};
-use crate::model::supported_nodes::standard::Named;
 use crate::model::NavigationTarget;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -15,12 +14,6 @@ pub struct FunctionDeclaration {
     pub parameters: Option<NavigationTarget>,
     /// The function body.
     pub body: Option<NavigationTarget>,
-}
-
-impl Named for FunctionDeclaration {
-    fn name(&self) -> &str {
-        &self.name
-    }
 }
 
 /// Languages where functions follow: `[async] function name(...) { body }`

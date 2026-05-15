@@ -1,13 +1,11 @@
 /// Returns the action keys available for a resolved construct node.
 /// Implemented by the language-specific node enums via `impl_lang_node_resolver!`.
 pub trait ConstructActions: std::fmt::Debug + Send + Sync {
-    /// Friendly name for this construct kind (e.g. "Function", "Assignment").
-    fn classification_name(&self) -> String;
-
     /// The specific node type as reported by Tree-sitter.
     fn node_type_name(&self) -> &'static str;
 
     /// List of semantic actions available for this node.
+    #[cfg(not(test))]
     fn available_actions(&self) -> &'static [&'static str];
 
     /// Returns (range, hint_key) pairs for NavigationTarget fields that carry a pinned hotkey.

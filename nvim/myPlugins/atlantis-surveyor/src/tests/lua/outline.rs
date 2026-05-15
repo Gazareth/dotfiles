@@ -6,6 +6,7 @@ use crate::survey::focused_node::ancestry::NodeAncestry;
 use crate::probe::treesitter::NodeOutline;
 use crate::probe::language::Language;
 use crate::model::node::NodeRange;
+use crate::model::AtlantisNode;
 
 fn range(sr: u32, sc: u32, er: u32, ec: u32) -> NodeRange {
     NodeRange { start_row: sr, start_col: sc, end_row: er, end_col: ec }
@@ -26,6 +27,7 @@ fn function_declaration_outline_suppresses_name_identifier() {
     let ancestry = NodeAncestry::new_test(vec![focus], root, Language::Lua);
 
     snap("function_declaration")
+        .range(fn_range.start_row, fn_range.start_col, fn_range.end_row, fn_range.end_col)
         .field_ranged("name",       "add",    name_range.start_row, name_range.start_col, name_range.end_row, name_range.end_col)
         .field_ranged("parameters", "(x, y)", p_range.start_row,    p_range.start_col,    p_range.end_row,    p_range.end_col)
         .field_ranged("block",      "...",    b_range.start_row,    b_range.start_col,    b_range.end_row,    b_range.end_col)
@@ -44,6 +46,11 @@ fn function_declaration_outline_suppresses_name_identifier() {
 
     let body = outline.iter().find(|i| i.node_type == "block").unwrap();
     assert_eq!(body.hint_key, Some("b"), "block should be stamped with hint_key 'b'");
+
+    assert_eq!(result.node_type, "function_declaration");
+    assert!(matches!(result.node, AtlantisNode::Recognised(_)), "function_declaration should be recognised");
+    assert_eq!(result.range, fn_range, "result range should reflect the snapshot range");
+    assert!(!result.navigation.is_at_top, "a top-level function has chunk as its top-level node, not itself");
 }
 
 // ── function_declaration with return statement ────────────────────────────

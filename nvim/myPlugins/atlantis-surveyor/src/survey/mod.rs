@@ -1,21 +1,28 @@
 pub(crate) mod focused_node;
+#[cfg(not(test))]
 mod lua;
 
-use nvim_oxi::Dictionary;
-use serde::Serialize;
-
-use crate::error::AtlantisError;
-use crate::model::node::NodeRange;
-use crate::model::OutlineItem;
-
+#[cfg(not(test))]
 pub use crate::model::AtlantisNode;
 pub use self::focused_node::NavigationInfo;
 
+#[cfg(not(test))]
+use nvim_oxi::Dictionary;
+#[cfg(not(test))]
+use serde::Serialize;
+#[cfg(not(test))]
+use crate::error::AtlantisError;
+#[cfg(not(test))]
+use crate::model::node::NodeRange;
+#[cfg(not(test))]
+use crate::model::OutlineItem;
+#[cfg(not(test))]
 use self::focused_node::FocusedNode;
 
 /// Lua-serialised response. The `kind` field discriminates success from failure:
 ///   ok  — full survey result with node classification and navigation targets
 ///   err — a message explaining why the probe failed
+#[cfg(not(test))]
 #[derive(Debug, Serialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum SurveyResult {
@@ -32,6 +39,7 @@ pub enum SurveyResult {
     Err { message: String },
 }
 
+#[cfg(not(test))]
 impl From<FocusedNode> for SurveyResult {
     fn from(n: FocusedNode) -> Self {
         let available_actions = n.available_actions();
@@ -42,6 +50,7 @@ impl From<FocusedNode> for SurveyResult {
     }
 }
 
+#[cfg(not(test))]
 impl SurveyResult {
     pub fn generate(raw: Dictionary, _mode: Option<String>) -> Self {
 

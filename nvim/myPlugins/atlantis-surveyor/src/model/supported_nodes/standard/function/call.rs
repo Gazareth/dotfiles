@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
 use crate::model::node::{Extract, RawNode};
-use crate::model::supported_nodes::standard::Named;
 use crate::model::NavigationTarget;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -11,12 +10,6 @@ pub struct FunctionCall {
     pub name_range: Option<crate::model::node::NodeRange>,
     /// The argument list.
     pub parameters: Option<NavigationTarget>,
-}
-
-impl Named for FunctionCall {
-    fn name(&self) -> &str {
-        &self.name
-    }
 }
 
 /// Languages where function calls follow: `function(arguments)`

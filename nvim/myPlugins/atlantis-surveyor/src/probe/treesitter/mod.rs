@@ -5,7 +5,6 @@ pub(crate) mod decode;
 mod types;
 pub use types::*;
 
-use crate::model::node::RawNode;
 use crate::error::AtlantisError;
 
 pub fn snapshot(

@@ -21,14 +21,16 @@ pub mod resolved;
 pub mod atlantis_node;
 pub mod navigation_target;
 
-pub use supported_nodes::{Assignment, ConditionalStatement, FunctionDeclaration};
+#[allow(unused_imports)]
+pub use node::{Node, NodeRange};
+#[allow(unused_imports)]
+pub use resolved::AnyNode;
+#[allow(unused_imports)]
 pub use lang::{
     JavaScriptNode,
     LuaNode,
     PythonNode,
     TypeScriptNode,
 };
-pub use node::{Node, NodeRange, RawNode, Unknown, Unresolved};
-pub use resolved::AnyNode;
 pub use atlantis_node::AtlantisNode;
 pub use navigation_target::{NavigationTarget, OutlineItem};

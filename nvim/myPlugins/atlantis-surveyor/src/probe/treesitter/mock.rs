@@ -13,27 +13,6 @@
 mod types;
 pub use types::*;
 
-// ── Decode stub ───────────────────────────────────────────────────────────
-//
-// `ancestry.rs` imports `treesitter::decode::ancestry::decode`. That code path
-// can only be reached via the live `nvim_oxi` entry point — never from tests.
-
-pub mod decode {
-    pub mod ancestry {
-        use nvim_oxi::Dictionary;
-        use crate::error::AtlantisError;
-        use super::super::NodeOutline;
-
-        pub fn decode(_d: &Dictionary) -> Result<(String, Vec<NodeOutline>), AtlantisError> {
-            panic!("treesitter::decode::ancestry::decode must not be called in test builds")
-        }
-    }
-
-    use nvim_oxi::Dictionary;
-    use crate::error::AtlantisError;
-    pub fn str(_d: &Dictionary, _key: &str) -> Result<String, AtlantisError> { unreachable!() }
-}
-
 // ── Thread-local snapshot queue ─────────────────────────────────────────
 
 use std::cell::RefCell;

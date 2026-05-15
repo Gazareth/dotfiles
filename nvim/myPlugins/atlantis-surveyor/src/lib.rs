@@ -9,6 +9,7 @@ mod survey;
 #[cfg(test)]
 mod tests;
 
+#[cfg(not(test))]
 use nvim_oxi::{Dictionary, Function};
 
 #[cfg(not(test))]
