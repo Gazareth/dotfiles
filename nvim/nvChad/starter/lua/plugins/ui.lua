@@ -18,6 +18,15 @@ local M = { {
   end
 },
   {
+    "folke/flash.nvim",
+    event = "VeryLazy",
+    config = function()
+      require("flash").setup({
+        highlight = { backdrop = false },
+      })
+    end,
+  },
+  {
     "anuvyklack/hydra.nvim",
     event = "VeryLazy",
     config = function()
@@ -74,6 +83,7 @@ local M = { {
       end, {
         desc = "Atlantis Nouveau: open node menu at cursor",
       })
+
     end,
   },
   { "mbbill/undotree" } -- Access different undo "timelines"
