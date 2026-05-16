@@ -27,18 +27,14 @@ local M = {
     end,
   },
 
-{
+  {
     "ThePrimeagen/refactoring.nvim",
     dependencies = {
-      "nvim-lua/plenary.nvim",
-      "nvim-treesitter/nvim-treesitter",
+      "lewis6991/async.nvim",
     },
-    lazy = true,
-    cmd = {
-      "Refactor"
-    },
-    opts = {},
+    lazy = false,
   },
+
 }
 
 return M
