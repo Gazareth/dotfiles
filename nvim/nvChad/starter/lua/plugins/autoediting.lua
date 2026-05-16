@@ -35,6 +35,15 @@ local M = {
     lazy = false,
   },
 
+  {
+    "ckolkey/ts-node-action",
+    dependencies = { "nvim-treesitter" },
+    lazy = false,
+    config = function()
+      require("ts-node-action").setup()
+    end,
+  },
+
 }
 
 return M

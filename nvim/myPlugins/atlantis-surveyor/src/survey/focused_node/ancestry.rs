@@ -100,7 +100,7 @@ impl NodeAncestry {
                     RawNode::from(all[candidate_idx - 1]),
                     all.get(candidate_idx).copied(),
                 );
-                if matches!(inner_kind, AtlantisNode::Recognised(_)) {
+                if matches!(inner_kind, AtlantisNode::Recognised(_) | AtlantisNode::Leaf) {
                     return Ok(candidate_idx - 1);
                 }
             }

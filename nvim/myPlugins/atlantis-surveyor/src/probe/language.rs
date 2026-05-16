@@ -50,6 +50,13 @@ impl Language {
         matches!(self.node_kind_for(node_type), Some(NodeKind::Body))
     }
 
+    /// True for node types that are atomic value literals in any supported language —
+    /// `true`, `false`, `nil`, `null`, `none`. These are always focusable as Leaf nodes
+    /// even when they are the sole child of a translucent parent.
+    fn is_literal_leaf_kind(kind: &str) -> bool {
+        matches!(kind, "true" | "false" | "nil" | "null" | "none")
+    }
+
     /// Classify a raw node in this language, using the optional parent outline
     /// to resolve ambiguous nodes.
     pub fn classify(&self, raw: RawNode, parent: Option<&NodeOutline>) -> AtlantisNode {
@@ -71,6 +78,11 @@ impl Language {
                                     refined.kind = "parameter".to_string();
                                     return AtlantisNode::from_raw(refined, self);
                                 }
+                            }
+                            // Literal tokens are intrinsically meaningful — stop here as Leaf
+                            // rather than climbing to the parent assignment/expression.
+                            if Self::is_literal_leaf_kind(&raw.kind) {
+                                return AtlantisNode::Leaf;
                             }
                             return AtlantisNode::Unrecognised;
                         }

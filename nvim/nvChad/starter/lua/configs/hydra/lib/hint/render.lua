@@ -36,9 +36,9 @@ function hint_render.section_lines(section)
       lines[#lines + 1] = ""
     end
     local rendered = hint_util.escape_hint_text(hint_render.render_item(item))
-    if rendered ~= "" then
+    if rendered ~= "" or item.separator then
       lines[#lines + 1] = rendered
-      first_item = false
+      if not item.separator then first_item = false end
     end
   end
 

@@ -17,13 +17,7 @@ local M = {
 
   {
     "arthurxavierx/vim-caser",  -- Commands to re-case selection
-    keys = vim.list_extend(
-      vim.list_extend(
-        get_keys({"n"}, {{"gs"}, {"a", "i"}, keys.allVimCaserKeys, keys.allWordMotions}),
-        get_keys({"n"}, {{"gs"}, { "w", "W" }})
-      ),
-      get_keys({"x"}, {{"gs"}, {"w", "W"}})
-    )
+    lazy = false,
   },
 
   {
