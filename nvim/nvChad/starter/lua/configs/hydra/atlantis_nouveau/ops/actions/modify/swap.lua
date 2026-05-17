@@ -48,7 +48,10 @@ function M.with_next(result)
   if not nav or not nav.next_sibling then return end
   local target = nav.next_sibling.range
   swap(result.bufnr, result.range, target)
-  reopen(result.bufnr, target.start_row, target.start_col)
+  -- Replacing the earlier range (current) with the target's text shifts everything
+  -- below it by the line-count difference, so offset the landing row accordingly.
+  local delta = (target.end_row - target.start_row) - (result.range.end_row - result.range.start_row)
+  reopen(result.bufnr, target.start_row + delta, target.start_col)
 end
 
 return M
