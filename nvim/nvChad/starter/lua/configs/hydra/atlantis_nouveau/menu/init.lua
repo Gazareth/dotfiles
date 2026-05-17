@@ -67,6 +67,23 @@ function M.open(result)
   local is_overflow = result.outline and #result.outline > OVERFLOW_THRESHOLD
 
   local header_actions = {}
+  local nav       = result.navigation
+  local swap_line = {}
+  if nav and nav.prev_sibling then
+    table.insert(swap_line, {
+      key    = registry.swap_prev.key,
+      label  = "swap ↑",
+      action = function() registry.swap_prev.fn(result) end,
+    })
+  end
+  if nav and nav.next_sibling then
+    table.insert(swap_line, {
+      key    = registry.swap_next.key,
+      label  = "swap ↓",
+      action = function() registry.swap_next.fn(result) end,
+    })
+  end
+  if #swap_line > 0 then table.insert(header_actions, swap_line) end
   local extra_line = {}
   if has_substitute then
     table.insert(extra_line, {

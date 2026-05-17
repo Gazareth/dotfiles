@@ -14,20 +14,16 @@ local function ranges_overlap(a, b)
   return not (a_before_b or b_before_a)
 end
 
---- Swaps the text of two ranges. Replaces the later range first to keep earlier positions stable.
 local function swap(bufnr, ra, rb)
   if ranges_overlap(ra, rb) then return end
-
   local first, second
   if ra.start_row < rb.start_row or (ra.start_row == rb.start_row and ra.start_col < rb.start_col) then
     first, second = ra, rb
   else
     first, second = rb, ra
   end
-
   local text_first  = get_text(bufnr, first)
   local text_second = get_text(bufnr, second)
-
   set_text(bufnr, second, text_first)
   set_text(bufnr, first,  text_second)
 end

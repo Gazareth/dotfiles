@@ -62,17 +62,17 @@ macro_rules! impl_lang_node_resolver {
 
             fn available_actions(&self) -> &'static [&'static str] {
                 match self {
-                    $Enum::Function(_)        => &["rename"],
-                    $Enum::Call(_)            => &["rename"],
-                    $Enum::Assignment(_)      => &["rename"],
-                    $Enum::Conditional(_)     => &[],
-                    $Enum::Loop(_)            => &[],
-                    $Enum::Parameter(_)       => &["rename"],
+                    $Enum::Function(_)        => &["rename", "prepend_append_statement"],
+                    $Enum::Call(_)            => &["rename", "prepend_append_statement"],
+                    $Enum::Assignment(_)      => &["rename", "prepend_append_statement"],
+                    $Enum::Conditional(_)     => &["prepend_append_statement"],
+                    $Enum::Loop(_)            => &["prepend_append_statement"],
+                    $Enum::Parameter(_)       => &["rename", "prepend_append_item"],
                     $Enum::ReturnStatement(_) => &[],
-                    $Enum::FileRoot(_)      => &[],
-                    $Enum::Body(_)          => &[],
-                    $Enum::ParameterList(_) => &[],
-                    $Enum::ExpressionList(_) => &[],
+                    $Enum::FileRoot(_)        => &["prepend_append_statement"],
+                    $Enum::Body(_)            => &["prepend_append_statement"],
+                    $Enum::ParameterList(_)   => &["prepend_append_list"],
+                    $Enum::ExpressionList(_)  => &["prepend_append_list"],
                     $Enum::Unresolved(_)      => &[],
                 }
             }
