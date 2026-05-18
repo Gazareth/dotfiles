@@ -1,5 +1,15 @@
 local M = {}
 
+-- Nav key→field mapping shared with flash.lua so both modes stay in sync.
+M.nav_order = {
+  { key = "H", field = "top_level"        },
+  { key = "F", field = "nearest_function" },
+  { key = "B", field = "nearest_body"     },
+  { key = "h", field = "parent"           },
+  { key = "j", field = "next_sibling"     },
+  { key = "k", field = "prev_sibling"     },
+}
+
 local function jump_and_reopen(bufnr, target)
   if not target then return end
   local range = target.range
@@ -108,7 +118,7 @@ function M.build(result)
   -- Siblings sub-section (always shown; notifies when no sibling is available)
   table.insert(items, { heading = "Siblings" })
   table.insert(items, {
-    key    = "j",
+    key    = "k",
     icon   = "󰜶",
     label  = nav.prev_sibling and "to previous sibling" or "no sibling",
     action = nav.prev_sibling
@@ -118,7 +128,7 @@ function M.build(result)
           end,
   })
   table.insert(items, {
-    key    = "k",
+    key    = "j",
     icon   = "󰜴",
     label  = nav.next_sibling and "to next sibling" or "no sibling",
     action = nav.next_sibling

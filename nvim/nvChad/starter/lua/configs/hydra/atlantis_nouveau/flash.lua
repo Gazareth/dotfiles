@@ -1,15 +1,7 @@
 local M = {}
 
--- Nav items in display order; keys are also registered as Flash actions so they
--- work regardless of label visibility.
-local NAV_ORDER = {
-  { key = "H", field = "top_level"        },
-  { key = "F", field = "nearest_function" },
-  { key = "B", field = "nearest_body"     },
-  { key = "h", field = "parent"           },
-  { key = "j", field = "prev_sibling"     },
-  { key = "k", field = "next_sibling"     },
-}
+-- Nav items sourced from navigate.lua so both modes share a single key mapping.
+local NAV_ORDER = require("configs.hydra.atlantis_nouveau.menu.sections.navigate").nav_order
 
 -- Flash doesn't auto-assign labels when search is disabled, so we own the full
 -- label assignment. Pool excludes nav keys and common hint_key chars (l, r, p).
