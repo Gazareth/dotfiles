@@ -20,7 +20,7 @@ function M.build(result)
     node_type    = node_type,
     nav          = result.navigation,
     avail        = avail,
-    lsp_attached = next(vim.lsp.get_clients({ bufnr = result.bufnr })) ~= nil,
+    lsp_attached = #vim.lsp.get_clients({ bufnr = result.bufnr, method = "textDocument/codeAction" }) > 0,
   }
 
   -- ── Subsections ───────────────────────────────────────────────────────────

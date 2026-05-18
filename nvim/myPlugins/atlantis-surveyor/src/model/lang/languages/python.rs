@@ -40,6 +40,7 @@ crate::impl_language_syntax_map!(Python, PYTHON_KINDS, {
     "module"     => FileRoot,
     "parameters" => ParameterList,
     "block"      => Body,
+    "comment"    => Comment,
 });
 
 crate::impl_lang_node_resolver!(Python, PythonNode);

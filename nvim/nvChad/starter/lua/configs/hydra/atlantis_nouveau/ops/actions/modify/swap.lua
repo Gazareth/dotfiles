@@ -35,23 +35,51 @@ local function reopen(bufnr, row, col)
   end)
 end
 
+-- Returns the effective range for a node, extended to include its comment block.
+-- Statement focus: comment_range present → extend backward to include preceding comments.
+-- Comment focus: associated_statement present → extend forward to include the statement.
+local function effective_range(node)
+  if node.comment_range then
+    return {
+      start_row = node.comment_range.start_row,
+      start_col = node.comment_range.start_col,
+      end_row   = node.range.end_row,
+      end_col   = node.range.end_col,
+    }
+  elseif node.associated_statement then
+    local st = node.associated_statement
+    return {
+      start_row = node.range.start_row,
+      start_col = node.range.start_col,
+      end_row   = st.range.end_row,
+      end_col   = st.range.end_col,
+    }
+  end
+  return node.range
+end
+
 function M.with_prev(result)
   local nav = result.navigation
   if not nav or not nav.prev_sibling then return end
-  local target = nav.prev_sibling.range
-  swap(result.bufnr, result.range, target)
-  reopen(result.bufnr, target.start_row, target.start_col)
+  local my_eff  = effective_range(result)
+  local tgt_eff = effective_range(nav.prev_sibling)
+  swap(result.bufnr, my_eff, tgt_eff)
+  -- Land on the focused node's statement row (not its comment) in its new position.
+  local my_offset = result.range.start_row - my_eff.start_row
+  reopen(result.bufnr, tgt_eff.start_row + my_offset, result.range.start_col)
 end
 
 function M.with_next(result)
   local nav = result.navigation
   if not nav or not nav.next_sibling then return end
-  local target = nav.next_sibling.range
-  swap(result.bufnr, result.range, target)
-  -- Replacing the earlier range (current) with the target's text shifts everything
-  -- below it by the line-count difference, so offset the landing row accordingly.
-  local delta = (target.end_row - target.start_row) - (result.range.end_row - result.range.start_row)
-  reopen(result.bufnr, target.start_row + delta, target.start_col)
+  local my_eff  = effective_range(result)
+  local tgt_eff = effective_range(nav.next_sibling)
+  swap(result.bufnr, my_eff, tgt_eff)
+  -- tgt_eff.start_row + delta = top of the current node's new position;
+  -- + my_offset shifts past any comment lines to land on the statement row.
+  local delta     = (tgt_eff.end_row - tgt_eff.start_row) - (my_eff.end_row - my_eff.start_row)
+  local my_offset = result.range.start_row - my_eff.start_row
+  reopen(result.bufnr, tgt_eff.start_row + delta + my_offset, result.range.start_col)
 end
 
 return M

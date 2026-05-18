@@ -125,31 +125,55 @@ local function build_parameters_rows(result)
 end
 
 function M.build(result)
-  local items = result.outline
-  if not items or #items == 0 then return nil end
+  local registry = require("configs.hydra.atlantis_nouveau.ops.registry")
+  local items    = result.outline
 
-  local focus = focus_node_type(result)
-  local rows
-  if focus and COMPONENTS_FOCUS[focus] then
-    rows = build_components_rows(result)
-  elseif focus and PARAMETERS_FOCUS[focus] then
-    rows = build_parameters_rows(result)
-  else
-    rows = build_classification_rows(result)
+  -- Exactly one of these is present: the user is either on the comment or the statement.
+  local switch_row
+  if result.comment_range then
+    switch_row = {
+      key    = registry.switch_to_comment.key,
+      label  = registry.switch_to_comment.label,
+      action = function() registry.switch_to_comment.fn(result) end,
+    }
+  elseif result.associated_statement then
+    switch_row = {
+      key    = registry.switch_to_statement.key,
+      label  = registry.switch_to_statement.label,
+      action = function() registry.switch_to_statement.fn(result) end,
+    }
   end
 
-  -- For component/parameter focus the navigate "l" key also jumps to the first
-  -- outline item, so annotate its label to make that visible.
-  if focus and (COMPONENTS_FOCUS[focus] or PARAMETERS_FOCUS[focus]) then
-    for _, row in ipairs(rows) do
-      if type(row.key) == "string" and row.key ~= "" then
-        row.label = (row.label or "") .. " (l)"
-        break
+  local has_outline = items and #items > 0
+  if not has_outline and not switch_row then return nil end
+
+  local focus = focus_node_type(result)
+  local rows  = {}
+  if has_outline then
+    if focus and COMPONENTS_FOCUS[focus] then
+      rows = build_components_rows(result)
+    elseif focus and PARAMETERS_FOCUS[focus] then
+      rows = build_parameters_rows(result)
+    else
+      rows = build_classification_rows(result)
+    end
+
+    -- For component/parameter focus the navigate "l" key also jumps to the first
+    -- outline item, so annotate its label to make that visible.
+    if focus and (COMPONENTS_FOCUS[focus] or PARAMETERS_FOCUS[focus]) then
+      for _, row in ipairs(rows) do
+        if type(row.key) == "string" and row.key ~= "" then
+          row.label = (row.label or "") .. " (l)"
+          break
+        end
       end
     end
   end
 
-  return { title = "Contents", items = rows }
+  local all_rows = switch_row and { switch_row } or {}
+  for _, r in ipairs(rows) do all_rows[#all_rows + 1] = r end
+
+  return { title = "Contents", items = all_rows }
 end
 
 return M

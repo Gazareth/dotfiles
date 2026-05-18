@@ -60,6 +60,10 @@ impl Language {
     /// Classify a raw node in this language, using the optional parent outline
     /// to resolve ambiguous nodes.
     pub fn classify(&self, raw: RawNode, parent: Option<&NodeOutline>) -> AtlantisNode {
+        if matches!(self.node_kind_for(&raw.kind), Some(NodeKind::Comment)) {
+            return AtlantisNode::Comment;
+        }
+
         let base = AtlantisNode::from_raw(raw.clone(), self);
 
         // Guard A — unrecognised child of a translucent parent.

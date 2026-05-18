@@ -195,7 +195,10 @@ macro_rules! impl_lang_node_resolver {
                             raw: self.raw,
                             _lang: PhantomData,
                         }),
-                    None =>
+                    // Comment nodes are short-circuited in `classify` before `resolve` is
+                    // called, so this arm is unreachable in practice — but required for
+                    // exhaustiveness since `Comment` is a valid `NodeKind`.
+                    None | Some(NodeKind::Comment) =>
                         $Enum::Unresolved($crate::model::node::Node {
                             state: $crate::model::node::Unresolved,
                             raw: self.raw,

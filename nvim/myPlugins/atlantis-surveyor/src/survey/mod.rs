@@ -30,6 +30,10 @@ pub enum SurveyResult {
         navigation:        NavigationInfo,
         #[serde(skip_serializing_if = "Vec::is_empty")]
         outline:           Vec<OutlineItem>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        comment_range:        Option<NodeRange>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        associated_statement: Option<crate::model::NavigationTarget>,
     },
     Err { message: String },
 }
@@ -40,6 +44,8 @@ impl From<FocusedNode> for SurveyResult {
         Self::Ok {
             node_type: n.node_type, range: n.range, node: n.node,
             available_actions, navigation: n.navigation, outline: n.outline,
+            comment_range: n.comment_range,
+            associated_statement: n.associated_statement,
         }
     }
 }

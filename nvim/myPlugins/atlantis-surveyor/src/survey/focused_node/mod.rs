@@ -1,5 +1,6 @@
 mod actions;
 pub(crate) mod ancestry;
+pub(crate) mod comment;
 mod navigation;
 mod outline;
 
@@ -9,8 +10,10 @@ use nvim_oxi::Dictionary;
 use crate::error::AtlantisError;
 use crate::model::lang::NodeKind;
 use crate::model::node::{NodeRange, RawNode};
-use crate::model::{AtlantisNode, OutlineItem};
-use crate::probe::treesitter::NodeOutline;
+use crate::model::{AtlantisNode, NavigationTarget, OutlineItem};
+use crate::probe::treesitter::{NodeOutline, SnapshotChild};
+use crate::probe::language::Language;
+use self::comment::{is_comment_kind, preceding_comment_range};
 
 use self::ancestry::NodeAncestry;
 
@@ -26,11 +29,80 @@ pub(crate) type Fetch<'a> = dyn FnMut(u32, u32, Option<&str>, Option<(u32, u32)>
 
 /// A resolved node ready to be turned into a `SurveyResult`.
 pub struct FocusedNode {
-    pub node_type:  String,
-    pub range:      NodeRange,
-    pub node:       AtlantisNode,
-    pub navigation: NavigationInfo,
-    pub outline:    Vec<OutlineItem>,
+    pub node_type:            String,
+    pub range:                NodeRange,
+    pub node:                 AtlantisNode,
+    pub navigation:           NavigationInfo,
+    pub outline:              Vec<OutlineItem>,
+    /// Range of consecutive comment lines immediately above this node (Function/Assignment/Loop only).
+    pub comment_range:        Option<NodeRange>,
+    /// When the focused node is a comment, the first recognised statement below the block.
+    pub associated_statement: Option<NavigationTarget>,
+}
+
+struct CommentInfo {
+    block_range:          NodeRange,
+    associated_statement: Option<NavigationTarget>,
+}
+
+impl CommentInfo {
+    /// Called when the focused node IS a comment. Expands to the full consecutive
+    /// comment block (including adjacent comment siblings above and below), then
+    /// finds the first recognised statement after the block.
+    fn from_comment_focus(snapshot: &crate::probe::treesitter::NodeSnapshot, lang: Language) -> Self {
+        let Some(pos) = snapshot.siblings.iter().position(|s| {
+            s.range.start_row == snapshot.range.start_row
+                && s.range.start_col == snapshot.range.start_col
+        }) else {
+            return Self { block_range: snapshot.range.clone(), associated_statement: None };
+        };
+
+        let above: Vec<&SnapshotChild> = {
+            let mut v = Vec::new();
+            let mut next_start_row = snapshot.range.start_row;
+            for s in snapshot.siblings[..pos].iter().rev() {
+                if !is_comment_kind(&s.node_type) { break; }
+                if s.range.end_row + 1 != next_start_row { break; }
+                v.push(s);
+                next_start_row = s.range.start_row;
+            }
+            v
+        };
+        let below: Vec<&SnapshotChild> = {
+            let mut v = Vec::new();
+            let mut prev_end_row = snapshot.range.end_row;
+            for s in snapshot.siblings[pos + 1..].iter() {
+                if !is_comment_kind(&s.node_type) { break; }
+                if s.range.start_row != prev_end_row + 1 { break; }
+                v.push(s);
+                prev_end_row = s.range.end_row;
+            }
+            v
+        };
+
+        let start = above.last().map(|s| &s.range).unwrap_or(&snapshot.range);
+        let end   = below.last().map(|s| &s.range).unwrap_or(&snapshot.range);
+
+        let block_range = NodeRange {
+            start_row: start.start_row, start_col: start.start_col,
+            end_row:   end.end_row,     end_col:   end.end_col,
+        };
+
+        let block_end_row = end.end_row;
+        let associated_statement = snapshot.siblings[pos..]
+            .iter()
+            .skip_while(|s| is_comment_kind(&s.node_type))
+            .find(|s| lang.node_kind_for(&s.node_type).is_some() && s.range.start_row == block_end_row + 1)
+            .map(|s| NavigationTarget {
+                node_type:      s.node_type.clone(),
+                classification: lang.classify(RawNode::from(s), None).classification_name(),
+                range:          s.range.clone(),
+                key:            None,
+                comment_range:  None,
+            });
+
+        Self { block_range, associated_statement }
+    }
 }
 
 impl FocusedNode {
@@ -109,7 +181,11 @@ impl FocusedNode {
             }
         }
 
-        let mut outline = Self::compute_outline(lang, &node_snapshot.children);
+        let mut outline = if matches!(node, AtlantisNode::Comment) {
+            vec![]
+        } else {
+            Self::compute_outline(lang, &node_snapshot.children)
+        };
 
         let exceptions = node.outline_exceptions();
         outline.retain(|item| {
@@ -156,8 +232,32 @@ impl FocusedNode {
             Self::redirect_transparent_param_outline_item(lang, &mut outline, fetch);
         }
 
+        let is_comment = matches!(node, AtlantisNode::Comment);
+
+        let (comment_range, associated_statement) = if is_comment {
+            let info = CommentInfo::from_comment_focus(&node_snapshot, lang);
+            range = info.block_range.clone();
+            (None, info.associated_statement)
+        } else {
+            let is_commentable = matches!(
+                lang.node_kind_for(&node_snapshot.node_type),
+                Some(NodeKind::Function | NodeKind::Assignment | NodeKind::Loop)
+            );
+            let cr = if is_commentable {
+                let pos = node_snapshot.siblings.iter().position(|s| {
+                    s.range.start_row == node_snapshot.range.start_row
+                        && s.range.start_col == node_snapshot.range.start_col
+                });
+                pos.and_then(|p| preceding_comment_range(&node_snapshot.siblings, p))
+            } else {
+                None
+            };
+            (cr, None)
+        };
+
         let focused = FocusedNode {
             node_type, range, node, navigation, outline,
+            comment_range, associated_statement,
         };
 
         Ok(Some(focused))

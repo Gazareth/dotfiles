@@ -25,25 +25,30 @@ pub struct NavigationTarget {
     /// Pinned hotkey hint. Not serialized — used only to propagate to OutlineItem.
     #[serde(skip)]
     pub key: Option<&'static str>,
+    /// Range of consecutive comment lines immediately above this node, if any.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub comment_range: Option<NodeRange>,
 }
 
 impl NavigationTarget {
     pub fn from_raw(raw: &RawNode) -> Self {
         Self {
-            node_type: raw.kind.clone(),
+            node_type:     raw.kind.clone(),
             classification: String::new(),
-            range: raw.range.clone(),
-            key: None,
+            range:          raw.range.clone(),
+            key:            None,
+            comment_range:  None,
         }
     }
 
     /// Constructs a NavigationTarget with a pinned hotkey hint.
     pub fn with_key(raw: &RawNode, key: &'static str) -> Self {
         Self {
-            node_type: raw.kind.clone(),
+            node_type:     raw.kind.clone(),
             classification: String::new(),
-            range: raw.range.clone(),
-            key: Some(key),
+            range:          raw.range.clone(),
+            key:            Some(key),
+            comment_range:  None,
         }
     }
 }

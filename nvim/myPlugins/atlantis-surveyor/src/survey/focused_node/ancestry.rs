@@ -76,8 +76,8 @@ impl NodeAncestry {
             all.iter().enumerate().position(|(i, n)| {
                 let parent = all.get(i + 1);
                 let classified = lang.classify(RawNode::from(*n), parent.copied());
-                
-                matches!(classified, AtlantisNode::Recognised(_) | AtlantisNode::Leaf)
+
+                matches!(classified, AtlantisNode::Recognised(_) | AtlantisNode::Leaf | AtlantisNode::Comment)
             }).ok_or(AtlantisError::UnsupportedLanguage)?
         };
 
@@ -85,7 +85,7 @@ impl NodeAncestry {
         // (e.g. `assignment_statement` → `variable_declaration` both resolve to Assignment).
         // Leaf nodes are never walked upward — they stay at exactly the candidate position.
         let candidate_kind = lang.classify(RawNode::from(all[candidate_idx]), all.get(candidate_idx + 1).copied());
-        if matches!(candidate_kind, AtlantisNode::Leaf) {
+        if matches!(candidate_kind, AtlantisNode::Leaf | AtlantisNode::Comment) {
             return Ok(candidate_idx);
         }
 

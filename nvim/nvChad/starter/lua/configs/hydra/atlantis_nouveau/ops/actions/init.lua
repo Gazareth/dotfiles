@@ -3,4 +3,5 @@ return {
   create   = require(p .. ".create"),
   modify   = require(p .. ".modify"),
   tools    = require(p .. ".tools"),
+  contents = require(p .. ".contents"),
 }

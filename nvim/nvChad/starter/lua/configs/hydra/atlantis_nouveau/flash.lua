@@ -68,6 +68,11 @@ local function collect_targets(result, win)
     end
   end
 
+  -- Comment/statement switch target: always pinned to "%".
+  local switch_item = result.comment_range and { range = result.comment_range }
+                   or result.associated_statement
+  if switch_item then used["%"] = true end
+
   -- ── Pool iterator: yields unused labels in LABEL_POOL order ─────────────
   local pool_i = 1
   local function next_label()
@@ -94,6 +99,21 @@ local function collect_targets(result, win)
       _item     = data.item,
       _my_label = table.concat(data.keys, "/"),
     }
+  end
+
+  if switch_item then
+    local pk = switch_item.range.start_row .. ":" .. switch_item.range.start_col
+    if not seen_pos[pk] then
+      seen_pos[pk] = true
+      local p = { switch_item.range.start_row + 1, switch_item.range.start_col }
+      targets[#targets + 1] = {
+        win       = win,
+        pos       = p,
+        end_pos   = p,
+        _item     = switch_item,
+        _my_label = "%",
+      }
+    end
   end
 
   for i, item in ipairs(outline) do
@@ -188,6 +208,16 @@ vim.keymap.set("n", "<Plug>(AtlantisJump)", function()
 
   local nav_item = nil
   local actions  = build_nav_actions(nav, function(t) nav_item = t end)
+
+  local switch_item = result.comment_range and { range = result.comment_range }
+                   or result.associated_statement
+  if switch_item then
+    actions["%"] = function(_state, _char)
+      nav_item = switch_item
+      return false
+    end
+  end
+
   local has_nav  = next(actions) ~= nil
 
   if #targets == 0 and not has_nav then

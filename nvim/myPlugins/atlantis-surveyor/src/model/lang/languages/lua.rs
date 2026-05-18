@@ -70,6 +70,7 @@ impl Extract<Assignment> for Lua {
                     classification: String::new(),
                     range:          c.range.clone(),
                     key:            Some("n"),
+                    comment_range:  None,
                 });
                 // Grandchildren aren't available, so compute the RHS position from the text.
                 let value = inner.and_then(|c| {
@@ -85,7 +86,8 @@ impl Extract<Assignment> for Lua {
                             end_row:   c.range.end_row,
                             end_col:   c.range.end_col,
                         },
-                        key: Some("v"),
+                        key:           Some("v"),
+                        comment_range: None,
                     })
                 });
                 Assignment { name, is_local_binding: true, lhs, value }
@@ -131,6 +133,7 @@ crate::impl_language_syntax_map!(Lua, LUA_KINDS, {
     "binary_expression"  => ExpressionList,
     "arguments"          => ExpressionList,
     "table_constructor"  => ExpressionList,
+    "comment"            => Comment,
 });
 
 crate::impl_lang_node_resolver!(Lua, LuaNode);

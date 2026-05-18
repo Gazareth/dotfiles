@@ -24,6 +24,7 @@ crate::impl_language_syntax_map!(JavaScript, JAVASCRIPT_KINDS, {
     "program"          => FileRoot,
     "formal_parameters" => ParameterList,
     "statement_block"  => Body,
+    "comment"          => Comment,
 });
 
 crate::impl_lang_node_resolver!(JavaScript, JavaScriptNode);

@@ -1,6 +1,7 @@
 local a        = "configs.hydra.atlantis_nouveau.ops.actions"
 local modify   = require(a .. ".modify")
-local tools = require(a .. ".tools")
+local tools    = require(a .. ".tools")
+local contents = require(a .. ".contents")
 
 return {
   rename          = { fn = modify.rename,                  key = "r", icon = "✎",  label = "Rename"      },
@@ -13,6 +14,8 @@ return {
   recase          = { fn = modify.recase.run,              key = "E", icon = "󰬴",  label = "Re-case"     },
   swap_prev       = { fn = modify.swap.with_prev,          key = "J", icon = "󰜸",  label = "Swap ↑ prev" },
   swap_next       = { fn = modify.swap.with_next,          key = "K", icon = "󰜶",  label = "Swap ↓ next" },
-  lsp_code_actions= { fn = tools.lsp.run,              key = "A", icon = "",  label = "LSP Actions" },
-  refactor     = { fn = tools.refactoring.run,     key = "R", icon = "",  label = "Refactor"    },
+  lsp_code_actions    = { fn = tools.lsp.run,                       key = "A", icon = "",   label = "LSP Actions"      },
+  refactor            = { fn = tools.refactoring.run,               key = "R", icon = "",   label = "Refactor"         },
+  switch_to_comment   = { fn = contents.comment.switch_to_comment,   key = "%", icon = "󰅺", label = "Switch to comment"   },
+  switch_to_statement = { fn = contents.comment.switch_to_statement, key = "%", icon = "󰅾", label = "Switch to commented code" },
 }

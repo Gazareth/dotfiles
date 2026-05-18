@@ -13,6 +13,7 @@ pub enum NodeKind {
     Body,
     ParameterList,
     ExpressionList,
+    Comment,
 }
 
 impl NodeKind {

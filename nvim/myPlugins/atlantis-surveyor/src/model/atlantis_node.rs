@@ -16,6 +16,9 @@ pub enum AtlantisNode {
     /// A terminal node within a transparent structural grouping (e.g. `nil`,
     /// `identifier` inside an expression list) that has no further Atlantis structure.
     Leaf,
+    /// A comment node — classified and range-expanded at survey level, but excluded
+    /// from sibling navigation and outline. Second-class by design.
+    Comment,
     /// Atlantis has no registered behaviour for this node type.
     Unrecognised,
 }
@@ -50,7 +53,8 @@ impl AtlantisNode {
             (Self::Recognised(AnyNode::JavaScript(a)), Self::Recognised(AnyNode::JavaScript(b))) => std::mem::discriminant(a) == std::mem::discriminant(b),
             (Self::Recognised(AnyNode::TypeScript(a)), Self::Recognised(AnyNode::TypeScript(b))) => std::mem::discriminant(a) == std::mem::discriminant(b),
             (Self::Recognised(AnyNode::Python(a)),     Self::Recognised(AnyNode::Python(b)))     => std::mem::discriminant(a) == std::mem::discriminant(b),
-            (Self::Leaf, Self::Leaf) => true,
+            (Self::Leaf,    Self::Leaf)    => true,
+            (Self::Comment, Self::Comment) => true,
             _ => false,
         }
     }
@@ -81,6 +85,7 @@ impl AtlantisNode {
         match self {
             AtlantisNode::Recognised(n) => n.node_type_name(),
             AtlantisNode::Leaf         => "Leaf",
+            AtlantisNode::Comment      => "Comment",
             AtlantisNode::Unrecognised => "Unrecognised",
         }.to_string()
     }

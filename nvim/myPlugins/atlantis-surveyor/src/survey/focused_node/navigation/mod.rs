@@ -9,6 +9,7 @@ use crate::probe::language::Language;
 use crate::probe::treesitter::{NodeOutline, NodeSnapshot, SnapshotChild};
 use crate::model::NavigationTarget;
 use crate::survey::focused_node::Fetch;
+use crate::survey::focused_node::comment::{is_comment_kind, preceding_comment_range};
 
 pub(super) mod binary_navigation;
 
@@ -75,15 +76,16 @@ pub(in crate::survey::focused_node) fn as_navigation_target(
     classify: &impl Fn(RawNode) -> AtlantisNode,
 ) -> Option<NavigationTarget> {
     let classified = classify(raw.clone());
-    if matches!(classified, AtlantisNode::Unrecognised) {
+    if matches!(classified, AtlantisNode::Unrecognised | AtlantisNode::Comment) {
         return None;
     }
 
     Some(NavigationTarget {
-        node_type: raw.kind,
+        node_type:      raw.kind,
         classification: classified.classification_name(),
-        range: raw.range,
-        key: None,
+        range:          raw.range,
+        key:            None,
+        comment_range:  None,
     })
 }
 
@@ -269,6 +271,7 @@ impl NavigationInfo {
                                 classification: "ReturnStatement".to_string(),
                                 range:          ret.range,
                                 key:            None,
+                                comment_range:  None,
                             });
                             siblings.sort_by(|a, b| {
                                 a.range.start_row.cmp(&b.range.start_row)
@@ -280,7 +283,36 @@ impl NavigationInfo {
             }
         }
 
-        sibling_nav(&siblings, &node_snapshot.node_type, &node_snapshot.range)
+        // Enrich each sibling with its preceding comment range by scanning the
+        // semantic parent's children list (which includes comment nodes in order).
+        for sibling in siblings.iter_mut() {
+            let pos = sp_snap.children.iter().position(|c| {
+                c.range.start_row == sibling.range.start_row
+                    && c.range.start_col == sibling.range.start_col
+            });
+            if let Some(p) = pos {
+                sibling.comment_range = preceding_comment_range(&sp_snap.children, p);
+            }
+        }
+
+        if is_comment_kind(&node_snapshot.node_type) {
+            let comment_pos = sp_snap.children.iter().position(|c| {
+                c.range.start_row == node_snapshot.range.start_row
+                    && c.range.start_col == node_snapshot.range.start_col
+            });
+            let stmt = comment_pos.and_then(|pos| {
+                sp_snap.children[pos..].iter()
+                    .skip_while(|c| is_comment_kind(&c.node_type))
+                    .find(|c| ctx.lang.node_kind_for(&c.node_type).is_some())
+            });
+            if let Some(s) = stmt {
+                sibling_nav(&siblings, &s.node_type, &s.range)
+            } else {
+                sibling_nav(&siblings, &node_snapshot.node_type, &node_snapshot.range)
+            }
+        } else {
+            sibling_nav(&siblings, &node_snapshot.node_type, &node_snapshot.range)
+        }
     }
 
     /// Resolves a single child of the semantic parent into a sibling NavigationTarget.
@@ -419,6 +451,7 @@ impl NavigationInfo {
             classification: "ReturnStatement".to_string(),
             range:          node_snapshot.range.clone(),
             key:            None,
+            comment_range:  None,
         });
 
         siblings.sort_by(|a, b| {
@@ -497,6 +530,7 @@ impl NavigationInfo {
             classification: "ReturnStatement".to_string(),
             range:          ret.range,
             key:            None,
+            comment_range:  None,
         });
         supported_siblings.sort_by(|a, b| {
             a.range.start_row.cmp(&b.range.start_row)
@@ -515,6 +549,7 @@ impl NavigationInfo {
                 classification: String::new(),
                 range:          node_snapshot.range.clone(),
                 key:            None,
+                comment_range:  None,
             });
             supported_siblings.sort_by(|a, b| {
                 a.range.start_row.cmp(&b.range.start_row)
