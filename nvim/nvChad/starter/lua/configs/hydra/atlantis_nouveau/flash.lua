@@ -147,7 +147,7 @@ local function build_nav_actions(nav, on_nav)
 end
 
 local function open_hint_win()
-  local text = " [?] Toggle hint   [<Tab>] Cycle selection mode   [q]/[Esc] Exit "
+  local text = " [?] Toggle hint   [<S-Tab>/<Tab>] Cycle selection mode   [q]/[Esc] Exit "
   local width = vim.api.nvim_strwidth(text)
   local row   = math.max(0, vim.o.lines - vim.o.cmdheight - 3)
   local col   = math.max(0, math.floor((vim.o.columns - width) / 2))
@@ -220,11 +220,17 @@ vim.keymap.set("n", "<Plug>(AtlantisJump)", function()
 
   local hint_win, hint_buf = open_hint_win()
 
-  local action_called = false
-  local tab_pressed   = false
+  local action_called     = false
+  local tab_pressed       = false
+  local shift_tab_pressed = false
 
   actions["<Tab>"] = function(_state, _char)
     tab_pressed = true
+    return false
+  end
+
+  actions["<S-Tab>"] = function(_state, _char)
+    shift_tab_pressed = true
     return false
   end
 
@@ -257,6 +263,17 @@ vim.keymap.set("n", "<Plug>(AtlantisJump)", function()
         target_start_row = result.range.start_row,
         target_start_col = result.range.start_col,
         mode             = "namu",
+      })
+    end)
+  elseif shift_tab_pressed then
+    close_hint_win(hint_win, hint_buf)
+    vim.schedule(function()
+      require("configs.hydra.atlantis_nouveau").open({
+        bufnr            = bufnr,
+        target_node_type = result.node_type,
+        target_start_row = result.range.start_row,
+        target_start_col = result.range.start_col,
+        mode             = "standard",
       })
     end)
   elseif nav_item then

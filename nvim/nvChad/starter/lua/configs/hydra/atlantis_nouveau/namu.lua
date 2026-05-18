@@ -19,8 +19,9 @@ function M.open(result)
 
   local orig_win    = vim.api.nvim_get_current_win()
   local cleanup     = highlight_node.apply(bufnr, result.range)
-  local tab_pressed = false
-  local jumped      = false
+  local tab_pressed       = false
+  local shift_tab_pressed = false
+  local jumped            = false
 
   require("namu.selecta.selecta").pick(items, {
     title = "Children",
@@ -30,7 +31,14 @@ function M.open(result)
         keys    = "<Tab>",
         handler = function()
           tab_pressed = true
-          return true  -- close picker, triggers on_cancel
+          return true  -- close picker, triggers on_close
+        end,
+      },
+      {
+        keys    = "<S-Tab>",
+        handler = function()
+          shift_tab_pressed = true
+          return true
         end,
       },
     },
@@ -73,6 +81,17 @@ function M.open(result)
             target_start_row = result.range.start_row,
             target_start_col = result.range.start_col,
             mode             = "standard",
+          })
+        end)
+      elseif shift_tab_pressed then
+        shift_tab_pressed = false
+        vim.schedule(function()
+          require("configs.hydra.atlantis_nouveau").open({
+            bufnr            = bufnr,
+            target_node_type = result.node_type,
+            target_start_row = result.range.start_row,
+            target_start_col = result.range.start_col,
+            mode             = "flash",
           })
         end)
       elseif not jumped then

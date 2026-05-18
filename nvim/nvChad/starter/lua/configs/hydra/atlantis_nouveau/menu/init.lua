@@ -151,6 +151,15 @@ function M.open(result)
         end,
         { exit = true, desc = false },
       },
+      {
+        "<S-Tab>",
+        function()
+          skip_highlight_cleanup    = true
+          result._highlight_cleanup = on_exit
+          require("configs.hydra.atlantis_nouveau.namu").open(result)
+        end,
+        { exit = true, desc = false },
+      },
     }
   end
 
@@ -158,7 +167,7 @@ function M.open(result)
   if is_overflow and has_namu then
     footer_left = "[?] toggle hint  [<Tab>] select child..."
   elseif not is_overflow and has_flash then
-    footer_left = "[?] toggle hint  [<Tab>] cycle selection mode"
+    footer_left = "[?] toggle hint  [<S-Tab>/<Tab>] cycle selection mode"
   else
     footer_left = "[?] toggle hint"
   end
