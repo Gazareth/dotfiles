@@ -4,26 +4,14 @@ local highlight_node = require("configs.hydra.atlantis_nouveau.menu.highlight_no
 
 local M = {}
 
+local badge = require("configs.hydra.atlantis_nouveau.menu.badge")
+
+local KICKER = "🔱 Atlantis 🔱"
+
 local function menu_title(result)
-  local classification = "Node"
-  local name = ""
-
-  if result.node then
-    classification = result.node.kind:gsub("^%l", string.upper)
-    local inner = result.node.node
-    if inner and inner.type then
-      classification = inner.type:gsub("^%l", string.upper)
-      if inner.name and inner.name ~= "" then
-        name = ' - "' .. inner.name .. '"'
-      end
-    end
-  end
-
-  local ts_type = result.node_type or "unknown"
-  local r = result.range
-  local range_str = string.format("[%s (%d:%d-%d:%d)]", ts_type, r.start_row + 1, r.start_col, r.end_row + 1, r.end_col)
-
-  return "!" .. classification .. name .. " " .. range_str
+  -- "!" prefix bypasses format_title's colon-based role/name parsing (the
+  -- L{start}:{end} format contains a literal colon that would be mangled).
+  return "!" .. badge.long(result)
 end
 
 function M.open(result)
@@ -173,7 +161,7 @@ function M.open(result)
   end
 
   make_hydra.open({
-    title          = menu_title(result),
+    title          = "Atlantis",
     common_actions = common_actions,
     header_actions = header_actions,
     sections       = sections,
@@ -181,6 +169,8 @@ function M.open(result)
       if not skip_highlight_cleanup then on_exit() end
     end,
     hint_opts      = {
+      title        = menu_title(result),
+      title_kicker = KICKER,
       footer = {
         left  = footer_left,
         right = "[q]/[Esc] exit",

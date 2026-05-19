@@ -1,5 +1,6 @@
 local M = {}
 local highlight_node = require("configs.hydra.atlantis_nouveau.menu.highlight_node")
+local badge          = require("configs.hydra.atlantis_nouveau.menu.badge")
 
 function M.open(result)
   -- Update remembered mode here because this can be called directly from the
@@ -9,7 +10,7 @@ function M.open(result)
   local bufnr = result.bufnr
   local items = {}
   for _, item in ipairs(result.outline or {}) do
-    items[#items + 1] = { text = item.label or item.node_type or "?", value = item }
+    items[#items + 1] = { text = badge.short(item), value = item }
   end
 
   if #items == 0 then

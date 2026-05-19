@@ -1,4 +1,5 @@
 local M = {}
+local badge = require("configs.hydra.atlantis_nouveau.menu.badge")
 
 -- Nav key→field mapping shared with flash.lua so both modes stay in sync.
 M.nav_order = {
@@ -30,10 +31,6 @@ local function same_target(a, b)
   return a.range.start_row == b.range.start_row and a.range.start_col == b.range.start_col
 end
 
-local function format_range(r)
-  return string.format("(%d:%d-%d:%d)", r.start_row + 1, r.start_col, r.end_row + 1, r.end_col)
-end
-
 function M.build(result)
   local nav = result.navigation
   if not nav then return nil end
@@ -56,7 +53,7 @@ function M.build(result)
       key       = "H",
       key_alias = "h",
       icon      = "󰜸",
-      label     = "to top level",
+      label     = "top level  (" .. badge.short(nav.top_level) .. ")",
       action    = function() jump_and_reopen(result.bufnr, nav.top_level) end,
     })
   else
@@ -64,7 +61,7 @@ function M.build(result)
       table.insert(context_items, {
         key    = "H",
         icon   = "󰜸",
-        label  = "to top level",
+        label  = "top level  (" .. badge.short(nav.top_level) .. ")",
         action = function() jump_and_reopen(result.bufnr, nav.top_level) end,
       })
     end
@@ -74,7 +71,7 @@ function M.build(result)
       table.insert(context_items, {
         key    = "F",
         icon   = "󰜷",
-        label  = "to function",
+        label  = "function  (" .. badge.short(nav.nearest_function) .. ")",
         action = function() jump_and_reopen(result.bufnr, nav.nearest_function) end,
       })
     end
@@ -82,17 +79,15 @@ function M.build(result)
       table.insert(context_items, {
         key    = "B",
         icon   = "󰜷",
-        label  = "to body",
+        label  = "body  (" .. badge.short(nav.nearest_body) .. ")",
         action = function() jump_and_reopen(result.bufnr, nav.nearest_body) end,
       })
     end
     if nav.parent then
-      local p = nav.parent
-      local class = p.classification ~= "" and p.classification or "Node"
       table.insert(context_items, {
         key    = "h",
         icon   = "󰜷",
-        label  = string.format("to parent [%s %s]", class, format_range(p.range)),
+        label  = "parent  (" .. badge.short(nav.parent) .. ")",
         action = function() jump_and_reopen(result.bufnr, nav.parent) end,
       })
     end
@@ -103,7 +98,7 @@ function M.build(result)
     table.insert(context_items, {
       key    = "l",
       icon   = "󰜴",
-      label  = string.format("to child [%s]", child.label),
+      label  = "child  (" .. badge.short(child) .. ")",
       action = function() jump_and_reopen(result.bufnr, child) end,
     })
   end
@@ -120,7 +115,7 @@ function M.build(result)
   table.insert(items, {
     key    = "k",
     icon   = "󰜶",
-    label  = nav.prev_sibling and "to previous sibling" or "no sibling",
+    label  = nav.prev_sibling and ("previous  (" .. badge.short(nav.prev_sibling) .. ")") or "no sibling",
     action = nav.prev_sibling
       and function() jump_and_reopen(result.bufnr, nav.prev_sibling) end
       or  function()
@@ -130,7 +125,7 @@ function M.build(result)
   table.insert(items, {
     key    = "j",
     icon   = "󰜴",
-    label  = nav.next_sibling and "to next sibling" or "no sibling",
+    label  = nav.next_sibling and ("next  (" .. badge.short(nav.next_sibling) .. ")") or "no sibling",
     action = nav.next_sibling
       and function() jump_and_reopen(result.bufnr, nav.next_sibling) end
       or  function()
