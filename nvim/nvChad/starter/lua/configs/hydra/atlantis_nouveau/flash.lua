@@ -198,8 +198,9 @@ vim.keymap.set("n", "<Plug>(AtlantisJump)", function()
   local targets = collect_targets(result, win)
   local nav     = result.navigation or {}
 
-  local nav_item = nil
-  local actions  = build_nav_actions(nav, function(t) nav_item = t end)
+  local nav_item     = nil
+  local pending_action = nil
+  local actions      = build_nav_actions(nav, function(t) nav_item = t end)
 
   local switch_item = result.comment_range and { range = result.comment_range }
                    or result.associated_statement
@@ -208,6 +209,16 @@ vim.keymap.set("n", "<Plug>(AtlantisJump)", function()
       nav_item = switch_item
       return false
     end
+  end
+
+  -- Register all available node-operation keys from the registry.
+  -- Adding an op to registry.action_ops is sufficient; no changes needed here.
+  local registry = require("configs.hydra.atlantis_nouveau.ops.registry")
+  local plugins  = require("configs.hydra.atlantis_nouveau.plugins")
+  local function set_pending(fn) pending_action = fn end
+
+  for _, op in ipairs(registry.available_actions(result, plugins)) do
+    actions[op.key] = registry.as_flash_handler(op, result, set_pending)
   end
 
   local has_nav  = next(actions) ~= nil
@@ -276,6 +287,10 @@ vim.keymap.set("n", "<Plug>(AtlantisJump)", function()
         mode             = "standard",
       })
     end)
+  elseif pending_action then
+    close_hint_win(hint_win, hint_buf)
+    if cleanup then cleanup() end
+    pending_action()
   elseif nav_item then
     close_hint_win(hint_win, hint_buf)
     do_jump(bufnr, nav_item)

@@ -18,78 +18,36 @@ function M.open(result)
   -- Apply a transient highlight over the node that is being hovered over
   -- Also get an on_exit callback that clears the highlight when the menu is closed
   local on_exit  = highlight_node.apply(result.bufnr, result.range)
+
   local registry = require("configs.hydra.atlantis_nouveau.ops.registry")
   local common_actions = {
-    {
-      key    = registry.yank.key,
-      label  = "yank",
-      action = function() registry.yank.fn(result) end,
-    },
-    {
-      key    = registry.delete.key,
-      label  = "delete",
-      action = function() registry.delete.fn(result) end,
-    },
-    {
-      key    = registry.change.key,
-      label  = "change",
-      action = function() registry.change.fn(result) end,
-    },
+    registry.as_menu_item(registry.yank,   result),
+    registry.as_menu_item(registry.delete, result),
+    registry.as_menu_item(registry.change, result),
   }
 
-  local has_substitute = pcall(require, "substitute")
-  local has_exchange   = vim.fn.exists("g:loaded_exchange") == 1
-  local has_flash      = pcall(require, "flash")
-  local has_namu       = pcall(require, "namu.selecta.selecta")
-
-  -- Support lazy-loaded plugins by checking the lazy.nvim registry
-  local ok, lazy_config = pcall(require, "lazy.core.config")
-  if ok and lazy_config.plugins then
-    has_substitute = has_substitute or (lazy_config.plugins["substitute.nvim"] ~= nil)
-    has_exchange   = has_exchange   or (lazy_config.plugins["vim-exchange"] ~= nil)
-    has_flash      = has_flash      or (lazy_config.plugins["flash.nvim"] ~= nil)
-    has_namu       = has_namu       or (lazy_config.plugins["namu.nvim"] ~= nil)
-  end
+  local plugins  = require("configs.hydra.atlantis_nouveau.plugins")
+  local has_flash = plugins.has("flash", "flash.nvim")
+  local has_namu  = plugins.has("namu.selecta.selecta", "namu.nvim")
 
   local OVERFLOW_THRESHOLD = 9
   local is_overflow = result.outline and #result.outline > OVERFLOW_THRESHOLD
 
+  local swap_line, extra_line = {}, {}
+  for _, entry in ipairs({
+    { registry.swap_prev,  swap_line  },
+    { registry.swap_next,  swap_line  },
+    { registry.substitute, extra_line },
+    { registry.exchange,   extra_line },
+  }) do
+    local op, line = entry[1], entry[2]
+    if registry.is_available(op, result, plugins) then
+      table.insert(line, registry.as_menu_item(op, result))
+    end
+  end
   local header_actions = {}
-  local nav       = result.navigation
-  local swap_line = {}
-  if nav and nav.prev_sibling then
-    table.insert(swap_line, {
-      key    = registry.swap_prev.key,
-      label  = "swap ↑",
-      action = function() registry.swap_prev.fn(result) end,
-    })
-  end
-  if nav and nav.next_sibling then
-    table.insert(swap_line, {
-      key    = registry.swap_next.key,
-      label  = "swap ↓",
-      action = function() registry.swap_next.fn(result) end,
-    })
-  end
-  if #swap_line > 0 then table.insert(header_actions, swap_line) end
-  local extra_line = {}
-  if has_substitute then
-    table.insert(extra_line, {
-      key    = registry.substitute.key,
-      label  = "substitute",
-      action = function() registry.substitute.fn(result) end,
-    })
-  end
-  if has_exchange then
-    table.insert(extra_line, {
-      key    = registry.exchange.key,
-      label  = "exchange",
-      action = function() registry.exchange.fn(result) end,
-    })
-  end
-  if #extra_line > 0 then
-    table.insert(header_actions, extra_line)
-  end
+  if #swap_line  > 0 then table.insert(header_actions, swap_line)  end
+  if #extra_line > 0 then table.insert(header_actions, extra_line) end
 
   -- In overflow mode the normal Contents section is replaced with a single
   -- heading so the hint window stays compact; Tab opens namu directly.
