@@ -102,7 +102,12 @@ function M.open(result)
         function()
           skip_highlight_cleanup    = true
           result._highlight_cleanup = on_exit
-          require("configs.hydra.atlantis_nouveau.namu").open(result)
+          if result.outline and #result.outline > 0 then
+            require("configs.hydra.atlantis_nouveau.namu").open(result)
+          else
+            -- No children: skip namu and continue backwards to flash.
+            require("configs.hydra.atlantis_nouveau.flash").open(result)
+          end
         end,
         { exit = true, desc = false },
       },

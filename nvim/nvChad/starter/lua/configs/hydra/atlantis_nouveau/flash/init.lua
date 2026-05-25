@@ -61,12 +61,14 @@ vim.keymap.set("n", "<Plug>(AtlantisJump)", function()
   if state.tab_pressed then
     helpers.close_hint_win(state.hint_win, state.hint_buf)
     vim.schedule(function()
+      -- No children: skip namu and continue forwards to standard.
+      local mode = (result.outline and #result.outline > 0) and "namu" or "standard"
       require("configs.hydra.atlantis_nouveau").open({
         bufnr            = bufnr,
         target_node_type = result.node_type,
         target_start_row = result.range.start_row,
         target_start_col = result.range.start_col,
-        mode             = "namu",
+        mode             = mode,
       })
     end)
   elseif state.shift_tab_pressed then
