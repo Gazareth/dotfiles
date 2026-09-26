@@ -6,6 +6,7 @@ if not env_file_present then
 else
     vim.g.project_patterns = env.project_patterns
     vim.g.refresh_rate = env.refresh_rate
+    vim.g.font_size = env.font_size
 end
 
 if not nvchad_present then

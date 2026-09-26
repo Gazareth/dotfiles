@@ -5,5 +5,6 @@ M.project_patterns = {
   }
 
 M.refresh_rate = 185
+M.font_size = 16
 
 return M
