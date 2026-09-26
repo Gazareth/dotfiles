@@ -1,6 +1,12 @@
 -- Navigation
 local M = {
-  { "serhez/bento.nvim", opts = {}, event = "DirChanged" },
+  {
+    "serhez/bento.nvim",
+    lazy = false, -- @todo - set up proper lazy loading for this
+    opts = {},
+    event = "DirChanged",
+    config = require("configs.bento")
+  },
   {
     "bassamsdata/namu.nvim",
     opts = {

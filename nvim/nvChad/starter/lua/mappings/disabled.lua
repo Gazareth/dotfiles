@@ -12,6 +12,7 @@ M.disabled = {
       ["<leader>h"] = { "", "toggle horizontal terminal" },
       ["<C-n>"] = { "", "toggle nvimtree" },
       ["<C-c>"] = { "", "general copy whole file" },
+      ["<Esc>"] = { "", "general clear highlights" },
       ["<leader>e"] = { "", "focus nvimtree" },
       ["<A-h>"] = { "", "toggle floating term" },
     },

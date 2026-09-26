@@ -3,6 +3,15 @@ local overrides = require("configs.overrides")
 -- Cosmetic
 local M = {
   {
+    "loctvl842/monokai-pro.nvim",
+    lazy = false,
+    priority = 1000,
+    config = function()
+      require("monokai-pro").setup()
+      -- Don't call vim.cmd.colorscheme() - let NvChad handle it
+    end,
+  },
+  {
     "echasnovski/mini.cursorword", -- Highlight all instances of the word under the cursor
     event = "BufEnter ",
     version = false,

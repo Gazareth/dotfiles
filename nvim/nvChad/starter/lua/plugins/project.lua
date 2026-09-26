@@ -1,7 +1,12 @@
 local M = {
   {
     "MagicDuck/grug-far.nvim",
-    cmd = { "GrugFar" }
+    cmd = { "GrugFar", "GrugFarWithin" },
+    opts = {
+      prefills = {
+          flags = "--hidden --glob !.git/",
+      },
+    },
   },
   {
     "coffebar/neovim-project",

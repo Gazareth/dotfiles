@@ -1,6 +1,12 @@
 require("nvchad.configs.lspconfig").defaults()
 
-local servers = { "html", "cssls", "emmylua_ls" }
+local servers = {
+"html",
+"cssls",
+"emmylua_ls",
+"ts_ls",
+"eslint",
+}
 
 vim.lsp.config("emmylua_ls", {
   settings = {

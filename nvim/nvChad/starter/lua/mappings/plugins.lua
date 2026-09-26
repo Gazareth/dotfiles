@@ -14,7 +14,13 @@ M.focus = {
 
 M.grug_far = {
   n = {
-    ["<leader>gf"] = { "<cmd> GrugFar <CR>", "GrugFar: Find and Replace" },
+    ["<C-S-F>"] = { "<cmd> GrugFar <CR>", "GrugFar: Find and Replace" },
+  },
+}
+
+M.flash = {
+  n = {
+    ["<leader>flt"] = { function() require("flash").treesitter() end, "Flash: Treesitter" },
   },
 }
 
@@ -36,7 +42,7 @@ M.leap_ast = {
 
 M.lspconfig = {
   n = {
-    ["<leader>fmt"] = {
+    ["<C-D-\\>"] = {
       function()
         vim.lsp.buf.format { async = true }
       end,

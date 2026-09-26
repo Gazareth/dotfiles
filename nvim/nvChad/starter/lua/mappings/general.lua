@@ -13,7 +13,9 @@ M.general = {
         -- cycle through buffers
         ["<leader><TAB>"] = {"<cmd> bnext <CR>", "Next buffer"},
         ["<leader><S-TAB>"] = {"<cmd> bprevious <CR>", "Prev buffer"},
-        ["<leader>x"] = {"<cmd> bd <CR>", "Delete buffer"},
+        ["<leader>x"] = {"<cmd> b#|bd# <CR>", "Delete buffer (but keep current window)"},
+        ["<leader>X"] = {"<cmd> bd <CR>", "Delete buffer and window"},
+        ["<leader>wc"] = {"<cmd> :clo <CR>", "Delete window window"},
         ["<leader>ww"] = {function()
             local node = vim.treesitter.get_node()
             if not node then
