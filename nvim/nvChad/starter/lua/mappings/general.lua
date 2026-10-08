@@ -7,6 +7,7 @@ local M = {}
 
 M.general = {
     [{"n", "i"}] = {
+        ["<C-p>"] = { "<cmd> Telescope find_files<CR>", "Find files" },
         ["<C-Tab>"] = {"<cmd> tabnext <CR>", "Switch to next tab"},
         ["<C-S-Tab>"] = {"<cmd> tabprev <CR>", "Switch to previous tab"},
         -- cycle through buffers

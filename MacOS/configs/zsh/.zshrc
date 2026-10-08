@@ -5,3 +5,4 @@ echo "Ensure you have a `.zprofile` in \$HOME"
 echo "See .example.zprofile"
 return 1
 fi
+eval "$(mise activate zsh)"

@@ -18,12 +18,3 @@
   property: (property_identifier) @variable.member.enum)
  (#match? @type.enum "^[A-Z]")
  (#match? @variable.member.enum "^[A-Z]"))
-
-((jsx_opening_element name: (member_expression object: (identifier) @tag.builtin property: (property_identifier) @tag))
- (#set! priority 105))
-
-((jsx_closing_element name: (member_expression object: (identifier) @tag.builtin property: (property_identifier) @tag))
- (#set! priority 105))
-
-((jsx_self_closing_element name: (member_expression object: (identifier) @tag.builtin property: (property_identifier) @tag))
- (#set! priority 105))

@@ -15,6 +15,7 @@ export default {
       match: [
         "https://chetwood.atlassian.net/*",
         "https://github.com/chetwoodfinancial/treasury/*",
+        "https://chetwoodbank.bamboohr.com/*"
       ],
       browser: "Microsoft Edge",
     },

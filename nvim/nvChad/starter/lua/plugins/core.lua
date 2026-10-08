@@ -42,7 +42,19 @@ local M = {
   {
     "tomarrell/vim-npr",  -- Follow a file path/url
   },
-
+  {
+    "nvim-telescope/telescope.nvim",
+    opts = function(_, opts)
+      -- Merge your custom picker settings into the existing NvChad opts
+      opts.pickers = {
+        find_files = {
+          hidden = true,
+          -- no_ignore = true, -- Uncomment if you also want to see files listed in .gitignore
+        },
+      }
+      return opts
+    end,
+  },
   {
     "ofirgall/open.nvim",  -- Open a file or Github link
       keys = {"n","gx"},
