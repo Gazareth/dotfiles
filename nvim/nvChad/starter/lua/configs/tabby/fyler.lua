@@ -19,7 +19,8 @@ function M.get_display_name(tab)
   end
 
   local cwd = vim.fs.normalize(vim.fn.getcwd())
-  local cwd_name = vim.fs.basename(cwd) or cwd
+  local collapsed_cwd = path_utils.collapse_home(cwd)
+  local cwd_name = (collapsed_cwd == "~") and "~" or (vim.fs.basename(cwd) or cwd)
 
   if editor_bufname ~= "" then
     local display = path_utils.format_display(path_utils.get_relative_path(editor_bufname))
