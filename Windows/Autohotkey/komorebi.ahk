@@ -30,7 +30,15 @@ global numbers := ArrayFromZero(WorkspaceNumber)
 global workspaceKeys := ["1", "2", "3", "4", "Q", "W", "E", "R"]
 
 init() {
+    if ProcessExist("komorebi.exe") {
+        RunKomorebiC("restore-windows")
+        RunKomorebiC("stop")
+        RunWait("powershell Stop-Process -Name 'komorebi' -Force -ErrorAction SilentlyContinue", , "Hide")
+        ProcessWaitClose("komorebi.exe", 5)
+    }
+
     RunKomorebiC("start")
+    Sleep(1000)
 
     settings := [
         "remove-title-bar exe neovide.exe",
@@ -154,11 +162,6 @@ for num in numbers {
 
 ;; Restart komorebi in a hard way
 !+z:: {
-    RunKomorebiC("restore-windows")
-    RunWait("powershell " . "Stop-Process -Name 'komorebi'", , "Hide")
-    RunWait("komorebic start") ;; intend to not hide it
-    ;; Delay 1000 milisecond
-    Sleep(1000)
     init()
 }
 
