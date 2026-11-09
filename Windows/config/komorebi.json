@@ -14,7 +14,7 @@
       "b": 245
     },
     "stack": {
-      "r": 256,
+      "r": 255,
       "g": 165,
       "b": 66
     },
@@ -155,7 +155,7 @@
           "initial_workspace_rules": [
             {
               "kind": "Exe",
-              "id": "WhatsApp.Root.exe",
+              "id": "WhatsApp.Root.exe"
             }
           ]
         }
