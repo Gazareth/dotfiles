@@ -124,6 +124,24 @@
             {
               "kind": "Exe",
               "id": "Antigravity.exe"
+            },
+            {
+              "kind": "Exe",
+              "id": "claude.exe"
+            },
+            {
+              "kind": "Exe",
+              "id": "Claude.exe"
+            }
+          ],
+          "workspace_rules": [
+            {
+              "kind": "Exe",
+              "id": "claude.exe"
+            },
+            {
+              "kind": "Exe",
+              "id": "Claude.exe"
             }
           ]
         },
@@ -162,6 +180,16 @@
       ]
     }
   ],
+  "manage_rules": [
+    {
+      "kind": "Exe",
+      "id": "claude.exe"
+    },
+    {
+      "kind": "Exe",
+      "id": "Claude.exe"
+    }
+  ],
   "tray_and_multi_window_applications": [
     {
       "kind": "Exe",
@@ -186,6 +214,14 @@
     {
       "kind": "Exe",
       "id": "'Clash for Windows'"
+    },
+    {
+      "kind": "Exe",
+      "id": "claude.exe"
+    },
+    {
+      "kind": "Exe",
+      "id": "Claude.exe"
     }
   ],
   "floating_applications": [
