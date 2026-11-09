@@ -118,6 +118,21 @@ brew install --cask monitorcontrol
 
 Requires native keyboard access
 
+#### Talon
+
+Hands-free voice & eye-tracking input.
+
+https://talonvoice.com/
+
+##### Config
+
+My Talon config (including the `talonhub/community` submodule and custom scripts) is at `talon/`. Remove the default empty `~/.talon/user` directory and symlink `talon/` in its place:
+
+```bash
+rmdir "$HOME/.talon/user"
+ln -s "$HOME/Documents/Workspace/dotfiles/talon" "$HOME/.talon/user"
+```
+
 ### Other apps
 
 [Development](docs/development)

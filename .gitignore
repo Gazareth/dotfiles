@@ -2,6 +2,7 @@
 nvim/nvChad/custom/env.lua
 nvim/nvChad/starter/lazy-lock.json
 **.zprofile
+**/.dotfiles_source
 
 # Ignore compiled AutoHotkey scripts
 Windows/AutoHotkey/**/*.exe
