@@ -146,6 +146,7 @@ CreateSwitchWorkspace(WorkspaceIndex) {
 ; Equal to bind key !1 to !9 to workspace 0 ~ 8
 for workspaceKey in workspaceKeys {
     Hotkey("~CapsLock & " . workspaceKey, CreateSwitchWorkspace(A_Index))
+    Hotkey("F" . (12 + A_Index), CreateSwitchWorkspace(A_Index))
 }
 
 ; Move window to workspace
