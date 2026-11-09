@@ -1,0 +1,5 @@
+set volume <number>: user.media_set_volume(number)
+set volume hundred: user.media_set_volume(100)
+turn up volume: key(volup)
+turn down volume: key(voldown)
+toggle mute: key(mute)
