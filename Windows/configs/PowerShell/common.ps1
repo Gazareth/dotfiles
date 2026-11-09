@@ -3,8 +3,13 @@ New-Alias which get-command
 New-Alias lg lazygit
 
 function goDevelopment {
+    param([switch]$Force)
     if ($WORKSPACE) {
-        Set-Location -Path $WORKSPACE
+        $currentPath = (Get-Location).Path
+        $workspacePrefix = $WORKSPACE.TrimEnd('\', '/') + '\'
+        if ($Force -or -not $currentPath.StartsWith($workspacePrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+            Set-Location -Path $WORKSPACE
+        }
     } else {
         Write-Warning "`$WORKSPACE is not defined"
     }
