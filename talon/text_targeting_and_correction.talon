@@ -8,6 +8,9 @@ click mouse:
 enter that:
     key(enter)
 
+escape that:
+    key(escape)
+
 space key:
     key(space)
 
