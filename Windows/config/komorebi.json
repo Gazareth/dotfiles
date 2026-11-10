@@ -267,6 +267,10 @@
       "kind": "Exe",
       "id": "CurseForge.exe",
       "matching_strategy": "Equals"
+    },
+    {
+      "kind": "Exe",
+      "id": "talon.exe"
     }
   ],
   "ignore_rules": [
@@ -274,6 +278,10 @@
       "kind": "Title",
       "id": "Picture in picture",
       "matching_strategy": "Equals"
+    },
+    {
+      "kind": "Exe",
+      "id": "talon.exe"
     }
   ]
 }
