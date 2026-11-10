@@ -1,5 +1,7 @@
 os: windows
 -
+start up komorebi: user.start_komorebi()
+
 go (browser | chrome | edge): key(f13)
 go (notes | files): key(f14)
 go media: key(f15)
