@@ -10,6 +10,9 @@ go (test | app): key(f17)
 go code: key(f18)
 go terminal: key(f19)
 go comms: key(f20)
+go (lazy git | lazygit): user.focus_or_open_lazygit()
+
+(lazy git | lazygit)$: user.focus_or_open_lazygit()
 
 desktop one: key(f13)
 desktop two: key(f14)
