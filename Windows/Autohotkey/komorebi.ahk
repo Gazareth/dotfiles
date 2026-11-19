@@ -29,17 +29,43 @@ RunKomorebiC(CommandString) {
 global numbers := ArrayFromZero(WorkspaceNumber)
 global workspaceKeys := ["1", "2", "3", "4", "Q", "W", "E", "R"]
 
+global progGui := ""
+global progressBar := ""
+global statusText := ""
+
+UpdateProgress(percent, message) {
+    global progressBar, statusText
+    if (progressBar != "") {
+        progressBar.Value := percent
+        statusText.Value := message
+    }
+}
+
 init() {
+    global progGui, progressBar, statusText
+
+    ; Create sleek, non-intrusive progress HUD (doesn't steal focus)
+    progGui := Gui("+AlwaysOnTop -Caption +ToolWindow +Border")
+    progGui.BackColor := "181825"
+    progGui.SetFont("s10 bold cWhite", "Segoe UI")
+    progGui.Add("Text", "w320", "Komorebi Initialisation")
+    progGui.SetFont("s9 norm cA6ADC8", "Segoe UI")
+    statusText := progGui.Add("Text", "w320", "Checking running instance...")
+    progressBar := progGui.Add("Progress", "w320 h12 c89B4FA Background313244", 10)
+    progGui.Show("NoActivate x" . (A_ScreenWidth // 2 - 160) . " y50")
+
     if ProcessExist("komorebi.exe") {
+        UpdateProgress(25, "Stopping previous instance...")
         RunKomorebiC("restore-windows")
         RunKomorebiC("stop")
         RunWait("powershell Stop-Process -Name 'komorebi' -Force -ErrorAction SilentlyContinue", , "Hide")
         ProcessWaitClose("komorebi.exe", 5)
     }
 
+    UpdateProgress(50, "Starting Komorebi daemon...")
     RunKomorebiC("start")
-    Sleep(1000)
 
+    UpdateProgress(75, "Configuring rules...")
     settings := [
         "remove-title-bar exe neovide.exe",
     ]
@@ -48,9 +74,16 @@ init() {
         RunKomorebiC(SettingsCommand)
     }
 
+    UpdateProgress(90, "Toggling title bars...")
     RunKomorebiC("toggle-title-bars")
 
-    MsgBox("Komorebi has finished initialising!")
+    UpdateProgress(100, "✓ Komorebi Ready!")
+    SoundPlay "*64"
+    Sleep(700)
+    progGui.Destroy()
+    progGui := ""
+    progressBar := ""
+    statusText := ""
 }
 
 ;; run init function at start

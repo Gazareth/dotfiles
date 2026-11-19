@@ -1,3 +1,4 @@
+import atexit
 import ctypes
 from ctypes import wintypes
 import json
@@ -36,6 +37,117 @@ def _find_komorebi_script() -> Path | None:
         return repo_candidate
 
     return None
+
+
+def _is_komorebi_running() -> bool:
+    """Checks if komorebi.exe is currently running."""
+    if app.platform != "windows":
+        return False
+    try:
+        res = subprocess.run(
+            ["tasklist", "/FI", "IMAGENAME eq komorebi.exe", "/NH"],
+            capture_output=True,
+            text=True,
+            creationflags=CREATE_NO_WINDOW,
+            timeout=2,
+        )
+        return "komorebi.exe" in res.stdout.lower()
+    except Exception:
+        return False
+
+
+def _is_komorebi_ahk_running() -> bool:
+    """Checks if komorebi.ahk is currently running."""
+    if app.platform != "windows":
+        return False
+    try:
+        ps_check = (
+            "Get-CimInstance Win32_Process | "
+            "Where-Object { $_.Name -match 'AutoHotkey' -and $_.CommandLine -like '*komorebi.ahk*' } | "
+            "Select-Object -ExpandProperty ProcessId -First 1"
+        )
+        res = subprocess.run(
+            ["powershell", "-NoProfile", "-Command", ps_check],
+            capture_output=True,
+            text=True,
+            creationflags=CREATE_NO_WINDOW,
+            timeout=3,
+        )
+        return bool(res.stdout.strip())
+    except Exception:
+        return False
+
+
+def _start_komorebi() -> None:
+    """Launches the komorebi AutoHotkey script if not already running."""
+    if app.platform != "windows":
+        return
+
+    script_path = _find_komorebi_script()
+    if not script_path:
+        print("[komorebi] Could not locate Windows/Autohotkey/komorebi.ahk.")
+        return
+
+    if _is_komorebi_running() and _is_komorebi_ahk_running():
+        print("[komorebi] komorebi and komorebi.ahk are already running.")
+        return
+
+    print(f"[komorebi] Starting komorebi via {script_path}...")
+    os.startfile(str(script_path))
+
+
+def _stop_komorebi() -> None:
+    """Restores all windows and exits komorebi and komorebi.ahk."""
+    if app.platform != "windows":
+        return
+
+    print("[komorebi] Stopping komorebi and restoring windows...")
+
+    # 1. Restore all windows and stop komorebic daemon
+    try:
+        subprocess.run(
+            ["komorebic", "restore-windows"],
+            creationflags=CREATE_NO_WINDOW,
+            timeout=2,
+        )
+    except Exception:
+        pass
+
+    try:
+        subprocess.run(
+            ["komorebic", "stop"],
+            creationflags=CREATE_NO_WINDOW,
+            timeout=2,
+        )
+    except Exception:
+        pass
+
+    # 2. Stop komorebi.ahk AutoHotkey process
+    try:
+        ps_stop_ahk = (
+            "Get-CimInstance Win32_Process | "
+            "Where-Object { $_.Name -match 'AutoHotkey' -and $_.CommandLine -like '*komorebi.ahk*' } | "
+            "ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"
+        )
+        subprocess.run(
+            ["powershell", "-NoProfile", "-Command", ps_stop_ahk],
+            creationflags=CREATE_NO_WINDOW,
+            timeout=3,
+        )
+    except Exception:
+        pass
+
+    # 3. Ensure komorebi.exe process is closed
+    try:
+        subprocess.run(
+            ["powershell", "-NoProfile", "-Command", "Stop-Process -Name 'komorebi' -Force -ErrorAction SilentlyContinue"],
+            creationflags=CREATE_NO_WINDOW,
+            timeout=2,
+        )
+    except Exception:
+        pass
+
+    print("[komorebi] Stopped.")
 
 
 def _get_current_workspace() -> int:
@@ -210,16 +322,12 @@ def _is_tab_idle(title: str) -> bool:
 @mod.action_class
 class Actions:
     def start_komorebi():
-        """Launches the komorebi AutoHotkey script."""
-        if app.platform != "windows":
-            return
+        """Launches the komorebi AutoHotkey script if not already running."""
+        _start_komorebi()
 
-        script_path = _find_komorebi_script()
-        if not script_path:
-            print("[komorebi] Could not locate Windows/Autohotkey/komorebi.ahk.")
-            return
-
-        os.startfile(str(script_path))
+    def stop_komorebi():
+        """Restores windows and exits komorebi and komorebi.ahk."""
+        _stop_komorebi()
 
     def komorebi_focus_workspace(workspace: int):
         """Switches Komorebi to target workspace index (0-based)."""
@@ -366,3 +474,19 @@ class Actions:
             tab_title="lazygit",
             workspace=6,
         )
+
+
+def _on_ready() -> None:
+    """Auto-start komorebi when Talon initializes."""
+    if app.platform == "windows":
+        _start_komorebi()
+
+
+def _on_exit() -> None:
+    """Auto-stop komorebi when Talon exits."""
+    if app.platform == "windows":
+        _stop_komorebi()
+
+
+app.register("ready", _on_ready)
+atexit.register(_on_exit)

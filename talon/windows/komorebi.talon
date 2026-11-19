@@ -1,6 +1,11 @@
 os: windows
 -
-start up komorebi: user.start_komorebi()
+(start up | start) komorebi: user.start_komorebi()
+stop komorebi: user.stop_komorebi()
+restart komorebi:
+    user.stop_komorebi()
+    sleep(1000ms)
+    user.start_komorebi()
 
 go (browser | chrome | edge): key(f13)
 go (notes | files): key(f14)
