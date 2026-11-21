@@ -1,11 +1,12 @@
 """Custom floating mode HUD scaled to display DPI with icons matching Talon HUD."""
 
 from dataclasses import dataclass
+import time
 from typing import Callable, Optional
 
 import skia
 from skia import Canvas as SkiaCanvas
-from talon import Module, actions, app, cron, registry, scope, settings, storage, ui
+from talon import Module, actions, app, cron, registry, scope, settings, speech_system, storage, ui
 from talon.canvas import Canvas, MouseEvent
 from talon.types import Point2d, Rect
 
@@ -25,10 +26,13 @@ STORAGE_KEY_SHOW = "user.custom_hud_show"
 STORAGE_KEY_SCALE = "user.custom_hud_user_scale"
 
 canvas: Optional[Canvas] = None
+bubble_canvas: Optional[Canvas] = None
 last_mouse_pos: Optional[Point2d] = None
 is_dragging = False
 _hud_x: float = 0.0
 _hud_y: float = 0.0
+_bubble_text: str = ""
+_bubble_time: float = 0.0
 
 # Colors (Catppuccin Mocha themed - 6-character RRGGBB hex)
 COLOR_BG = "181825"                  # Dark background
@@ -365,6 +369,8 @@ def on_mouse(e: MouseEvent):
         _hud_y += dy
         canvas.move(_hud_x, _hud_y)
         storage.set(STORAGE_KEY_POS, [int(_hud_x), int(_hud_y)])
+        if bubble_canvas:
+            _tick_bubble()
 
     elif e.event == "mouseup" and e.button == 0:
         is_dragging = False
@@ -374,6 +380,146 @@ def on_mouse(e: MouseEvent):
 def refresh_hud():
     if canvas:
         canvas.freeze()
+
+
+def _color_with_alpha(hex_color: str, alpha: float) -> str:
+    """Takes a 6-character hex RRGGBB and float alpha 0.0..1.0, returns 8-character RRGGBBAA."""
+    a = max(0, min(255, int(alpha * 255)))
+    return f"{hex_color[:6]}{a:02x}"
+
+
+def _close_bubble():
+    global bubble_canvas, _bubble_text, _bubble_time
+    _bubble_text = ""
+    _bubble_time = 0.0
+    if bubble_canvas:
+        try:
+            bubble_canvas.unregister("draw", on_draw_bubble)
+            bubble_canvas.close()
+        except Exception:
+            pass
+        bubble_canvas = None
+
+
+def _tick_bubble():
+    global bubble_canvas
+    if not _bubble_text or not canvas:
+        if bubble_canvas:
+            _close_bubble()
+        return
+
+    now = time.monotonic()
+    age = now - _bubble_time
+    if age >= 3.5:
+        _close_bubble()
+        return
+
+    scale = _get_scale()
+    font_size = 14.0 * scale
+    p = skia.Paint()
+    p.textsize = font_size
+    adv, bounds = p.measure_text(_bubble_text)
+
+    pad_x = 14.0 * scale
+    pad_y = 7.0 * scale
+    bubble_w = float(int(adv + (pad_x * 2)))
+    bubble_h = float(int(bounds.height + (pad_y * 2) + 4.0 * scale))
+
+    hud_w, hud_h = _get_dimensions(scale)
+    main_screen = ui.main_screen()
+
+    # Anchor horizontally centered relative to HUD
+    bubble_x = _hud_x + (hud_w - bubble_w) / 2.0
+    gap = 8.0 * scale
+    bubble_y = _hud_y - bubble_h - gap
+
+    # If it extends above the top edge of the screen, place it below the HUD
+    if bubble_y < main_screen.rect.y + gap:
+        bubble_y = _hud_y + hud_h + gap
+
+    # Clamp horizontally within screen bounds
+    bubble_x = max(main_screen.rect.x + gap, min(main_screen.rect.x + main_screen.rect.width - bubble_w - gap, bubble_x))
+
+    if bubble_canvas:
+        if int(bubble_canvas.rect.width) != int(bubble_w) or int(bubble_canvas.rect.height) != int(bubble_h):
+            bubble_canvas.move(bubble_x, bubble_y)
+            bubble_canvas.resize(bubble_w, bubble_h)
+        else:
+            bubble_canvas.move(bubble_x, bubble_y)
+        bubble_canvas.freeze()
+    else:
+        bubble_canvas = Canvas.from_rect(Rect(bubble_x, bubble_y, bubble_w, bubble_h))
+        bubble_canvas.blocks_mouse = False
+        bubble_canvas.register("draw", on_draw_bubble)
+        bubble_canvas.freeze()
+
+
+def _show_command_bubble(text: str):
+    global _bubble_text, _bubble_time
+    if not canvas:
+        return
+    _bubble_text = text
+    _bubble_time = time.monotonic()
+    _tick_bubble()
+
+
+def on_draw_bubble(c: SkiaCanvas):
+    try:
+        now = time.monotonic()
+        age = now - _bubble_time
+        if age >= 3.5 or not _bubble_text:
+            return
+
+        # Full opacity for first 2.7s, then linear fade out over 0.8s
+        alpha = 1.0 if age <= 2.7 else max(0.0, (3.5 - age) / 0.8)
+        scale = _get_scale()
+        box_r = 8.0 * scale
+        font_size = 14.0 * scale
+
+        # 1. Background fill
+        c.paint.style = c.paint.Style.FILL
+        c.paint.color = _color_with_alpha(COLOR_BG, alpha * 0.95)
+        _draw_box(c, c.rect, box_r)
+
+        # 2. Subtle border
+        c.paint.style = c.paint.Style.STROKE
+        c.paint.stroke_width = 1.2 * scale
+        c.paint.color = _color_with_alpha(COLOR_BORDER, alpha * 0.85)
+        _draw_box(c, c.rect, box_r)
+
+        # 3. Spoken Command Text
+        c.paint.style = c.paint.Style.FILL
+        c.paint.color = _color_with_alpha(COLOR_TEXT_INACTIVE, alpha)
+        c.paint.textsize = font_size
+
+        adv, bounds = c.paint.measure_text(_bubble_text)
+        tx = c.rect.center.x - bounds.center.x
+        ty = c.rect.center.y - bounds.center.y
+        c.draw_text(_bubble_text, tx, ty)
+
+    except Exception as e:
+        import traceback
+        print(f"[custom_hud] on_draw_bubble exception: {e}")
+        traceback.print_exc()
+
+
+def _on_phrase(phrase: dict):
+    try:
+        words = phrase.get("phrase")
+        if not words:
+            return
+        text = " ".join(str(w) for w in words).strip()
+        if not text:
+            return
+
+        modes = scope.get("mode") or []
+        # Only show command bubble when in command mode (or mixed command mode), not pure dictation
+        if "dictation" in modes and "command" not in modes:
+            return
+
+        _show_command_bubble(text)
+    except Exception as e:
+        print(f"[custom_hud] _on_phrase exception: {e}")
 
 
 def show_hud():
@@ -408,6 +554,7 @@ def show_hud():
 
 def hide_hud():
     global canvas
+    _close_bubble()
     if canvas:
         canvas.unregister("draw", on_draw)
         canvas.unregister("mouse", on_mouse)
@@ -437,6 +584,10 @@ class Actions:
             hide_hud()
         else:
             show_hud()
+
+    def custom_hud_notify(text: str):
+        """Display a command notification bubble above the custom HUD."""
+        _show_command_bubble(text)
 
     def custom_hud_scale_up():
         """Increase custom HUD scale by 0.2."""
@@ -473,11 +624,19 @@ def on_ready():
     cron.after("1s", _hide_default_hud_safely)
     registry.register("update_contexts", lambda: refresh_hud())
     cron.interval("500ms", refresh_hud)
+    cron.interval("50ms", _tick_bubble)
+    speech_system.register("phrase", _on_phrase)
 
 
 app.register("ready", on_ready)
 
 # Initialize immediately if Talon is already running
+cron.interval("50ms", _tick_bubble)
+try:
+    speech_system.register("phrase", _on_phrase)
+except Exception:
+    pass
+
 if not canvas:
     show_hud()
     cron.after("1s", _hide_default_hud_safely)
