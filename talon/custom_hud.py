@@ -158,8 +158,6 @@ def _draw_box(c: SkiaCanvas, rect: Rect, r: float):
 
 
 def _draw_mic_icon(c: SkiaCanvas, ox: float, oy: float, s: float, is_awake: bool, color: str, stroke_w: float):
-    c.paint.style = c.paint.Style.STROKE
-    c.paint.stroke_width = stroke_w
     c.paint.color = color
 
     # Microphone capsule from Talon default HUD (rect x=8, y=2, w=8, h=14, rx=4)
@@ -167,13 +165,15 @@ def _draw_mic_icon(c: SkiaCanvas, ox: float, oy: float, s: float, is_awake: bool
     if is_awake:
         c.paint.style = c.paint.Style.FILL
         _draw_box(c, capsule, 4.0 * s)
-        c.paint.style = c.paint.Style.STROKE
+    c.paint.style = c.paint.Style.STROKE
+    c.paint.stroke_width = stroke_w
     _draw_box(c, capsule, 4.0 * s)
 
-    # Microphone stand & cradle from Talon default HUD
+    # Microphone stand & cradle from Talon default HUD (evaluated in 24x24 space)
     c.save()
     c.translate(ox, oy)
     c.scale(s, s)
+    c.paint.stroke_width = stroke_w / s
     c.draw_path(PATH_MIC_STAND)
     c.restore()
 
@@ -218,13 +218,13 @@ def _draw_dictation_icon(c: SkiaCanvas, ox: float, oy: float, s: float, color: s
 
 def _draw_whisper_icon(c: SkiaCanvas, ox: float, oy: float, s: float, is_active: bool, color: str, stroke_w: float):
     c.paint.style = c.paint.Style.STROKE
-    c.paint.stroke_width = stroke_w
     c.paint.color = color
 
-    # Audio sound wave from Talon's official icon set
+    # Audio sound wave from Talon's official icon set (evaluated in 24x24 space)
     c.save()
     c.translate(ox, oy)
     c.scale(s, s)
+    c.paint.stroke_width = stroke_w / s
     c.draw_path(PATH_WAVE)
     c.restore()
 
@@ -297,7 +297,7 @@ def on_draw(c: SkiaCanvas):
             ox = btn.rect.x + (btn.rect.width - icon_box_size) / 2.0
             oy = btn.rect.y + (btn.rect.height - icon_box_size) / 2.0
             s = icon_box_size / 24.0
-            icon_stroke = 2.2 * scale
+            icon_stroke = 1.6 * scale
 
             if btn.id == "sleep":
                 _draw_mic_icon(c, ox, oy, s, is_awake=speech_enabled, color=icon_color, stroke_w=icon_stroke)
