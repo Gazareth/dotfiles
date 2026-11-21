@@ -7,6 +7,11 @@ nvim/nvChad/starter/lazy-lock.json
 # Ignore compiled AutoHotkey scripts
 Windows/AutoHotkey/**/*.exe
 
+# Python caches and virtual environments
+**/__pycache__/**
+*.pyc
+**/.venv/**
+
 # Ignore AI and IDE related directories
 **/.claude/**
 **/.vscode/**
