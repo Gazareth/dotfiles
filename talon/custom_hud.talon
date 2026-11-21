@@ -1,0 +1,6 @@
+(custom hud | hud) (on | show)$: user.custom_hud_show()
+(custom hud | hud) (off | hide)$: user.custom_hud_hide()
+(custom hud | hud) toggle$: user.custom_hud_toggle()
+(custom hud | hud) (larger | scale up)$: user.custom_hud_scale_up()
+(custom hud | hud) (smaller | scale down)$: user.custom_hud_scale_down()
+(custom hud | hud) scale reset$: user.custom_hud_scale_reset()
