@@ -5,7 +5,7 @@ click mouse:
     user.grid_close()
     user.mouse_drag_end()
 
-enter that:
+enter that | send:
     key(enter)
 
 escape that:
