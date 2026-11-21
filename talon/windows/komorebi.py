@@ -5,9 +5,10 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import threading
 import time
 
-from talon import Module, actions, app, ui
+from talon import Module, actions, app, cron, ui
 
 try:
     from ..dotfiles_sync import find_source_dir
@@ -90,10 +91,12 @@ def _start_komorebi() -> None:
 
     if _is_komorebi_running() and _is_komorebi_ahk_running():
         print("[komorebi] komorebi and komorebi.ahk are already running.")
+        cron.after("1s", _trigger_arrange_desktops)
         return
 
     print(f"[komorebi] Starting komorebi via {script_path}...")
     os.startfile(str(script_path))
+    cron.after("4s", _trigger_arrange_desktops)
 
 
 def _stop_komorebi() -> None:
@@ -169,11 +172,8 @@ def _get_current_workspace() -> int:
     return -1
 
 
-def _find_window_in_komorebi(exe: str = "", title: str = "") -> tuple[int, int] | None:
-    """
-    Finds a window in Komorebi state across all workspaces.
-    Returns (workspace_index, hwnd) or None.
-    """
+def _get_komorebi_state() -> dict | None:
+    """Returns the parsed komorebic state JSON, or None on failure."""
     if app.platform != "windows":
         return None
     try:
@@ -182,11 +182,40 @@ def _find_window_in_komorebi(exe: str = "", title: str = "") -> tuple[int, int] 
             capture_output=True,
             text=True,
             creationflags=CREATE_NO_WINDOW,
-            timeout=1,
+            timeout=2,
         )
-        if res.returncode != 0:
-            return None
-        state = json.loads(res.stdout)
+        if res.returncode == 0 and res.stdout.strip():
+            return json.loads(res.stdout)
+    except Exception as e:
+        print(f"[komorebi] Error getting state: {e}")
+    return None
+
+
+def _focus_hwnd(hwnd: int) -> None:
+    """Brings a window to the foreground and focuses it."""
+    try:
+        for w in ui.windows():
+            for attr in ("handle", "hwnd", "id"):
+                if getattr(w, attr, None) == hwnd:
+                    w.focus()
+                    break
+    except Exception:
+        pass
+
+    user32 = ctypes.windll.user32
+    user32.ShowWindow(hwnd, 9)  # SW_RESTORE
+    user32.SetForegroundWindow(hwnd)
+
+
+def _find_window_in_komorebi(exe: str = "", title: str = "") -> tuple[int, int] | None:
+    """
+    Finds a window in Komorebi state across all workspaces.
+    Returns (workspace_index, hwnd) or None.
+    """
+    state = _get_komorebi_state()
+    if not state:
+        return None
+    try:
         focused_mon = state.get("monitors", {}).get("focused", 0)
         monitors = state.get("monitors", {}).get("elements", [])
         if not monitors or focused_mon >= len(monitors):
@@ -204,6 +233,152 @@ def _find_window_in_komorebi(exe: str = "", title: str = "") -> tuple[int, int] 
     except Exception:
         pass
     return None
+
+
+def _is_edge_main(w: dict) -> bool:
+    """Checks if a window object belongs to the Main Edge profile."""
+    exe = (w.get("exe") or "").lower()
+    title = (w.get("title") or "").lower()
+    if "msedge" in exe:
+        if "main" in title:
+            return True
+        if "gamedev" not in title:
+            return True
+    return False
+
+
+def _is_code_primary(w: dict) -> bool:
+    """Checks if a window object is Antigravity (preferred primary for workspace 6)."""
+    exe = (w.get("exe") or "").lower()
+    return "antigravity" in exe
+
+
+def _arrange_workspace(ws_idx: int, is_primary_fn) -> bool:
+    """
+    Arranges all windows on a workspace into a single stack and guarantees
+    the primary window (matching is_primary_fn) is at index 0 (leftmost tab).
+    """
+    # 1. Switch to target workspace
+    subprocess.run(
+        ["komorebic", "focus-workspace", str(ws_idx)],
+        creationflags=CREATE_NO_WINDOW,
+        timeout=1,
+    )
+    time.sleep(0.15)
+
+    state = _get_komorebi_state()
+    if not state:
+        return False
+
+    focused_mon = state.get("monitors", {}).get("focused", 0)
+    monitors = state.get("monitors", {}).get("elements", [])
+    if not monitors or focused_mon >= len(monitors):
+        return False
+
+    workspaces = monitors[focused_mon].get("workspaces", {}).get("elements", [])
+    if ws_idx >= len(workspaces):
+        return False
+
+    ws = workspaces[ws_idx]
+    containers = ws.get("containers", {}).get("elements", [])
+    all_windows = [
+        w for c in containers for w in c.get("windows", {}).get("elements", [])
+    ]
+
+    if len(all_windows) < 2:
+        return False
+
+    # 2. If windows are separated across multiple containers, stack them together
+    if len(containers) > 1:
+        subprocess.run(
+            ["komorebic", "stack-all"],
+            creationflags=CREATE_NO_WINDOW,
+            timeout=1,
+        )
+        time.sleep(0.2)
+        state = _get_komorebi_state()
+        if not state:
+            return False
+        workspaces = state.get("monitors", {}).get("elements", [])[focused_mon].get("workspaces", {}).get("elements", [])
+        ws = workspaces[ws_idx]
+        containers = ws.get("containers", {}).get("elements", [])
+
+    if not containers:
+        return False
+
+    stack_windows = containers[0].get("windows", {}).get("elements", [])
+    if len(stack_windows) < 2:
+        return False
+
+    # 3. Find the current index of the primary window in the stack
+    primary_idx = None
+    for idx, w in enumerate(stack_windows):
+        if is_primary_fn(w):
+            primary_idx = idx
+            break
+
+    # If the primary window is not at index 0, cycle it to index 0
+    if primary_idx is not None and primary_idx > 0:
+        subprocess.run(
+            ["komorebic", "focus-stack-window", str(primary_idx)],
+            creationflags=CREATE_NO_WINDOW,
+            timeout=1,
+        )
+        time.sleep(0.1)
+        for _ in range(primary_idx):
+            subprocess.run(
+                ["komorebic", "cycle-stack-index", "previous"],
+                creationflags=CREATE_NO_WINDOW,
+                timeout=1,
+            )
+            time.sleep(0.08)
+
+    # 4. Ensure index 0 (primary window) has focus
+    subprocess.run(
+        ["komorebic", "focus-stack-window", "0"],
+        creationflags=CREATE_NO_WINDOW,
+        timeout=1,
+    )
+    time.sleep(0.1)
+    return True
+
+
+_arranging_lock = threading.Lock()
+
+
+def _arrange_desktops() -> None:
+    """
+    Arranges Desktop 1 (Edge Main + GameDev) and Desktop 6 (Antigravity + VSCode):
+    - On Desktop 1, guarantees Edge Main is index 0 (leftmost tab).
+    - On Desktop 6, guarantees Antigravity is index 0 (leftmost tab).
+    - Returns focus to Desktop 1.
+    """
+    if app.platform != "windows":
+        return
+
+    _arrange_workspace(0, _is_edge_main)
+    _arrange_workspace(5, _is_code_primary)
+
+    # Return focus to Desktop 1 (Workspace 0)
+    subprocess.run(
+        ["komorebic", "focus-workspace", "0"],
+        creationflags=CREATE_NO_WINDOW,
+        timeout=1,
+    )
+
+
+def _arrange_desktops_worker() -> None:
+    if not _arranging_lock.acquire(blocking=False):
+        return
+    try:
+        _arrange_desktops()
+    finally:
+        _arranging_lock.release()
+
+
+def _trigger_arrange_desktops() -> None:
+    """Launches _arrange_desktops in a background thread if not already running."""
+    threading.Thread(target=_arrange_desktops_worker, daemon=True).start()
 
 
 def _find_terminal_hwnds() -> tuple[int, int] | tuple[None, None]:
@@ -344,6 +519,20 @@ class Actions:
             if 0 <= workspace <= 7:
                 actions.key(f"f{13 + workspace}")
 
+    def komorebi_focus_last_workspace():
+        """Switches Komorebi to the last focused workspace."""
+        if app.platform != "windows":
+            return
+        try:
+            subprocess.run(
+                ["komorebic", "focus-last-workspace"],
+                check=False,
+                creationflags=CREATE_NO_WINDOW,
+                timeout=1,
+            )
+        except Exception as e:
+            print(f"[komorebi] Error focusing last workspace: {e}")
+
     def focus_or_open(
         exe: str = "",
         title: str = "",
@@ -474,6 +663,10 @@ class Actions:
             tab_title="lazygit",
             workspace=6,
         )
+
+    def komorebi_arrange_desktops():
+        """Arranges Desktop 1 (Edge Main + GameDev) and Desktop 6 (Antigravity + VSCode) into stacks."""
+        _trigger_arrange_desktops()
 
 
 def _on_ready() -> None:
