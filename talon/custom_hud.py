@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 from typing import Callable, Optional
 
+import skia
 from skia import Canvas as SkiaCanvas
 from talon import Module, actions, app, cron, registry, scope, settings, storage, ui
 from talon.canvas import Canvas, MouseEvent
@@ -144,6 +145,11 @@ def _toggle_sleep():
         pass
 
 
+# Official Talon default HUD & library SVG paths
+PATH_MIC_STAND = skia.Path.from_svg("M5 11C5 17 8 20 12 20S19 17 19 11M12 20V23M8 23H16")
+PATH_WAVE = skia.Path.from_svg("M2 10v3 M6 6v11 M10 3v18 M14 8v7 M18 5v13 M22 10v3")
+
+
 def _draw_box(c: SkiaCanvas, rect: Rect, r: float):
     try:
         c.draw_round_rect(rect, r, r)
@@ -156,29 +162,25 @@ def _draw_mic_icon(c: SkiaCanvas, ox: float, oy: float, s: float, is_awake: bool
     c.paint.stroke_width = stroke_w
     c.paint.color = color
 
-    # Microphone capsule
-    capsule = Rect(ox + 8.5 * s, oy + 3.0 * s, 7.0 * s, 10.0 * s)
+    # Microphone capsule from Talon default HUD (rect x=8, y=2, w=8, h=14, rx=4)
+    capsule = Rect(ox + 8.0 * s, oy + 2.0 * s, 8.0 * s, 14.0 * s)
     if is_awake:
         c.paint.style = c.paint.Style.FILL
-        _draw_box(c, capsule, 3.5 * s)
+        _draw_box(c, capsule, 4.0 * s)
         c.paint.style = c.paint.Style.STROKE
-    _draw_box(c, capsule, 3.5 * s)
+    _draw_box(c, capsule, 4.0 * s)
 
-    # Cradle arc around bottom of capsule
-    c.draw_line(ox + 5.0 * s, oy + 8.0 * s, ox + 5.0 * s, oy + 11.0 * s)
-    c.draw_line(ox + 19.0 * s, oy + 8.0 * s, ox + 19.0 * s, oy + 11.0 * s)
-    c.draw_line(ox + 5.0 * s, oy + 11.0 * s, ox + 8.0 * s, oy + 15.0 * s)
-    c.draw_line(ox + 8.0 * s, oy + 15.0 * s, ox + 16.0 * s, oy + 15.0 * s)
-    c.draw_line(ox + 16.0 * s, oy + 15.0 * s, ox + 19.0 * s, oy + 11.0 * s)
-
-    # Stem and base foot
-    c.draw_line(ox + 12.0 * s, oy + 15.0 * s, ox + 12.0 * s, oy + 20.0 * s)
-    c.draw_line(ox + 8.0 * s, oy + 20.0 * s, ox + 16.0 * s, oy + 20.0 * s)
+    # Microphone stand & cradle from Talon default HUD
+    c.save()
+    c.translate(ox, oy)
+    c.scale(s, s)
+    c.draw_path(PATH_MIC_STAND)
+    c.restore()
 
     # Diagonal slash when sleeping/muted
     if not is_awake:
-        c.paint.stroke_width = stroke_w * 1.3
-        c.draw_line(ox + 4.0 * s, oy + 4.0 * s, ox + 20.0 * s, oy + 20.0 * s)
+        c.paint.stroke_width = stroke_w * 1.1
+        c.draw_line(ox + 3.0 * s, oy + 21.0 * s, ox + 21.0 * s, oy + 3.0 * s)
 
 
 def _draw_command_icon(c: SkiaCanvas, ox: float, oy: float, s: float, color: str, stroke_w: float):
@@ -219,24 +221,12 @@ def _draw_whisper_icon(c: SkiaCanvas, ox: float, oy: float, s: float, is_active:
     c.paint.stroke_width = stroke_w
     c.paint.color = color
 
-    # Lightning bolt icon
-    pts = [
-        (13.5, 2.0),
-        (6.5, 12.0),
-        (12.5, 12.0),
-        (10.5, 22.0),
-        (17.5, 10.0),
-        (11.5, 10.0),
-        (13.5, 2.0),
-    ]
-    for i in range(len(pts) - 1):
-        x1, y1 = pts[i]
-        x2, y2 = pts[i + 1]
-        c.draw_line(ox + x1 * s, oy + y1 * s, ox + x2 * s, oy + y2 * s)
-
-    # Accent body lines
-    if is_active:
-        c.draw_line(ox + 12.0 * s, oy + 6.0 * s, ox + 11.0 * s, oy + 17.0 * s)
+    # Audio sound wave from Talon's official icon set
+    c.save()
+    c.translate(ox, oy)
+    c.scale(s, s)
+    c.draw_path(PATH_WAVE)
+    c.restore()
 
 
 def on_draw(c: SkiaCanvas):
