@@ -18,7 +18,7 @@ mod.setting(
     desc="Custom HUD scale multiplier (0 = auto-detect from display scale)",
 )
 
-HUD_BASE_WIDTH = 264.0
+HUD_BASE_WIDTH = 276.0
 HUD_BASE_HEIGHT = 72.0
 STORAGE_KEY_POS = "user.custom_hud_pos"
 STORAGE_KEY_SHOW = "user.custom_hud_show"
@@ -114,8 +114,9 @@ def _get_buttons(rect: Rect, scale: float) -> list[HudButton]:
     btn_h = rect.height - (pad_y * 2)
     btn_w = btn_h  # Square buttons (1:1 aspect ratio)
 
-    total_avail_w = (btn_w * 4) + (btn_gap * 3)
-    pad_x = (rect.width - total_avail_w) / 2.0
+    # 20.0 * scale reserved on the left for the drag handle dots
+    handle_w = 20.0 * scale
+    start_x = rect.x + handle_w
 
     btn_defs = [
         ("sleep", current_mode == "sleep", _toggle_sleep),
@@ -125,7 +126,7 @@ def _get_buttons(rect: Rect, scale: float) -> list[HudButton]:
     ]
 
     buttons = []
-    x_offset = rect.x + pad_x
+    x_offset = start_x
     y_offset = rect.y + pad_y
     for btn_id, active, callback in btn_defs:
         b_rect = Rect(x_offset, y_offset, btn_w, btn_h)
@@ -133,6 +134,23 @@ def _get_buttons(rect: Rect, scale: float) -> list[HudButton]:
         x_offset += btn_w + btn_gap
 
     return buttons
+
+
+def _draw_drag_handle(c: SkiaCanvas, rect: Rect, scale: float):
+    c.paint.style = c.paint.Style.FILL
+    c.paint.color = "6c7086"  # Muted grip dots (Catppuccin overlay)
+
+    dot_r = 1.4 * scale
+    col1_x = rect.x + 8.0 * scale
+    col2_x = rect.x + 12.0 * scale
+
+    center_y = rect.y + rect.height / 2.0
+    row_gap = 5.5 * scale
+    rows_y = [center_y - row_gap, center_y, center_y + row_gap]
+
+    for y in rows_y:
+        c.draw_circle(col1_x, y, dot_r)
+        c.draw_circle(col2_x, y, dot_r)
 
 
 def _toggle_sleep():
@@ -253,6 +271,9 @@ def on_draw(c: SkiaCanvas):
         c.paint.stroke_width = border_stroke
         c.paint.color = COLOR_BORDER
         _draw_box(c, c.rect, box_r)
+
+        # Drag handle grip dots
+        _draw_drag_handle(c, c.rect, scale)
 
         # 2. Draw buttons
         whisper_active = _is_whisper_active()
